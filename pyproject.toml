@@ -14,6 +14,7 @@ dependencies = [
 
 [project.scripts]
 citationer = "citationer.cli.main:app"
+ctr = "citationer.cli.main:app"
 
 [project.optional-dependencies]
 dev = [
