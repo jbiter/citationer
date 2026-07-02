@@ -223,3 +223,6 @@ __marimo__/
 # citationer data cache
 .citationer/
 citationer_output/
+
+# sample data files
+data/
