@@ -1,10 +1,10 @@
 # Citationer
 
-> 一键式文献题录分析 CLI 工具 — 从描述统计到主题挖掘的完整文献分析报告
+> Citationer — A one-click bibliometric analysis CLI tool.
 
-[![PyPI version](https://img.shields.io/pypi/v/citationer.svg)](https://pypi.org/project/citationer/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://img.shields.io/pypi/v/citationer.svg)](https://pypi.org/project/citationer/)
 
 **Citationer** 是一个面向科研工作者的轻量级、本地化、零配置文献分析工具。进入包含题录文件的目录，运行一条命令，即可获得从描述统计到知识图谱的完整文献分析报告。
 
@@ -65,7 +65,7 @@ citationer stats authors --top 20
 
 ## 📖 文档
 
-完整文档请访问 [GitHub Wiki](https://github.com/JasonCENG/citationer/wiki).
+完整文档请访问 [GitHub Wiki](https://github.com/jbiter/citationer/wiki).
 
 ## 🛠 开发
 
