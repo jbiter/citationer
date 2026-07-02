@@ -105,7 +105,7 @@ class WosTextParser(BaseParser):
                     if continuation:
                         # For author fields, use "; " separator to distinguish
                         # multi-author lines from wrapped text
-                        sep = "; " if current_tag in ("AU", "AF") else " "
+                        sep = "; " if current_tag in ("AU", "AF", "C1") else " "
                         current[current_tag] += sep + continuation
                 elif current_tag and line.strip():
                     # Some WoS exports wrap without indentation
@@ -239,20 +239,27 @@ class WosTextParser(BaseParser):
         """Parse WoS C1 (author address) field.
 
         Format: "[Author Name] Institution, City, Country"
-        Multiple addresses separated by newlines.
+        Multiple addresses separated by semicolons (from continuation joining)
+        or newlines in the original export.
         """
         if not c1_field:
             return []
 
-        # Split by newline to get individual addresses
-        # But the field value has them joined with spaces already
-        # Let's try splitting on the author-bracket pattern
-        parts = re.split(r"(?=\[)", c1_field)
+        # Split by "; " to get individual addresses (C1 continuation lines
+        # are joined with "; "), then split each by bracket markers
+        raw_parts: list[str] = []
+        for segment in c1_field.split("; "):
+            segment = segment.strip()
+            if not segment:
+                continue
+            # Split segment by bracket-style author markers
+            subparts = re.split(r"(?=\[)", segment)
+            raw_parts.extend(p.strip() for p in subparts if p.strip())
 
         institutions: list[Institution] = []
         seen: set[str] = set()
 
-        for part in parts:
+        for part in raw_parts:
             part = part.strip()
             if not part:
                 continue
@@ -272,7 +279,7 @@ class WosTextParser(BaseParser):
             # Extract country (last meaningful token)
             country: str | None = None
             if len(tokens) > 1:
-                last = tokens[-1].strip()
+                last = tokens[-1].strip().rstrip(".")
                 # Country names: all letters (maybe with spaces), no digits
                 if re.match(r"^[A-Za-z\s]{2,30}$", last) and not any(
                     c.isdigit() for c in last
