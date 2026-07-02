@@ -30,7 +30,7 @@ pipx install citationer
 pip install citationer
 
 # 或从源码安装
-git clone https://github.com/JasonCENG/citationer.git
+git clone https://github.com/jbiter/citationer.git
 cd citationer
 pip install -e .
 ```
