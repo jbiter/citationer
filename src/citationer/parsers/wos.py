@@ -472,7 +472,46 @@ class WosTabDelimitedParser(BaseParser):
 
 
 class WosExcelParser(BaseParser):
-    """Parser for Web of Science Excel export files (.xlsx)."""
+    """Parser for Web of Science Excel export files (.xlsx and .xls)."""
+
+    # WoS export header markers for detection
+    WOS_MARKERS: list[str] = [
+        "Publication Type",
+        "Article Title",
+        "Authors",
+        "Source Title",
+        "Times Cited",
+    ]
+
+    # Column header → WoS field tag mapping
+    FIELD_MARKERS: dict[str, str] = {
+        "Publication Type": "DT",
+        "Document Type": "DT",
+        "Article Title": "TI",
+        "Authors": "AU",
+        "Author Full Names": "AF",
+        "Source Title": "SO",
+        "Journal": "SO",
+        "Abstract": "AB",
+        "Author Keywords": "DE",
+        "Keywords Plus": "ID",
+        "Addresses": "C1",
+        "Correspondence Address": "RP",
+        "ISSN": "SN",
+        "DOI": "DI",
+        "Publication Year": "PY",
+        "Volume": "VL",
+        "Issue": "IS",
+        "Start Page": "BP",
+        "End Page": "EP",
+        "Article Number": "AR",
+        "Times Cited, WoS Core": "TC",
+        "Times Cited, All Databases": "Z9",
+        "Cited References": "CR",
+        "Language": "LA",
+        "Funding Orgs": "FU",
+        "Funding Text": "FX",
+    }
 
     def __init__(self, encoding: str = "utf-8") -> None:
         self._encoding = encoding
@@ -496,101 +535,181 @@ class WosExcelParser(BaseParser):
         except Exception:
             pass
 
-        try:
-            wb = openpyxl.load_workbook(filepath, read_only=True, data_only=True)
-            ws = wb.active
-            if ws is None:
-                wb.close()
-                return False
+        # Try reading headers with the appropriate library
+        headers = self._read_headers(filepath)
+        if headers is None:
+            return False
 
-            row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True), None)
-            wb.close()
-
-            if row:
-                headers = [str(c).strip() if c else "" for c in row]
-                header_text = " ".join(headers)
-                wos_markers = [
-                    "Publication Type",
-                    "Article Title",
-                    "Authors",
-                    "Source Title",
-                    "Times Cited",
-                ]
-                match_count = sum(1 for m in wos_markers if m in header_text)
-                return match_count >= 2
-        except Exception:
-            pass
-
-        return False
+        header_text = " ".join(headers)
+        match_count = sum(1 for m in self.WOS_MARKERS if m in header_text)
+        return match_count >= 2
 
     def parse(self, filepath: Path) -> list[Record]:
-        """Parse a WoS Excel export."""
-        wb = openpyxl.load_workbook(filepath, read_only=True, data_only=True)
-        ws = wb.active
-        if ws is None:
-            wb.close()
-            return []
+        """Parse a WoS Excel export (.xlsx or .xls)."""
+        suffix = filepath.suffix.lower()
 
-        rows = list(ws.iter_rows(values_only=True))
-        wb.close()
+        if suffix == ".xls":
+            return self._parse_xls(filepath)
+        else:
+            return self._parse_xlsx(filepath)
+
+    # ------------------------------------------------------------------
+    # Header reading
+    # ------------------------------------------------------------------
+
+    def _read_headers(self, filepath: Path) -> list[str] | None:
+        """Read the header row, dispatching to the right library."""
+        suffix = filepath.suffix.lower()
+        try:
+            if suffix == ".xls":
+                return self._read_headers_xls(filepath)
+            else:
+                return self._read_headers_xlsx(filepath)
+        except Exception:
+            return None
+
+    def _read_headers_xlsx(self, filepath: Path) -> list[str] | None:
+        """Read header row from .xlsx using openpyxl."""
+        import openpyxl
+
+        wb = openpyxl.load_workbook(filepath, read_only=True, data_only=True)
+        try:
+            ws = wb.active
+            if ws is None:
+                return None
+            row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True), None)
+            if row:
+                return [str(c).strip() if c else "" for c in row]
+            return None
+        finally:
+            wb.close()
+
+    def _read_headers_xls(self, filepath: Path) -> list[str] | None:
+        """Read header row from .xls using xlrd."""
+        import xlrd
+
+        wb = xlrd.open_workbook(str(filepath))
+        try:
+            ws = wb.sheet_by_index(0)
+            if ws.nrows == 0:
+                return None
+            return [str(ws.cell_value(0, c)).strip() for c in range(ws.ncols)]
+        finally:
+            pass  # xlrd auto-closes on garbage collection
+
+    # ------------------------------------------------------------------
+    # Parsing
+    # ------------------------------------------------------------------
+
+    def _parse_xlsx(self, filepath: Path) -> list[Record]:
+        """Parse .xlsx file with openpyxl."""
+        import openpyxl
+
+        wb = openpyxl.load_workbook(filepath, read_only=True, data_only=True)
+        try:
+            ws = wb.active
+            if ws is None:
+                return []
+
+            rows = list(ws.iter_rows(values_only=True))
+        finally:
+            wb.close()
 
         if len(rows) < 2:
             return []
 
         headers = [str(c).strip() if c else "" for c in rows[0]]
+        return self._rows_to_records(headers, rows[1:], filepath.name)
 
-        # Build column mapping from header names to WoS field tags
-        field_markers = {
-            "Publication Type": "DT",
-            "Article Title": "TI",
-            "Authors": "AU",
-            "Author Full Names": "AF",
-            "Source Title": "SO",
-            "Journal": "SO",
-            "Abstract": "AB",
-            "Author Keywords": "DE",
-            "Keywords Plus": "ID",
-            "Addresses": "C1",
-            "Correspondence Address": "RP",
-            "ISSN": "SN",
-            "DOI": "DI",
-            "Publication Year": "PY",
-            "Volume": "VL",
-            "Issue": "IS",
-            "Start Page": "BP",
-            "End Page": "EP",
-            "Article Number": "AR",
-            "Times Cited, WoS Core": "TC",
-            "Times Cited, All Databases": "Z9",
-            "Cited References": "CR",
-            "Language": "LA",
-            "Funding Orgs": "FU",
-            "Funding Text": "FX",
-        }
+    def _parse_xls(self, filepath: Path) -> list[Record]:
+        """Parse .xls file with xlrd."""
+        import xlrd
 
+        wb = xlrd.open_workbook(str(filepath))
+        try:
+            ws = wb.sheet_by_index(0)
+            if ws.nrows < 2:
+                return []
+
+            headers = [str(ws.cell_value(0, c)).strip() for c in range(ws.ncols)]
+            rows = [
+                tuple(ws.cell_value(r, c) for c in range(ws.ncols))
+                for r in range(1, ws.nrows)
+            ]
+        finally:
+            pass  # xlrd auto-closes on garbage collection
+
+        return self._rows_to_records(headers, rows, filepath.name)
+
+    def _build_col_map(self, headers: list[str]) -> dict[str, int]:
+        """Build column index from header names to WoS field tags.
+
+        Uses exact match first (case-insensitive), then falls back to
+        substring match. Exact matches are never overwritten by later
+        substring matches, preventing false positives like "Authors"
+        matching "Group Authors" instead of the real "Authors" column.
+        """
         col_map: dict[str, int] = {}
-        for i, h in enumerate(headers):
-            for marker, tag in field_markers.items():
-                if marker.lower() in h.lower():
-                    col_map[tag] = i
-                    break
+        exact_matched: set[str] = set()
 
-        # Use the text parser's _dict_to_record for conversion
+        for i, h in enumerate(headers):
+            h_lower = h.lower()
+
+            # Phase 1: exact match (case-insensitive)
+            for marker, tag in self.FIELD_MARKERS.items():
+                if marker.lower() == h_lower:
+                    col_map[tag] = i
+                    exact_matched.add(tag)
+                    break
+            else:
+                # Phase 2: substring match — only if tag not already
+                # found via exact match in an earlier column
+                for marker, tag in self.FIELD_MARKERS.items():
+                    if tag not in exact_matched and marker.lower() in h_lower:
+                        col_map[tag] = i
+                        break
+
+        return col_map
+
+    def _rows_to_records(
+        self,
+        headers: list[str],
+        rows: list[tuple],
+        source_file: str,
+    ) -> list[Record]:
+        """Convert rows + headers to Record objects."""
+        col_map = self._build_col_map(headers)
+
         text_parser = WosTextParser()
         records: list[Record] = []
 
-        for row in rows[1:]:
-            if all(c is None or str(c).strip() == "" for c in row):
+        for row in rows:
+            # Skip empty rows
+            if all(
+                c is None or (isinstance(c, float) and c == 0.0) or str(c).strip() == ""
+                for c in row
+            ):
                 continue
 
             fields: dict[str, str] = {}
             for tag, idx in col_map.items():
-                if idx < len(row) and row[idx] is not None:
-                    fields[tag] = str(row[idx]).strip()
+                if idx < len(row):
+                    val = row[idx]
+                    if val is not None:
+                        # xlrd returns floats for numeric cells — convert cleanly
+                        if isinstance(val, float):
+                            if val == int(val):
+                                val = str(int(val))
+                            else:
+                                val = str(val)
+                        else:
+                            val = str(val).strip()
+                        if val:
+                            fields[tag] = val
 
             if fields:
                 records.append(
-                    text_parser._dict_to_record(fields, filepath.name)
+                    text_parser._dict_to_record(fields, source_file)
                 )
 
         return records
