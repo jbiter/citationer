@@ -1,6 +1,6 @@
 # Citationer
 
-> Citationer — A one-click bibliometric analysis CLI tool.
+> Citationer — A bibliometric analysis CLI tool.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
@@ -8,7 +8,7 @@
 
 **Citationer** 是一个面向科研工作者的轻量级、本地化、零配置文献分析工具。进入包含题录文件的目录，运行一条命令，即可获得从描述统计到知识图谱的完整文献分析报告。
 
-Citationer — A one-click bibliometric analysis CLI tool. Auto-detects CNKI, Web of Science, and Scopus export formats; delivers descriptive statistics, co-occurrence/collaboration networks, AI-powered topic labeling via DeepSeek, and one-shot Markdown/HTML/PDF report generation.
+Citationer — A bibliometric analysis CLI tool. Auto-detects CNKI, Web of Science, and Scopus export formats; delivers descriptive statistics, co-occurrence/collaboration networks, AI-powered topic labeling via DeepSeek, and one-shot Markdown/HTML/PDF report generation.
 
 ## ✨ 特性
 

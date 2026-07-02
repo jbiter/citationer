@@ -1,14 +1,14 @@
 [project]
 name = "citationer"
 version = "1.0.3"
-description = "一键式文献题录分析 CLI 工具"
+description = "A bibliometric analysis CLI tool"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "typer>=0.12",
     "rich>=13.0",
     "openpyxl>=3.1",
-    "xlrd>=2.0",
+    "xlrd>=2.0",    
     "pydantic>=2.0",
     "pyyaml>=6.0",
 ]
