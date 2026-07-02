@@ -7,8 +7,7 @@ import io
 import re
 from pathlib import Path
 
-import openpyxl
-
+# openpyxl is imported lazily in WosExcelParser methods for .xlsx handling
 from citationer.models.record import Author, DocType, Institution, Record
 from citationer.parsers.base import BaseParser
 

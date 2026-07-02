@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -140,10 +140,10 @@ class CitationDatabase:
         authors: list[dict],
         keywords: list[dict],
         institutions: list[dict],
-    ) -> int:
+    ) -> int | None:
         """Insert a single record with related data. Returns the new record ID."""
         c = self.conn
-        record_data["imported_at"] = datetime.now(timezone.utc).isoformat()
+        record_data["imported_at"] = datetime.now(UTC).isoformat()
         record_data.setdefault("raw_data", "{}")
         if isinstance(record_data.get("raw_data"), dict):
             record_data["raw_data"] = json.dumps(record_data["raw_data"], ensure_ascii=False)

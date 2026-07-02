@@ -290,14 +290,14 @@ class DedupEngine:
                 journal_sim = SequenceMatcher(None, j1, j2).ratio() if j1 and j2 else 0
 
                 # Pages match
-                pages_match = (
+                pages_match = bool(
                     r1.pages
                     and r2.pages
                     and r1.pages.strip() == r2.pages.strip()
                 )
 
                 # Volume match
-                vol_match = (
+                vol_match = bool(
                     r1.volume
                     and r2.volume
                     and r1.volume.strip() == r2.volume.strip()
