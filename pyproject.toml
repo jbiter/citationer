@@ -12,6 +12,9 @@ dependencies = [
     "pyyaml>=6.0",
 ]
 
+[project.scripts]
+citationer = "citationer.cli.main:app"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
