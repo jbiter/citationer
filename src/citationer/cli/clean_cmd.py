@@ -1,0 +1,213 @@
+"""Clean command — validate and deduplicate records."""
+
+from __future__ import annotations
+
+import typer
+from rich.console import Console
+from rich.table import Table
+
+from citationer.analysis.dedup import DedupEngine
+from citationer.utils.config import get_db_path
+from citationer.utils.database import CitationDatabase
+from citationer.utils.db_loader import load_records_from_db
+
+console = Console()
+
+
+def clean(
+    check_duplicates: bool = typer.Option(
+        True,
+        "--check-duplicates/--no-check-duplicates",
+        help="检测并合并重复记录",
+    ),
+    check_missing: bool = typer.Option(
+        True,
+        "--check-missing/--no-check-missing",
+        help="检测缺失关键字段的记录",
+    ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="仅检测，不执行合并",
+    ),
+) -> None:
+    """数据清洗：去重、缺失字段检测、异常值检测。"""
+    db_path = get_db_path()
+    if not db_path.exists():
+        console.print("[yellow]⚠ 尚未导入数据，请先运行 citationer import[/yellow]")
+        return
+
+    records = load_records_from_db(db_path)
+    if not records:
+        console.print("[yellow]⚠ 数据库中没有记录[/yellow]")
+        return
+
+    initial_count = len(records)
+    issues: list[dict] = []
+
+    # --- Check missing fields ---
+    if check_missing:
+        missing_table = Table(
+            title="🔍 缺失字段检测",
+            show_header=True,
+            header_style="bold yellow",
+        )
+        missing_table.add_column("问题类型")
+        missing_table.add_column("数量")
+        missing_table.add_column("占比")
+
+        missing_title = sum(1 for r in records if not r.title)
+        missing_year = sum(1 for r in records if r.year is None)
+        missing_authors = sum(1 for r in records if not r.authors)
+
+        for label, count in [
+            ("缺少标题", missing_title),
+            ("缺少年份", missing_year),
+            ("缺少作者", missing_authors),
+        ]:
+            pct = f"{count / initial_count * 100:.1f}%" if initial_count else "0%"
+            style = "red" if count > 0 else "green"
+            missing_table.add_row(label, f"[{style}]{count}[/{style}]", pct)
+
+        console.print(missing_table)
+
+        if missing_title > 0:
+            issues.append({"type": "missing_title", "count": missing_title})
+        if missing_year > 0:
+            issues.append({"type": "missing_year", "count": missing_year})
+        if missing_authors > 0:
+            issues.append({"type": "missing_authors", "count": missing_authors})
+
+    # --- Year anomaly detection ---
+    year_anomalies: list[str] = []
+    for r in records:
+        if r.year is not None and (r.year < 1900 or r.year > 2030):
+            year_anomalies.append(f"{r.title[:50]}... → {r.year}")
+
+    if year_anomalies:
+        console.print()
+        console.print(f"[yellow]⚠ 年份异常检测: {len(year_anomalies)} 条[/yellow]")
+        for a in year_anomalies[:5]:
+            console.print(f"  - {a}")
+        if len(year_anomalies) > 5:
+            console.print(f"  ... 还有 {len(year_anomalies) - 5} 条")
+
+    # --- Deduplication ---
+    dup_removed = 0
+    if check_duplicates:
+        console.print()
+        engine = DedupEngine()
+        merged, merge_log = engine.deduplicate(records)
+
+        dup_removed = initial_count - len(merged)
+
+        if dup_removed > 0:
+            dup_table = Table(
+                title="🔗 去重结果",
+                show_header=True,
+                header_style="bold cyan",
+            )
+            dup_table.add_column("层级", justify="center")
+            dup_table.add_column("类型")
+            dup_table.add_column("数量", justify="right")
+
+            layer_counts: dict[int, int] = {}
+            for entry in merge_log:
+                layer = entry["layer"]
+                layer_counts[layer] = layer_counts.get(layer, 0) + 1
+
+            layer_names = {
+                1: "DOI 精确匹配",
+                2: "标题模糊 (≥85%) + 年份",
+                3: "标题模糊 (≥70%) + 第一作者 + 年份",
+                4: "跨语言匹配 (中英文)",
+            }
+
+            for layer, name in layer_names.items():
+                count = layer_counts.get(layer, 0)
+                if count > 0:
+                    dup_table.add_row(f"Layer {layer}", name, str(count))
+
+            dup_table.add_row(
+                "", "[bold]总计[/bold]", f"[bold green]{dup_removed}[/bold green]"
+            )
+            console.print(dup_table)
+
+            if dry_run:
+                console.print()
+                console.print(
+                    "[yellow]🔍 Dry-run 模式: 未执行合并。"
+                    "运行 `citationer clean` 执行合并。[/yellow]"
+                )
+            else:
+                _save_merged_records(db_path, merged)
+                console.print()
+                console.print(
+                    f"✅ 去重完成: [bold red]{initial_count}[/bold red] → "
+                    f"[bold green]{len(merged)}[/bold green] 条 "
+                    f"(移除 {dup_removed} 条重复)"
+                )
+        else:
+            console.print("[green]✅ 未发现重复记录[/green]")
+
+    if not issues and dup_removed == 0:
+        console.print()
+        console.print("[green]✅ 数据质量检查通过，未发现问题[/green]")
+
+
+def _save_merged_records(db_path, merged) -> None:
+    """Save merged records back to the database."""
+    from pathlib import Path
+
+    db = CitationDatabase(Path(db_path))
+    db.initialize()
+    db.clear_records()
+    for record in merged:
+        authors_data = [
+            {
+                "full_name": a.full_name,
+                "surname": a.surname,
+                "given_name": a.given_name,
+                "order": a.order,
+                "is_corresponding": a.is_corresponding,
+                "affiliation": a.affiliation,
+                "email": a.email,
+            }
+            for a in record.authors
+        ]
+        keywords_data = [{"keyword": k, "lang": "zh"} for k in record.keywords]
+        institutions_data = [
+            {
+                "name": i.name,
+                "country": i.country,
+                "province": i.province,
+                "city": i.city,
+                "inst_type": i.inst_type,
+            }
+            for i in record.institutions
+        ]
+        db.insert_record(
+            record_data={
+                "source_database": record.source_database,
+                "source_file": record.source_file,
+                "title": record.title,
+                "title_en": record.title_en,
+                "year": record.year,
+                "journal": record.journal,
+                "volume": record.volume,
+                "issue": record.issue,
+                "pages": record.pages,
+                "doi": record.doi,
+                "issn": record.issn,
+                "abstract": record.abstract,
+                "abstract_en": record.abstract_en,
+                "doc_type": record.doc_type.value,
+                "language": record.language,
+                "citation_count": record.citation_count,
+                "raw_data": record.raw_data,
+            },
+            authors=authors_data,
+            keywords=keywords_data,
+            institutions=institutions_data,
+        )
+    db.close()
