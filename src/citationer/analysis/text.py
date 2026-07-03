@@ -47,18 +47,44 @@ def _load_stopwords(filename: str) -> set[str]:
 _STOPWORDS_ZH: set[str] | None = None
 _STOPWORDS_EN: set[str] | None = None
 
+# Minimal built-in stop words — used as fallback if the bundled data files
+# cannot be loaded (e.g. when package data is not installed).
+_FALLBACK_STOPWORDS_EN: set[str] = {
+    "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did", "will", "would", "shall",
+    "should", "may", "might", "must", "can", "could", "i", "me", "my",
+    "we", "our", "you", "your", "he", "him", "his", "she", "her", "it",
+    "its", "they", "them", "their", "this", "that", "these", "those",
+    "in", "on", "at", "to", "for", "of", "with", "from", "by", "as",
+    "or", "and", "but", "not", "no", "nor", "so", "if", "then", "than",
+    "too", "very", "just", "about", "also", "into", "over", "such",
+    "only", "other", "new", "some", "any", "each", "all", "both", "few",
+    "more", "most", "one", "two", "first", "last", "up", "out", "now",
+    "when", "where", "how", "what", "which", "who",
+    "paper", "study", "research", "based", "using", "used", "results",
+    "method", "methods", "approach", "analysis", "data", "model",
+}
+_FALLBACK_STOPWORDS_ZH: set[str] = {
+    "的", "了", "在", "是", "和", "也", "就", "都", "不", "与", "及",
+    "或", "但", "而", "且", "虽", "然", "如", "果", "因", "为", "所",
+    "以", "能", "够", "可", "会", "将", "把", "被", "对", "从", "由",
+    "向", "到", "于", "之", "其", "这", "那", "等", "等", "等",
+}
+
 
 def _get_stopwords_zh() -> set[str]:
     global _STOPWORDS_ZH
     if _STOPWORDS_ZH is None:
-        _STOPWORDS_ZH = _load_stopwords("stopwords_zh.txt")
+        loaded = _load_stopwords("stopwords_zh.txt")
+        _STOPWORDS_ZH = loaded if loaded else _FALLBACK_STOPWORDS_ZH
     return _STOPWORDS_ZH
 
 
 def _get_stopwords_en() -> set[str]:
     global _STOPWORDS_EN
     if _STOPWORDS_EN is None:
-        _STOPWORDS_EN = _load_stopwords("stopwords_en.txt")
+        loaded = _load_stopwords("stopwords_en.txt")
+        _STOPWORDS_EN = loaded if loaded else _FALLBACK_STOPWORDS_EN
     return _STOPWORDS_EN
 
 

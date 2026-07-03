@@ -54,6 +54,9 @@ all = [
     "wordcloud>=1.9",
 ]
 
+[tool.setuptools.package-data]
+citationer = ["data/*.txt"]
+
 [build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
