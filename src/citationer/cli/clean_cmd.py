@@ -10,6 +10,7 @@ from citationer.analysis.dedup import DedupEngine
 from citationer.utils.config import get_db_path
 from citationer.utils.database import CitationDatabase
 from citationer.utils.db_loader import load_records_from_db
+from citationer.utils.serialization import record_to_db_serializable
 
 console = Console()
 
@@ -163,51 +164,6 @@ def _save_merged_records(db_path, merged) -> None:
     db.initialize()
     db.clear_records()
     for record in merged:
-        authors_data = [
-            {
-                "full_name": a.full_name,
-                "surname": a.surname,
-                "given_name": a.given_name,
-                "order": a.order,
-                "is_corresponding": a.is_corresponding,
-                "affiliation": a.affiliation,
-                "email": a.email,
-            }
-            for a in record.authors
-        ]
-        keywords_data = [{"keyword": k, "lang": "zh"} for k in record.keywords]
-        institutions_data = [
-            {
-                "name": i.name,
-                "country": i.country,
-                "province": i.province,
-                "city": i.city,
-                "inst_type": i.inst_type,
-            }
-            for i in record.institutions
-        ]
-        db.insert_record(
-            record_data={
-                "source_database": record.source_database,
-                "source_file": record.source_file,
-                "title": record.title,
-                "title_en": record.title_en,
-                "year": record.year,
-                "journal": record.journal,
-                "volume": record.volume,
-                "issue": record.issue,
-                "pages": record.pages,
-                "doi": record.doi,
-                "issn": record.issn,
-                "abstract": record.abstract,
-                "abstract_en": record.abstract_en,
-                "doc_type": record.doc_type.value,
-                "language": record.language,
-                "citation_count": record.citation_count,
-                "raw_data": record.raw_data,
-            },
-            authors=authors_data,
-            keywords=keywords_data,
-            institutions=institutions_data,
-        )
+        data = record_to_db_serializable(record)
+        db.insert_record(**data)
     db.close()

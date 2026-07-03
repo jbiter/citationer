@@ -238,6 +238,39 @@ class CitationDatabase:
             "FROM records GROUP BY source_database ORDER BY cnt DESC"
         ).fetchall())
 
+    # ------------------------------------------------------------------
+    # LLM cache
+    # ------------------------------------------------------------------
+
+    def get_cached_llm_response(self, cache_key: str) -> str | None:
+        """Retrieve a cached LLM response by cache key."""
+        row = self.conn.execute(
+            "SELECT response FROM llm_cache WHERE cache_key = ?", (cache_key,)
+        ).fetchone()
+        return row["response"] if row else None
+
+    def save_llm_cache(
+        self, cache_key: str, response: str, tokens: int, model: str
+    ) -> None:
+        """Save an LLM response to the cache."""
+        self.conn.execute(
+            """INSERT OR REPLACE INTO llm_cache (cache_key, response, tokens_used, model)
+               VALUES (?, ?, ?, ?)""",
+            (cache_key, response, tokens, model),
+        )
+        self.conn.commit()
+
+    def get_llm_cache_stats(self) -> dict:
+        """Get LLM cache statistics."""
+        row = self.conn.execute(
+            "SELECT COUNT(*) as cnt, COALESCE(SUM(tokens_used), 0) as total_tokens "
+            "FROM llm_cache"
+        ).fetchone()
+        return {
+            "cached_entries": row["cnt"] if row else 0,
+            "total_tokens_used": row["total_tokens"] if row else 0,
+        }
+
     def close(self) -> None:
         if self._conn:
             self._conn.close()

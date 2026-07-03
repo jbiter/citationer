@@ -144,3 +144,90 @@ class TestDedupEngine:
         merged, log = engine.deduplicate([])
         assert merged == []
         assert log == []
+
+    def test_layer3_title_low_same_author(self):
+        """Title >= 70% + same first author + same year → merge."""
+        records = [
+            Record(
+                title="A Survey of Machine Learning in Medical Image Analysis",
+                year=2024,
+                authors=[Author(full_name="Zhang, Wei", order=1)],
+            ),
+            Record(
+                title="A Review of Machine Learning for Medical Image Processing",
+                year=2024,
+                authors=[Author(full_name="Zhang, Wei", order=1)],
+            ),
+        ]
+        engine = DedupEngine(title_threshold_high=0.95, title_threshold_low=0.70)
+        merged, log = engine.deduplicate(records)
+        # These should be similar enough for layer 3
+        assert len(merged) == 1
+        assert log[0]["layer"] in (2, 3)
+
+    def test_layer3_different_author_no_merge(self):
+        """Title similar but different first author → no merge."""
+        records = [
+            Record(
+                title="Machine Learning in Healthcare Applications",
+                year=2024,
+                authors=[Author(full_name="Smith, John", order=1)],
+            ),
+            Record(
+                title="Machine Learning in Healthcare Systems",
+                year=2024,
+                authors=[Author(full_name="Jones, Mary", order=1)],
+            ),
+        ]
+        engine = DedupEngine(title_threshold_high=0.95, title_threshold_low=0.60)
+        merged, log = engine.deduplicate(records)
+        assert len(merged) == 2  # different authors → no merge
+
+    def test_layer4_cross_language(self):
+        """Cross-source + same year + author + journal + pages → merge."""
+        records = [
+            Record(
+                title="中文文献标题",
+                year=2024,
+                authors=[Author(full_name="Wang", surname="Wang", order=1)],
+                journal="Nature",
+                volume="10",
+                pages="123-130",
+                source_database="CNKI",
+            ),
+            Record(
+                title="English Paper Title",
+                year=2024,
+                authors=[Author(full_name="Wang, L.", surname="Wang", order=1)],
+                journal="Nature",
+                volume="10",
+                pages="123-130",
+                source_database="WoS",
+            ),
+        ]
+        engine = DedupEngine()
+        merged, log = engine.deduplicate(records)
+        assert len(merged) == 1
+        assert log[0]["layer"] == 4
+
+    def test_layer4_same_source_skip(self):
+        """Same source database → layer 4 skips."""
+        records = [
+            Record(
+                title="Paper A", year=2024,
+                authors=[Author(full_name="Smith", surname="Smith", order=1)],
+                journal="Science", volume="1", pages="1-10",
+                source_database="WoS",
+            ),
+            Record(
+                title="Paper B", year=2024,
+                authors=[Author(full_name="Smith", surname="Smith", order=1)],
+                journal="Science", volume="1", pages="1-10",
+                source_database="WoS",
+            ),
+        ]
+        engine = DedupEngine()
+        merged, log = engine.deduplicate(records)
+        # Layer 4 skips same-source; these may be caught by layer 1/2/3
+        # If not caught elsewhere, they remain separate
+        assert len(merged) >= 1

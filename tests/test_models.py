@@ -29,6 +29,41 @@ class TestRecord:
         assert r.authors == []
         assert r.keywords == []
 
+    def test_author_eq_non_author(self):
+        a = Author(full_name="Smith, John")
+        assert a != "Smith, John"
+        assert a != 42
+        assert a != None  # noqa: E711
+
+    def test_first_author_no_order_one(self):
+        """When no author has order=1, fall back to first in list."""
+        r = Record(
+            title="Test",
+            authors=[
+                Author(full_name="A", order=2),
+                Author(full_name="B", order=3),
+            ],
+        )
+        assert r.first_author is not None
+        assert r.first_author.full_name == "A"
+
+    def test_institutions_empty(self):
+        r = Record(title="Test")
+        assert r.institutions == []
+
+    def test_funding_default(self):
+        r = Record(title="Test")
+        assert r.funding is None
+
+    def test_references_default(self):
+        r = Record(title="Test")
+        assert r.references is None
+
+    def test_raw_data_excluded(self):
+        r = Record(title="Test", raw_data={"custom": "value"})
+        d = r.model_dump()
+        assert "raw_data" not in d  # excluded by Field(exclude=True)
+
     def test_first_author(self):
         r = Record(
             title="Test",

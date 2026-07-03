@@ -5,8 +5,24 @@ from __future__ import annotations
 import json as _json
 from pathlib import Path
 
+from rich.console import Console
+
 from citationer.models.record import Author, DocType, Institution, Record
+from citationer.utils.config import get_db_path
 from citationer.utils.database import CitationDatabase
+
+
+def get_records() -> list[Record]:
+    """Load records from DB, returning empty list if not available."""
+    console = Console()
+    db_path = get_db_path()
+    if not db_path.exists():
+        console.print("[yellow]⚠ 尚未导入数据，请先运行 citationer import[/yellow]")
+        return []
+    records = load_records_from_db(db_path)
+    if not records:
+        console.print("[yellow]⚠ 数据库中没有记录[/yellow]")
+    return records
 
 
 def load_records_from_db(db_path: Path) -> list[Record]:

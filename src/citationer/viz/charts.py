@@ -85,7 +85,7 @@ def generate_yearly_chart(
         ax1.plot(years, trend_y, color="red", linestyle="--", linewidth=1.5, label="Trend")
 
     ax1.set_xticks(years)
-    ax1.set_xticklabels(years, rotation=45)
+    ax1.set_xticklabels([str(y) for y in years], rotation=45)
 
     # Cumulative overlay
     if cumulative:

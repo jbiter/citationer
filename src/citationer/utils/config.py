@@ -103,13 +103,22 @@ def get_output_dir() -> Path:
 
 
 def load_api_key() -> str:
-    """Load the DeepSeek API key from environment or config."""
-    # 1. Environment variable takes priority
+    """Load the LLM API key from environment or config.
+
+    Environment variables (highest priority):
+        CITATIONER_LLM_API_KEY  (or DEEPSEEK_API_KEY for backward compat)
+    """
+    # 1. Environment variable (new generic name)
+    env_key = os.environ.get("CITATIONER_LLM_API_KEY", "")
+    if env_key:
+        return env_key
+
+    # 2. Environment variable (legacy DeepSeek-specific name)
     env_key = os.environ.get("DEEPSEEK_API_KEY", "")
     if env_key:
         return env_key
 
-    # 2. Check config file
+    # 3. Check config file
     config_path = get_config_path()
     if config_path.exists():
         config = CitationerConfig.load(config_path)
@@ -117,3 +126,68 @@ def load_api_key() -> str:
             return config.llm.api_key
 
     return ""
+
+
+def load_llm_config() -> dict:
+    """Load the full LLM configuration from environment and config file.
+
+    Priority: env vars > config file > defaults.
+
+    Supported environment variables:
+        CITATIONER_LLM_API_KEY     (or DEEPSEEK_API_KEY)
+        CITATIONER_LLM_MODEL
+        CITATIONER_LLM_BASE_URL
+        CITATIONER_LLM_TEMPERATURE
+        CITATIONER_LLM_MAX_TOKENS
+
+    Returns a dict with keys: api_key, model, base_url, temperature, max_tokens.
+    """
+    # Defaults
+    result: dict = {
+        "api_key": "",
+        "model": "deepseek-chat",
+        "base_url": "https://api.deepseek.com",
+        "temperature": 0.3,
+        "max_tokens": 4096,
+    }
+
+    # Load from config file first (lowest priority)
+    config_path = get_config_path()
+    if config_path.exists():
+        cfg = CitationerConfig.load(config_path)
+        if cfg.llm.api_key:
+            result["api_key"] = cfg.llm.api_key
+        if cfg.llm.model:
+            result["model"] = cfg.llm.model
+        if cfg.llm.base_url:
+            result["base_url"] = cfg.llm.base_url
+        result["temperature"] = cfg.llm.temperature
+        result["max_tokens"] = cfg.llm.max_tokens
+
+    # Override with environment variables (highest priority)
+    env_map = {
+        "api_key": ("CITATIONER_LLM_API_KEY", "DEEPSEEK_API_KEY"),
+        "model": ("CITATIONER_LLM_MODEL",),
+        "base_url": ("CITATIONER_LLM_BASE_URL",),
+        "temperature": ("CITATIONER_LLM_TEMPERATURE",),
+        "max_tokens": ("CITATIONER_LLM_MAX_TOKENS",),
+    }
+    for key, env_names in env_map.items():
+        for name in env_names:
+            val = os.environ.get(name, "")
+            if val:
+                if key in ("temperature",):
+                    try:
+                        result[key] = float(val)
+                    except ValueError:
+                        pass
+                elif key in ("max_tokens",):
+                    try:
+                        result[key] = int(val)
+                    except ValueError:
+                        pass
+                else:
+                    result[key] = val
+                break  # first env var wins
+
+    return result

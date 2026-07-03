@@ -1,1 +1,3 @@
-"""citationer — 一键式文献题录分析 CLI 工具."""
+"""citationer — One-click bibliometric analysis CLI tool."""
+
+__version__ = "2.0.0"

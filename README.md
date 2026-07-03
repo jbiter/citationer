@@ -1,86 +1,211 @@
 # Citationer
 
-> Citationer — A bibliometric analysis CLI tool.
+> **One-click bibliometric analysis CLI tool** — scan, import, analyze, and visualize your literature collection in the terminal.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyPI version](https://img.shields.io/pypi/v/citationer.svg)](https://pypi.org/project/citationer/)
 
-**Citationer** 是一个面向科研工作者的轻量级、本地化、零配置文献分析工具。进入包含题录文件的目录，运行一条命令，即可获得从描述统计到知识图谱的完整文献分析报告。
+**Citationer** is a lightweight, local-first, zero-config CLI tool for researchers. Drop into a directory with bibliographic export files, run a single command, and get a complete literature analysis — from descriptive statistics to knowledge graphs and AI-powered topic labeling.
 
-Citationer — A bibliometric analysis CLI tool. Auto-detects CNKI, Web of Science, and Scopus export formats; delivers descriptive statistics, co-occurrence/collaboration networks, AI-powered topic labeling via DeepSeek, and one-shot Markdown/HTML/PDF report generation.
+---
 
-## ✨ 特性
+## Features
 
-- 🔍 **自动格式检测** — 支持 CNKI、Web of Science、Scopus 等多种题录格式
-- 📊 **描述统计分析** — 年度趋势、高产作者/期刊/机构、引用分析
-- 🔗 **网络分析** — 关键词共现、作者合作、共被引网络
-- 🤖 **AI 增强** — 集成 DeepSeek 大模型进行主题标注和综述生成
-- 📝 **报告生成** — 一键生成 Markdown/HTML/PDF 报告
-- 🎨 **Rich 终端界面** — 彩色表格、进度条、交互式输出
-- 📦 **管道友好** — 输出结果可被 `grep`、`jq` 等标准 Unix 工具处理
+| Category | Capability |
+|----------|-----------|
+| 🔍 **Format Detection** | Auto-detect CNKI, Web of Science exports (.xlsx, .txt, .ciw) |
+| 📊 **Descriptive Stats** | Yearly trends, top journals/authors/institutions, h-index, solo/coop rates |
+| 🔗 **Network Analysis** | Keyword co-occurrence, author/institution collaboration, co-citation, bibliographic coupling |
+| 📝 **Text Mining** | Tokenization (jieba + spaCy), keyword frequency, LDA/NMF topic modeling, TF-IDF summarization, clustering |
+| 🤖 **LLM-Powered AI** | Topic labeling, literature review generation, trend identification, multi-dimensional classification — supports DeepSeek, OpenAI, Ollama |
+| ⚙ **Configurable** | CLI-driven config (`config show/set/init`), env-var support, multi-provider LLM |
+| 🎨 **Rich Terminal** | Color tables, progress bars, interactive HTML network graphs (Plotly) |
+| 📦 **Pipe-friendly** | JSON/CSV/GEXF/GraphML export — works with `grep`, `jq`, Gephi, Cytoscape |
 
-## 📦 安装
+---
+
+## Installation
 
 ```bash
-# 推荐: 使用 pipx 隔离安装
+# Recommended: isolated install via pipx
 pipx install citationer
 
-# 或使用 pip
+# Or via pip
 pip install citationer
 
-# 或从源码安装
-git clone https://github.com/jbiter/citationer.git
+# With all optional dependencies (NLP, network, AI, viz)
+pip install "citationer[all]"
+
+# From source
+git clone https://github.com/JasonCENG/citationer.git
 cd citationer
-pip install -e .
+pip install -e ".[all,dev]"
 ```
 
-## 🚀 快速开始
+---
+
+## Quick Start
 
 ```bash
-# 1. 进入题录文件目录
-cd /path/to/your/literature
+# 1. Navigate to your literature directory
+cd /path/to/literature
 
-# 2. 扫描目录中的题录文件
+# 2. Scan for bibliographic files
 citationer scan
 
-# 3. 导入题录数据
+# 3. Import into the local database
 citationer import
 
-# 4. 数据清洗与去重
+# 4. Clean & deduplicate
 citationer clean
 
-# 5. 查看统计概览
+# 5. View the overview dashboard
 citationer stats overview
-
-# 6. 年度趋势分析
-citationer stats yearly
-
-# 7. 高产期刊 Top-20
-citationer stats journals --top 20
-
-# 8. 高产作者 Top-20
-citationer stats authors --top 20
 ```
 
-## 📖 文档
+---
 
-完整文档请访问 [GitHub Wiki](https://github.com/jbiter/citationer/wiki).
+## Command Reference
 
-## 🛠 开发
+### Data Management
 
 ```bash
-# 安装依赖
-poetry install
-
-# 运行测试
-poetry run pytest
-
-# 代码检查
-poetry run ruff check src/ tests/
-poetry run mypy src/citationer/
+citationer scan                  # Scan directory for bibliographic files
+citationer status                # Quick status check
+citationer import                # Import files into SQLite database
+citationer clean                 # Validate & deduplicate records
 ```
 
-## 📄 许可证
+### Descriptive Statistics (`stats`)
+
+```bash
+citationer stats overview        # Dashboard: totals, years, h-index, languages
+citationer stats yearly          # Annual publication trend
+citationer stats yearly --cumulative  # Cumulative trend
+citationer stats journals --top 20    # Top journals
+citationer stats authors --top 20     # Top authors (with Price's Law)
+citationer stats institutions --top 20 # Top institutions
+```
+
+### Text Mining (`text`)
+
+```bash
+citationer text preprocess       # Tokenize + language detection
+citationer text keywords --top 30     # Keyword frequency
+citationer text keywords --per-year   # Keyword × year heatmap
+citationer text topics --method lda   # LDA topic modeling
+citationer text topics --method nmf   # NMF topic modeling
+citationer text summarize              # TF-IDF extractive summary
+citationer text cluster --method kmeans  # Document clustering
+```
+
+### Network Analysis (`network`)
+
+```bash
+citationer network keywords --top 50 --threshold 3   # Co-occurrence network
+citationer network coauthors --min-papers 2           # Author collaboration
+citationer network coauthors --type institutions       # Institution collaboration
+citationer network cocitation --top 30                 # Co-citation analysis
+citationer network coupling --top 30                   # Bibliographic coupling
+
+# Export formats: csv, gexf, graphml, html (interactive)
+citationer network keywords --output-format gexf --output graph.gexf
+citationer network coauthors --viz --output network.html
+```
+
+### LLM-Powered Analysis (`ai`)
+
+```bash
+# Configure your LLM first
+citationer config set llm.api_key sk-your-key
+citationer config set llm.model deepseek-chat
+
+citationer ai topics --auto-label     # Auto-label LDA topics
+citationer ai summarize               # Generate literature review (200-500 words)
+citationer ai trends                  # Identify research trends & gaps
+citationer ai classify                # Multi-dimensional classification
+citationer ai info                    # View LLM config & cache stats
+
+# Preview without API call
+citationer ai summarize --dry-run
+```
+
+### Configuration (`config`)
+
+```bash
+citationer config show                # View all settings
+citationer config set llm.api_key sk-xxx  # Set API key
+citationer config set llm.model gpt-4o    # Change model
+citationer config set llm.base_url https://api.openai.com/v1  # Change provider
+citationer config init                # Initialize config file with defaults
+```
+
+---
+
+## LLM Provider Configuration
+
+Citationer supports any OpenAI-compatible API. Edit `.citationer/config.yaml` or use env vars:
+
+```yaml
+# .citationer/config.yaml
+llm:
+  api_key: "sk-xxx"
+  model: "deepseek-chat"
+  base_url: "https://api.deepseek.com"
+  temperature: 0.3
+  max_tokens: 4096
+```
+
+| Provider | base_url |
+|----------|----------|
+| DeepSeek | `https://api.deepseek.com` |
+| OpenAI | `https://api.openai.com/v1` |
+| Ollama (local) | `http://localhost:11434/v1` |
+
+Environment variables override the config file: `CITATIONER_LLM_API_KEY`, `CITATIONER_LLM_MODEL`, etc.
+
+---
+
+## Supported Bibliographic Formats
+
+| Source | Format | Extensions | Status |
+|--------|--------|-----------|--------|
+| **Web of Science** | Plain text / Tab-delimited / Excel | `.txt`, `.ciw`, `.xlsx`, `.xls` | ✅ Stable |
+| **CNKI (知网)** | Excel export | `.xlsx` | ✅ Stable |
+| Scopus | CSV/Excel | `.csv`, `.xlsx` | 🔜 Phase 3 |
+| PubMed | XML/MEDLINE | `.xml`, `.nbib` | 🔜 Phase 3 |
+| BibTeX / RIS | Generic | `.bib`, `.ris` | 🔜 Phase 3 |
+
+---
+
+## Development
+
+```bash
+# Install with dev dependencies
+pip install -e ".[all,dev]"
+
+# Run tests
+pytest tests/ -v
+
+# Lint & type check
+ruff check src/ tests/
+mypy src/ --ignore-missing-imports
+
+# Coverage report
+pytest tests/ --cov=src/citationer --cov-report=term-missing
+```
+
+---
+
+## Documentation
+
+- **[Handbook](docs/Handbook.md)** — Full user manual with examples
+- **[PRD v2.0](docs/PRD-v2.0.md)** — Product requirements document
+- **[PRD v1.0](docs/PRD-v1.0.md)** — Original PRD (historical)
+
+---
+
+## License
 
 MIT © Jason Yu

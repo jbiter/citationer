@@ -103,8 +103,14 @@ def _merge_records(r1: Record, r2: Record) -> Record:
         merged.doc_type = r2.doc_type
 
     # Update source tracking
-    if r2.source_database not in merged.source_database.split("+"):
-        merged.source_database += f"+{r2.source_database}"
+    if r2.source_database:
+        existing = merged.source_database.split("+") if merged.source_database else []
+        if r2.source_database not in existing:
+            merged.source_database = (
+                f"{merged.source_database}+{r2.source_database}"
+                if merged.source_database
+                else r2.source_database
+            )
 
     # Preserve both raw_data
     merged.raw_data = {**r1.raw_data, **r2.raw_data}

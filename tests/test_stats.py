@@ -3,7 +3,7 @@
 import pytest
 
 from citationer.analysis.stats import StatsEngine
-from citationer.models.record import Author, Record
+from citationer.models.record import Author, Institution, Record
 
 
 def make_record(title: str, year: int, journal: str = "", authors=None, citations=0, **kwargs):
@@ -135,3 +135,63 @@ class TestAuthorStats:
         assert len(result.top_authors.items) == 2
         # Smith has 2 papers
         assert result.top_authors.items[0][1] == 2
+
+    def test_author_h_index_computation(self):
+        """Verify author H-index from citation counts."""
+        records = [
+            make_record("A", 2024, authors=[
+                Author(full_name="Smith, J", order=1),
+            ], citations=10),
+            make_record("B", 2024, authors=[
+                Author(full_name="Smith, J", order=1),
+            ], citations=5),
+            make_record("C", 2024, authors=[
+                Author(full_name="Smith, J", order=1),
+            ], citations=3),
+        ]
+        engine = StatsEngine(records)
+        result = engine.authors(top_n=1)
+        # Smith's citations: [10, 5, 3] → h-index = 3
+        h_dict = dict(result.author_h_index)
+        assert h_dict.get("Smith, J", 0) == 3
+
+
+class TestYearlyBySource:
+    def test_yearly_by_source(self):
+        records = [
+            make_record("A", 2024, source_database="WoS"),
+            make_record("B", 2024, source_database="WoS"),
+            make_record("C", 2023, source_database="CNKI"),
+        ]
+        engine = StatsEngine(records)
+        result = engine.yearly_by_source()
+        assert "WoS" in result
+        assert "CNKI" in result
+        assert result["WoS"][2024] == 2
+        assert result["CNKI"][2023] == 1
+
+    def test_yearly_by_source_empty(self):
+        engine = StatsEngine([])
+        result = engine.yearly_by_source()
+        assert result == {}
+
+
+class TestInstitutionsEdgeCases:
+    def test_institutions_empty(self):
+        engine = StatsEngine([])
+        result = engine.institutions(top_n=10)
+        assert result.total_unique == 0
+        assert result.items == []
+
+    def test_institutions_with_country(self):
+        records = [
+            make_record("A", 2024, institutions=[
+                Institution(name="Harvard", country="USA"),
+                Institution(name="MIT", country="USA"),
+                Institution(name="Tsinghua", country="China"),
+            ]),
+        ]
+        engine = StatsEngine(records)
+        stats = engine.overview()
+        assert stats.num_institutions == 3
+        assert stats.num_countries == 2
