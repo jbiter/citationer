@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import typer
 from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from citationer.analysis.dedup import DedupEngine
@@ -98,7 +99,14 @@ def clean(
     if check_duplicates:
         console.print()
         engine = DedupEngine()
-        merged, merge_log = engine.deduplicate(records)
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            progress.add_task("[cyan]正在执行去重…", total=None)
+            merged, merge_log = engine.deduplicate(records)
 
         dup_removed = initial_count - len(merged)
 

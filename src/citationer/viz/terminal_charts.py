@@ -147,11 +147,12 @@ def plot_hbar(
     bar_scale = 50.0 / max(max_val, 1)
 
     lines: list[str] = []
-    for lbl, val in items:
+    for i, (lbl, val) in enumerate(items):
         bar_len = int(val * bar_scale)
         bar = _BLOCK * bar_len
         lines.append(f"  {_fmt_label(lbl)} │{bar} {val}")
-        lines.append(f"  {' ' * label_w} │")
+        if i < len(items) - 1:
+            lines.append(f"  {' ' * label_w} │")
 
     # Print
     print()

@@ -177,33 +177,41 @@ class DedupEngine:
         return [r for i, r in enumerate(records) if i not in merged_indices]
 
     def _layer2_title_high(self, records: list[Record]) -> list[Record]:
-        """Title fuzzy match (>= 85%) + same year → auto-merge."""
+        """Title fuzzy match (>= 85%) + same year → auto-merge.
+
+        Records are bucketed by year so comparisons are O(buckets × bucket²)
+        instead of O(n²) — a huge win for large datasets spanning many years.
+        """
         merged_indices: set[int] = set()
-        n = len(records)
 
-        for i in range(n):
-            if i in merged_indices:
-                continue
-            for j in range(i + 1, n):
-                if j in merged_indices:
+        # Bucket records by year
+        year_buckets: dict[int, list[int]] = {}
+        for i, r in enumerate(records):
+            year_buckets.setdefault(r.year or 0, []).append(i)
+
+        for indices in year_buckets.values():
+            m = len(indices)
+            for a in range(m):
+                i = indices[a]
+                if i in merged_indices:
                     continue
-                r1, r2 = records[i], records[j]
+                for b in range(a + 1, m):
+                    j = indices[b]
+                    if j in merged_indices:
+                        continue
+                    r1, r2 = records[i], records[j]
 
-                # Year must match (or both be None)
-                if r1.year is not None and r2.year is not None and r1.year != r2.year:
-                    continue
-
-                sim = _title_similarity(r1.title, r2.title)
-                if sim >= self.title_threshold_high:
-                    self._merge_log.append({
-                        "layer": 2,
-                        "type": "title_fuzzy_high",
-                        "kept": r1.title,
-                        "merged": r2.title,
-                        "similarity": round(sim, 3),
-                    })
-                    records[i] = _merge_records(r1, r2)
-                    merged_indices.add(j)
+                    sim = _title_similarity(r1.title, r2.title)
+                    if sim >= self.title_threshold_high:
+                        self._merge_log.append({
+                            "layer": 2,
+                            "type": "title_fuzzy_high",
+                            "kept": r1.title,
+                            "merged": r2.title,
+                            "similarity": round(sim, 3),
+                        })
+                        records[i] = _merge_records(r1, r2)
+                        merged_indices.add(j)
 
         return [r for i, r in enumerate(records) if i not in merged_indices]
 
@@ -211,42 +219,46 @@ class DedupEngine:
         """Title fuzzy match (>= 70%) + same first author + same year → auto-merge.
 
         (PRD says "需人工确认" but in MVP we auto-merge and log for review.)
+
+        Bucketed by (year, first-author) for O(buckets × bucket²) performance.
         """
         merged_indices: set[int] = set()
-        n = len(records)
 
-        for i in range(n):
-            if i in merged_indices:
+        # Bucket by (year, first_author_lower)
+        from collections import defaultdict
+        buckets: dict[tuple[int, str], list[int]] = defaultdict(list)
+        for i, r in enumerate(records):
+            fa = r.first_author
+            if not fa:
                 continue
-            for j in range(i + 1, n):
-                if j in merged_indices:
-                    continue
-                r1, r2 = records[i], records[j]
+            key = (r.year or 0, fa.full_name.lower())
+            buckets[key].append(i)
 
-                # Year must match
-                if r1.year is not None and r2.year is not None and r1.year != r2.year:
+        for indices in buckets.values():
+            m = len(indices)
+            for a in range(m):
+                i = indices[a]
+                if i in merged_indices:
                     continue
+                for b in range(a + 1, m):
+                    j = indices[b]
+                    if j in merged_indices:
+                        continue
+                    r1, r2 = records[i], records[j]
 
-                # First author must match
-                fa1 = r1.first_author
-                fa2 = r2.first_author
-                if not fa1 or not fa2:
-                    continue
-                if fa1.full_name.lower() != fa2.full_name.lower():
-                    continue
-
-                sim = _title_similarity(r1.title, r2.title)
-                if sim >= self.title_threshold_low:
-                    self._merge_log.append({
-                        "layer": 3,
-                        "type": "title_fuzzy_low",
-                        "kept": r1.title,
-                        "merged": r2.title,
-                        "similarity": round(sim, 3),
-                        "first_author": fa1.full_name,
-                    })
-                    records[i] = _merge_records(r1, r2)
-                    merged_indices.add(j)
+                    sim = _title_similarity(r1.title, r2.title)
+                    if sim >= self.title_threshold_low:
+                        fa = r1.first_author
+                        self._merge_log.append({
+                            "layer": 3,
+                            "type": "title_fuzzy_low",
+                            "kept": r1.title,
+                            "merged": r2.title,
+                            "similarity": round(sim, 3),
+                            "first_author": fa.full_name if fa else "",
+                        })
+                        records[i] = _merge_records(r1, r2)
+                        merged_indices.add(j)
 
         return [r for i, r in enumerate(records) if i not in merged_indices]
 
