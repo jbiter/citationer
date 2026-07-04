@@ -585,4 +585,4 @@ your-project/
 
 ---
 
-*Citationer v2.0.0 — July 2026*
+*Citationer v2.0.2 — July 2026*
