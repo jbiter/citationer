@@ -1,14 +1,23 @@
 """Terminal-native chart rendering via plotext.
 
 Provides chart functions for stats command visualisation.
-Each function renders directly to stdout via plotext.show() and
-returns True on success, False if the chart could not be rendered
-(e.g. non-TTY output, missing plotext, or empty data).
+Each function renders directly to stdout and returns True on success.
 """
 
 from __future__ import annotations
 
+import re
 import sys
+
+# ── style constants ────────────────────────────────────────────────
+_LINE_COLOR = 6       # cyan
+_BAR_COLOR = 4        # blue
+_CUMULATIVE_COLOR = 3  # gold
+_LINE_WIDTH = 78
+_BAR_WIDTH = 80
+
+# Matches ANSI background-color sequences (ESC[48;...m)
+_BG_RE = re.compile(r"\x1b\[48;[0-9;]*m")
 
 
 def _can_render() -> bool:
@@ -22,6 +31,15 @@ def _can_render() -> bool:
         return False
 
 
+def _show(chart: str) -> None:
+    """Print a chart string to stdout, stripping plotext's white background."""
+    clean = _BG_RE.sub("", chart)
+    print(clean, end="")
+
+
+# ── line chart ─────────────────────────────────────────────────────
+
+
 def plot_line(
     years: list[int],
     counts: list[int],
@@ -30,22 +48,22 @@ def plot_line(
     xlabel: str = "Year",
     ylabel: str = "Publications",
 ) -> bool:
-    """Render a braille line chart of yearly publication counts.
-
-    Returns True on success, False if rendering is not possible.
-    """
+    """Render a braille line chart.  Returns True on success."""
     if not _can_render() or not years:
         return False
 
-    import plotext as plt  # noqa: F811
+    import plotext as plt
 
     plt.clf()
-    plt.plot(years, counts, marker="braille", color="cyan")
+    plt.plotsize(_LINE_WIDTH, min(18, len(years) + 4))
+
+    plt.plot(years, counts, marker="braille", color=_LINE_COLOR)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid(True)
-    plt.show()
+
+    _show(plt.build())
     return True
 
 
@@ -56,31 +74,33 @@ def plot_line_dual(
     *,
     title: str = "Publication Trend (with Cumulative)",
 ) -> bool:
-    """Dual chart: bars for annual counts + braille line for cumulative.
-
-    Returns True on success, False if rendering is not possible.
-    """
+    """Bars (annual) + braille line (cumulative).  Returns True on success."""
     if not _can_render() or not years:
         return False
 
-    import plotext as plt  # noqa: F811
+    import plotext as plt
 
     plt.clf()
+    plt.plotsize(_LINE_WIDTH, min(18, len(years) + 4))
 
-    plt.bar(years, counts, color="blue", label="Annual")
+    plt.bar(years, counts, color=_BAR_COLOR, label="Annual")
     plt.xlabel("Year")
-    plt.ylabel("Publications", color="blue")
-    plt.tick_params(axis="y", color="blue")
+    plt.ylabel("Publications", color=_BAR_COLOR)
+    plt.tick_params(axis="y", color=_BAR_COLOR)
 
     plt.twinx()
-    plt.plot(years, cumulative, marker="braille", color="gold", label="Cumulative")
-    plt.ylabel("Cumulative", color="gold")
-    plt.tick_params(axis="y", color="gold")
+    plt.plot(years, cumulative, marker="braille", color=_CUMULATIVE_COLOR, label="Cumulative")
+    plt.ylabel("Cumulative", color=_CUMULATIVE_COLOR)
+    plt.tick_params(axis="y", color=_CUMULATIVE_COLOR)
 
     plt.title(title)
     plt.grid(True)
-    plt.show()
+
+    _show(plt.build())
     return True
+
+
+# ── horizontal bar chart ───────────────────────────────────────────
 
 
 def plot_hbar(
@@ -90,15 +110,16 @@ def plot_hbar(
     title: str = "Ranking",
     max_items: int = 20,
 ) -> bool:
-    """Render a horizontal bar chart for Top-N rankings.
-
-    Labels longer than 24 characters are truncated.
-    Returns True on success, False if rendering is not possible.
+    """Render a horizontal bar chart.  Labels > 24 chars are truncated.
+    Returns True on success.
     """
     if not _can_render() or not labels:
         return False
 
-    import plotext as plt  # noqa: F811
+    import plotext as plt
+
+    plt.clf()
+    plt.plotsize(_BAR_WIDTH, min(16, len(labels) + 5))
 
     short_labels = [
         (lbl[:22] + "…") if len(lbl) > 24 else lbl for lbl in labels[:max_items]
@@ -107,8 +128,8 @@ def plot_hbar(
     short_labels.reverse()
     short_values.reverse()
 
-    plt.clf()
-    plt.bar(short_labels, short_values, orientation="h", color="blue")
+    plt.bar(short_labels, short_values, orientation="h", color=_BAR_COLOR)
     plt.title(title)
-    plt.show()
+
+    _show(plt.build())
     return True
