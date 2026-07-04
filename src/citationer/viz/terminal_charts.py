@@ -124,16 +124,25 @@ def plot_hbar(
     import plotext as plt
 
     plt.clf()
-    plt.plotsize(_BAR_WIDTH, min(16, len(labels) + 5))
+    plt.plotsize(_BAR_WIDTH, min(24, len(labels) * 2 + 6))
 
-    short_labels = [
-        (lbl[:22] + "…") if len(lbl) > 24 else lbl for lbl in labels[:max_items]
-    ]
-    short_values = values[:max_items]
-    short_labels.reverse()
-    short_values.reverse()
+    # Build labels with values appended, and insert spacer rows between bars
+    spaced_labels: list[str] = []
+    spaced_values: list[int] = []
+    for i in range(len(labels[:max_items])):
+        lbl = labels[i]
+        val = values[i]
+        short = (lbl[:20] + "…") if len(lbl) > 22 else lbl
+        spaced_labels.append(f"{short}  {val}")
+        spaced_values.append(val)
+        if i < len(labels[:max_items]) - 1:
+            spaced_labels.append("")
+            spaced_values.append(0)
 
-    plt.bar(short_labels, short_values, orientation="h", color=_BAR_COLOR)
+    spaced_labels.reverse()
+    spaced_values.reverse()
+
+    plt.bar(spaced_labels, spaced_values, orientation="h", color=_BAR_COLOR)
     plt.title(title)
 
     _show(plt.build())
