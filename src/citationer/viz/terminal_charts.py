@@ -151,6 +151,7 @@ def plot_hbar(
         bar_len = int(val * bar_scale)
         bar = _BLOCK * bar_len
         lines.append(f"  {_fmt_label(lbl)} │{bar} {val}")
+        lines.append("")  # blank line between bars
 
     # Print
     print()
