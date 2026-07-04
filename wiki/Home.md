@@ -149,9 +149,9 @@ citationer status
 Parses detected files and stores unified records in a local SQLite database (`.citationer/cache.db`).
 
 ```bash
-citationer import                         # Import all detected files
+citationer import                         # Import — clears old data by default
 citationer import file1.txt file2.xlsx    # Import specific files
-citationer import --force                 # Clear existing data first
+citationer import --keep                  # Append to existing data
 ```
 
 ### `clean` — Validate & deduplicate
@@ -585,4 +585,4 @@ your-project/
 
 ---
 
-*Citationer v2.0.2 — July 2026*
+*Citationer v2.1.1 — July 2026*

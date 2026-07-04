@@ -149,9 +149,9 @@ citationer status
 解析检测到的文件，将统一格式的记录存入本地 SQLite 数据库（`.citationer/cache.db`）。
 
 ```bash
-citationer import                         # 导入所有检测到的文件
+citationer import                         # 导入 — 默认清除已有数据
 citationer import file1.txt file2.xlsx    # 导入指定文件
-citationer import --force                 # 先清空已有数据再导入
+citationer import --keep                  # 追加到已有数据
 ```
 
 ### `clean` — 数据清洗与去重
@@ -585,4 +585,4 @@ your-project/
 
 ---
 
-*Citationer v2.0.2 — 2026年7月*
+*Citationer v2.1.1 — 2026年7月*

@@ -4,9 +4,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
-[![PyPI version](https://img.shields.io/pypi/v/citationer.svg)](https://pypi.org/project/citationer/)
+[![CI](https://github.com/jbiter/citationer/actions/workflows/CI.yml/badge.svg)](https://github.com/jbiter/citationer/actions)
 
-**Citationer** is a lightweight, local-first, zero-config CLI tool for researchers. Drop into a directory with bibliographic export files, run a single command, and get a complete literature analysis — from descriptive statistics to knowledge graphs and AI-powered topic labeling.
+**Citationer** is a lightweight, local-first, zero-config CLI tool for researchers. Drop into a directory with bibliographic export files, run a single command, and get a complete literature analysis — from descriptive statistics with terminal charts to knowledge graphs and AI-powered topic labeling.
 
 ---
 
@@ -15,7 +15,8 @@
 | Category | Capability |
 |----------|-----------|
 | 🔍 **Format Detection** | Auto-detect CNKI, Web of Science exports (.xlsx, .txt, .ciw) |
-| 📊 **Descriptive Stats** | Yearly trends, top journals/authors/institutions, h-index, solo/coop rates |
+| 📊 **Descriptive Stats** | Yearly trends, top journals/authors/institutions, h-index — with **terminal charts** |
+| 📈 **Terminal Charts** | Braille line charts + Unicode bar charts rendered directly in terminal |
 | 🔗 **Network Analysis** | Keyword co-occurrence, author/institution collaboration, co-citation, bibliographic coupling |
 | 📝 **Text Mining** | Tokenization (jieba + spaCy), keyword frequency, LDA/NMF topic modeling, TF-IDF summarization, clustering |
 | 🤖 **LLM-Powered AI** | Topic labeling, literature review generation, trend identification, multi-dimensional classification — supports DeepSeek, OpenAI, Ollama |
@@ -54,7 +55,7 @@ cd /path/to/literature
 # 2. Scan for bibliographic files
 citationer scan
 
-# 3. Import into the local database
+# 3. Import into the local database (auto-clears old data)
 citationer import
 
 # 4. Clean & deduplicate
@@ -73,19 +74,21 @@ citationer stats overview
 ```bash
 citationer scan                  # Scan directory for bibliographic files
 citationer status                # Quick status check
-citationer import                # Import files into SQLite database
+citationer import                # Import files (clears old data by default)
+citationer import --keep         # Append to existing data
 citationer clean                 # Validate & deduplicate records
 ```
 
 ### Descriptive Statistics (`stats`)
 
 ```bash
-citationer stats overview        # Dashboard: totals, years, h-index, languages
-citationer stats yearly          # Annual publication trend
-citationer stats yearly --cumulative  # Cumulative trend
-citationer stats journals --top 20    # Top journals
-citationer stats authors --top 20     # Top authors (with Price's Law)
-citationer stats institutions --top 20 # Top institutions
+citationer stats overview             # Dashboard: totals, years, h-index, languages
+citationer stats yearly               # Braille line chart + table
+citationer stats yearly --cumulative  # Dual bar+line chart
+citationer stats yearly --no-chart    # Table only (pipe-friendly)
+citationer stats journals --top 20    # Horizontal bar chart
+citationer stats authors --top 20     # Bar chart + Price's Law core authors
+citationer stats institutions --top 20 # Bar chart
 ```
 
 ### Text Mining (`text`)
