@@ -16,8 +16,8 @@ _CUMULATIVE_COLOR = 3  # gold
 _LINE_WIDTH = 78
 _BAR_WIDTH = 80
 
-# Matches ANSI background-color sequences (ESC[48;...m)
-_BG_RE = re.compile(r"\x1b\[48;[0-9;]*m")
+# Matches ALL ANSI SGR sequences (color, style, reset)
+_SGR_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def _can_render() -> bool:
@@ -32,8 +32,13 @@ def _can_render() -> bool:
 
 
 def _show(chart: str) -> None:
-    """Print a chart string to stdout, stripping plotext's white background."""
-    clean = _BG_RE.sub("", chart)
+    """Print chart to stdout, stripping all ANSI color codes.
+
+    With all SGR sequences removed the chart inherits the terminal's
+    current text colour — white on dark backgrounds, black on light
+    backgrounds — blending seamlessly into the user's theme.
+    """
+    clean = _SGR_RE.sub("", chart)
     print(clean, end="")
 
 
