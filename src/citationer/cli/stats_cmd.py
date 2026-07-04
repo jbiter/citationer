@@ -145,7 +145,7 @@ def yearly(
             chart = plot_line(years, counts)
 
         if chart:
-            console.print(chart)
+            console.out(chart)
             if stats.trend_slope != 0:
                 direction = "上升" if stats.trend_slope > 0 else "下降"
                 console.print(
@@ -209,7 +209,7 @@ def journals(
         values = [count for _, count in result.items]
         chart = plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Journals")
         if chart:
-            console.print(chart)
+            console.out(chart)
 
     if chart_only:
         # Still show total count
@@ -260,7 +260,7 @@ def authors(
         values = [count for _, count in result.top_authors.items]
         chart = plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Authors")
         if chart:
-            console.print(chart)
+            console.out(chart)
 
     if chart_only:
         # Still show key stats
@@ -334,7 +334,7 @@ def institutions(
         values = [count for _, count in result.items]
         chart = plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Institutions")
         if chart:
-            console.print(chart)
+            console.out(chart)
 
     if chart_only:
         console.print(f"[dim]共 {result.total_unique} 个不同机构[/dim]")
