@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -9,6 +11,7 @@ from rich.table import Table
 from citationer.analysis.stats import StatsEngine
 from citationer.utils.config import get_db_path
 from citationer.utils.db_loader import load_records_from_db
+from citationer.viz.terminal_charts import plot_hbar, plot_line, plot_line_dual
 
 app = typer.Typer(
     name="stats",
@@ -90,13 +93,35 @@ def overview() -> None:
         console.print(dt_table)
 
 
+# ── shared chart flags ─────────────────────────────────────────────
+
+
+def _no_chart_flag() -> bool:
+    """Return True if the --no-chart flag was passed on the command line."""
+    return "--no-chart" in sys.argv
+
+
+def _chart_only_flag() -> bool:
+    """Return True if the --chart-only flag was passed on the command line."""
+    return "--chart-only" in sys.argv
+
+
+# ── yearly ──────────────────────────────────────────────────────────
+
+
 @app.command(name="yearly")
 def yearly(
     cumulative: bool = typer.Option(
         False, "--cumulative", "-c", help="显示累积发表量"
     ),
+    no_chart: bool = typer.Option(
+        False, "--no-chart", help="禁用终端图表，仅显示表格"
+    ),
+    chart_only: bool = typer.Option(
+        False, "--chart-only", help="仅显示终端图表，不显示表格"
+    ),
 ) -> None:
-    """年度发表趋势分析。"""
+    """年度发表趋势分析。默认显示 braille 折线图。"""
     records = _get_records()
     if not records:
         return
@@ -108,6 +133,30 @@ def yearly(
         console.print("[yellow]没有可统计的年份数据[/yellow]")
         return
 
+    years = sorted(stats.year_counts)
+    counts = [stats.year_counts[y] for y in years]
+
+    # ── Chart ──
+    if not no_chart:
+        if cumulative:
+            cum_values = [stats.cumulative[y] for y in years]
+            chart = plot_line_dual(years, counts, cum_values)
+        else:
+            chart = plot_line(years, counts)
+
+        if chart:
+            console.print(chart)
+            if stats.trend_slope != 0:
+                direction = "上升" if stats.trend_slope > 0 else "下降"
+                console.print(
+                    f"[dim]趋势: {direction} (斜率: {stats.trend_slope:.2f}/年) · "
+                    f"总计: {sum(counts)} 篇[/dim]"
+                )
+
+    if chart_only:
+        return
+
+    # ── Table ──
     table = Table(
         title="📈 年度发表趋势",
         show_header=True,
@@ -122,8 +171,7 @@ def yearly(
     for year in sorted(stats.year_counts):
         count = stats.year_counts[year]
         if cumulative:
-            cum = stats.cumulative[year]
-            table.add_row(str(year), str(count), str(cum))
+            table.add_row(str(year), str(count), str(stats.cumulative[year]))
         else:
             table.add_row(str(year), str(count))
 
@@ -134,11 +182,20 @@ def yearly(
         console.print(f"趋势: {direction} (斜率: {stats.trend_slope:.2f}/年)")
 
 
+# ── journals ────────────────────────────────────────────────────────
+
+
 @app.command(name="journals")
 def journals(
     top: int = typer.Option(20, "--top", "-n", help="显示 Top-N 期刊"),
+    no_chart: bool = typer.Option(
+        False, "--no-chart", help="禁用终端图表，仅显示表格"
+    ),
+    chart_only: bool = typer.Option(
+        False, "--chart-only", help="仅显示终端图表，不显示表格"
+    ),
 ) -> None:
-    """期刊/来源分析：Top-N 高产期刊。"""
+    """期刊/来源分析：Top-N 高产期刊。默认显示水平条形图。"""
     records = _get_records()
     if not records:
         return
@@ -146,6 +203,20 @@ def journals(
     engine = StatsEngine(records)
     result = engine.journals(top_n=top)
 
+    # ── Chart ──
+    if not no_chart and result.items:
+        labels = [name for name, _ in result.items]
+        values = [count for _, count in result.items]
+        chart = plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Journals")
+        if chart:
+            console.print(chart)
+
+    if chart_only:
+        # Still show total count
+        console.print(f"[dim]共 {result.total_unique} 个不同期刊/来源[/dim]")
+        return
+
+    # ── Table ──
     table = Table(
         title=f"📰 Top-{top} 高产期刊/来源",
         show_header=True,
@@ -162,11 +233,20 @@ def journals(
     console.print(f"共 {result.total_unique} 个不同期刊/来源")
 
 
+# ── authors ─────────────────────────────────────────────────────────
+
+
 @app.command(name="authors")
 def authors(
     top: int = typer.Option(20, "--top", "-n", help="显示 Top-N 作者"),
+    no_chart: bool = typer.Option(
+        False, "--no-chart", help="禁用终端图表，仅显示表格"
+    ),
+    chart_only: bool = typer.Option(
+        False, "--chart-only", help="仅显示终端图表，不显示表格"
+    ),
 ) -> None:
-    """作者分析：高产作者、独著率、合作率等。"""
+    """作者分析：高产作者、独著率、合作率等。默认显示水平条形图。"""
     records = _get_records()
     if not records:
         return
@@ -174,7 +254,25 @@ def authors(
     engine = StatsEngine(records)
     result = engine.authors(top_n=top)
 
-    # Top authors
+    # ── Chart ──
+    if not no_chart and result.top_authors.items:
+        labels = [name for name, _ in result.top_authors.items]
+        values = [count for _, count in result.top_authors.items]
+        chart = plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Authors")
+        if chart:
+            console.print(chart)
+
+    if chart_only:
+        # Still show key stats
+        console.print(f"[dim]作者总数: {result.top_authors.total_unique} · "
+                      f"独著: {result.solo_count} · 合著: {result.coop_count} · "
+                      f"篇均作者: {result.avg_authors_per_paper:.1f}[/dim]")
+        if result.core_authors:
+            core_list = ", ".join(result.core_authors[:10])
+            console.print(f"[bold]核心作者 (Price 定律)[/bold]: {core_list}")
+        return
+
+    # ── Table ──
     table = Table(
         title=f"👤 Top-{top} 高产作者",
         show_header=True,
@@ -209,11 +307,20 @@ def authors(
         console.print(f"[bold]核心作者 (Price 定律)[/bold]: {core_list}")
 
 
+# ── institutions ────────────────────────────────────────────────────
+
+
 @app.command(name="institutions")
 def institutions(
     top: int = typer.Option(20, "--top", "-n", help="显示 Top-N 机构"),
+    no_chart: bool = typer.Option(
+        False, "--no-chart", help="禁用终端图表，仅显示表格"
+    ),
+    chart_only: bool = typer.Option(
+        False, "--chart-only", help="仅显示终端图表，不显示表格"
+    ),
 ) -> None:
-    """机构分析：Top-N 高产机构和分布。"""
+    """机构分析：Top-N 高产机构和分布。默认显示水平条形图。"""
     records = _get_records()
     if not records:
         return
@@ -221,6 +328,19 @@ def institutions(
     engine = StatsEngine(records)
     result = engine.institutions(top_n=top)
 
+    # ── Chart ──
+    if not no_chart and result.items:
+        labels = [name for name, _ in result.items]
+        values = [count for _, count in result.items]
+        chart = plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Institutions")
+        if chart:
+            console.print(chart)
+
+    if chart_only:
+        console.print(f"[dim]共 {result.total_unique} 个不同机构[/dim]")
+        return
+
+    # ── Table ──
     table = Table(
         title=f"🏛 Top-{top} 高产机构",
         show_header=True,
