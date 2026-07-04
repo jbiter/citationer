@@ -118,7 +118,7 @@ def show() -> None:
     # ---- Other config ----
     console.print()
     other = Table(
-        title="⚙ 其他配置",
+        title="🔧 其他配置",
         show_header=True,
         header_style="bold",
     )

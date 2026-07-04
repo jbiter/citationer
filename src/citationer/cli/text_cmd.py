@@ -60,7 +60,7 @@ def preprocess(
     total_tokens = sum(r.token_count for r in results)
 
     console.print()
-    summary = Table(title="📝 预处理概览", show_header=True, header_style="bold cyan")
+    summary = Table(title="🔤 预处理概览", show_header=True, header_style="bold cyan")
     summary.add_column("指标")
     summary.add_column("数值", justify="right")
     summary.add_row("总记录数", str(len(results)))
@@ -73,7 +73,7 @@ def preprocess(
     # Sample tokens from top N records
     console.print()
     sample_table = Table(
-        title=f"📋 分词样例 (前 {min(top_n, len(results))} 条)",
+        title=f"🔤 分词样例 (前 {min(top_n, len(results))} 条)",
         show_header=True,
         header_style="bold",
     )

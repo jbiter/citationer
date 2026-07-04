@@ -70,7 +70,7 @@ def render_l1_overview() -> None:
     _quickstart(console)
     _section(console, "📁 数据管理", _TOP_LEVEL)
     _section_groups(console)
-    _section(console, "⚙ 工具与配置", _TOOLS)
+    _section(console, "🔧 工具与配置", _TOOLS)
     _global_options(console)
     _footer(console)
 
