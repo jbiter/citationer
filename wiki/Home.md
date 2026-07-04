@@ -1,4 +1,4 @@
-# Citationer v2.0 — User Handbook
+# Citationer v2.1 — User Handbook
 
 > **One-click bibliometric analysis CLI tool** — from raw export files to insights.
 
@@ -585,4 +585,4 @@ your-project/
 
 ---
 
-*Citationer v2.1.1 — July 2026*
+*Citationer v2.1.2 — July 2026*
