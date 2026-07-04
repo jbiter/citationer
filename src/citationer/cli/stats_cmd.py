@@ -140,18 +140,16 @@ def yearly(
     if not no_chart:
         if cumulative:
             cum_values = [stats.cumulative[y] for y in years]
-            chart = plot_line_dual(years, counts, cum_values)
+            chart_ok = plot_line_dual(years, counts, cum_values)
         else:
-            chart = plot_line(years, counts)
+            chart_ok = plot_line(years, counts)
 
-        if chart:
-            console.out(chart)
-            if stats.trend_slope != 0:
-                direction = "上升" if stats.trend_slope > 0 else "下降"
-                console.print(
-                    f"[dim]趋势: {direction} (斜率: {stats.trend_slope:.2f}/年) · "
-                    f"总计: {sum(counts)} 篇[/dim]"
-                )
+        if chart_ok and stats.trend_slope != 0:
+            direction = "上升" if stats.trend_slope > 0 else "下降"
+            console.print(
+                f"[dim]趋势: {direction} (斜率: {stats.trend_slope:.2f}/年) · "
+                f"总计: {sum(counts)} 篇[/dim]"
+            )
 
     if chart_only:
         return
@@ -207,9 +205,7 @@ def journals(
     if not no_chart and result.items:
         labels = [name for name, _ in result.items]
         values = [count for _, count in result.items]
-        chart = plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Journals")
-        if chart:
-            console.out(chart)
+        plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Journals")
 
     if chart_only:
         # Still show total count

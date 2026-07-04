@@ -1,12 +1,9 @@
 """Terminal-native chart rendering via plotext.
 
-Provides two core functions for stats command visualisation:
-
-- :func:`plot_line` — braille line chart for yearly trends
-- :func:`plot_hbar` — horizontal bar chart for rankings
-
-Both detect non-TTY output (pipes / redirects) and return ``None`` so
-callers can fall back to Rich tables.
+Provides chart functions for stats command visualisation.
+Each function renders directly to stdout via plotext.show() and
+returns True on success, False if the chart could not be rendered
+(e.g. non-TTY output, missing plotext, or empty data).
 """
 
 from __future__ import annotations
@@ -14,9 +11,15 @@ from __future__ import annotations
 import sys
 
 
-def _is_tty() -> bool:
-    """Return True if stdout is a real terminal (not piped or redirected)."""
-    return sys.stdout.isatty()
+def _can_render() -> bool:
+    """Return True if stdout is a real terminal and plotext is available."""
+    if not sys.stdout.isatty():
+        return False
+    try:
+        import plotext  # noqa: F401
+        return True
+    except ImportError:
+        return False
 
 
 def plot_line(
@@ -26,18 +29,15 @@ def plot_line(
     title: str = "Publication Trend",
     xlabel: str = "Year",
     ylabel: str = "Publications",
-) -> str | None:
+) -> bool:
     """Render a braille line chart of yearly publication counts.
 
-    Returns the ANSI string, or ``None`` if stdout is not a TTY.
+    Returns True on success, False if rendering is not possible.
     """
-    if not _is_tty() or not years:
-        return None
+    if not _can_render() or not years:
+        return False
 
-    try:
-        import plotext as plt  # noqa: F811
-    except ImportError:
-        return None
+    import plotext as plt  # noqa: F811
 
     plt.clf()
     plt.plot(years, counts, marker="braille", color="cyan")
@@ -45,7 +45,8 @@ def plot_line(
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid(True)
-    return plt.build()
+    plt.show()
+    return True
 
 
 def plot_line_dual(
@@ -54,28 +55,23 @@ def plot_line_dual(
     cumulative: list[int],
     *,
     title: str = "Publication Trend (with Cumulative)",
-) -> str | None:
-    """Line chart with bars for annual counts + line for cumulative.
+) -> bool:
+    """Dual chart: bars for annual counts + braille line for cumulative.
 
-    Returns the ANSI string, or ``None`` if stdout is not a TTY.
+    Returns True on success, False if rendering is not possible.
     """
-    if not _is_tty() or not years:
-        return None
+    if not _can_render() or not years:
+        return False
 
-    try:
-        import plotext as plt  # noqa: F811
-    except ImportError:
-        return None
+    import plotext as plt  # noqa: F811
 
     plt.clf()
 
-    # Bar-plot for annual counts (left axis)
     plt.bar(years, counts, color="blue", label="Annual")
     plt.xlabel("Year")
     plt.ylabel("Publications", color="blue")
     plt.tick_params(axis="y", color="blue")
 
-    # Line-plot for cumulative (right axis, twin)
     plt.twinx()
     plt.plot(years, cumulative, marker="braille", color="gold", label="Cumulative")
     plt.ylabel("Cumulative", color="gold")
@@ -83,7 +79,8 @@ def plot_line_dual(
 
     plt.title(title)
     plt.grid(True)
-    return plt.build()
+    plt.show()
+    return True
 
 
 def plot_hbar(
@@ -92,32 +89,26 @@ def plot_hbar(
     *,
     title: str = "Ranking",
     max_items: int = 20,
-) -> str | None:
+) -> bool:
     """Render a horizontal bar chart for Top-N rankings.
 
     Labels longer than 24 characters are truncated.
-
-    Returns the ANSI string, or ``None`` if stdout is not a TTY.
+    Returns True on success, False if rendering is not possible.
     """
-    if not _is_tty() or not labels:
-        return None
+    if not _can_render() or not labels:
+        return False
 
-    try:
-        import plotext as plt  # noqa: F811
-    except ImportError:
-        return None
+    import plotext as plt  # noqa: F811
 
-    # Truncate long labels
     short_labels = [
         (lbl[:22] + "…") if len(lbl) > 24 else lbl for lbl in labels[:max_items]
     ]
     short_values = values[:max_items]
-
-    # Reverse so the largest bar is at the top (plotext plots bottom-up)
     short_labels.reverse()
     short_values.reverse()
 
     plt.clf()
     plt.bar(short_labels, short_values, orientation="h", color="blue")
     plt.title(title)
-    return plt.build()
+    plt.show()
+    return True
