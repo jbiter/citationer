@@ -200,7 +200,7 @@ pytest tests/ --cov=src/citationer --cov-report=term-missing
 
 ## Documentation
 
-- **[Handbook (English)](https://github.com/jbiter/citationer/wiki/Handbook)** — Full user manual
+- **[User Manual](https://github.com/jbiter/citationer/wiki/)** — Full user manual (English)
 - **[Handbook (中文)](https://github.com/jbiter/citationer/wiki/Handbook_zh)** — Chinese user manual
 - **[PRD v2.0](docs/PRD-v2.0.md)** — Product requirements document
 - **[PRD v1.0](docs/PRD-v1.0.md)** — Original PRD (historical)
