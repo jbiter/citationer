@@ -237,56 +237,103 @@ class WosTextParser(BaseParser):
     def _parse_institutions(self, c1_field: str) -> list[Institution]:
         """Parse WoS C1 (author address) field.
 
-        Format: "[Author Name] Institution, City, Country"
-        Multiple addresses separated by semicolons (from continuation joining)
-        or newlines in the original export.
+        Handles both WoS export formats:
+
+        *Tagged text*:  ``[Smith, John] Harvard Univ, Cambridge, MA 02138 USA``
+        *Excel*:        ``Smith, John; Harvard Univ, Cambridge, MA 02138 USA``
+
+        Multiple addresses are separated by newlines (tagged) or
+        ``. `` (dot-space, Excel).  The parsed result deduplicates
+        institution names (case-insensitive).
+
         """
         if not c1_field:
             return []
 
-        # Split by "; " to get individual addresses (C1 continuation lines
-        # are joined with "; "), then split each by bracket markers
-        raw_parts: list[str] = []
-        for segment in c1_field.split("; "):
-            segment = segment.strip()
-            if not segment:
-                continue
-            # Split segment by bracket-style author markers
-            subparts = re.split(r"(?=\[)", segment)
-            raw_parts.extend(p.strip() for p in subparts if p.strip())
+        # ── Normalise & split into per-author address entries ──────────
+        text = c1_field.strip()
+
+        # Strategy: the most reliable separator between different
+        # author-address groups is a newline OR a ``[`` marker (lookahead).
+        # Excel exports typically use newlines; tagged exports use ``[``.
+        entries = re.split(r"\n|(?=\[)", text)
+        entries = [e.strip().rstrip(".") for e in entries if e.strip()]
+
+        # If splitting didn't produce multiple entries, try semicolons
+        if len(entries) == 1:
+            # Excel may put everything on one line separated by "; "
+            # but only split when we see author-like patterns: "Name, Init.;"
+            entries = re.split(r";\s*(?=[A-Z][a-z]+,\s+[A-Z])", entries[0])
+            entries = [e.strip() for e in entries if e.strip()]
 
         institutions: list[Institution] = []
         seen: set[str] = set()
 
-        for part in raw_parts:
-            part = part.strip()
-            if not part:
+        for entry in entries:
+            entry = entry.strip().rstrip(".")
+            if not entry:
                 continue
 
-            # Strip author marker: [Smith, John]
-            cleaned = re.sub(r"\[.*?\]\s*", "", part).strip()
-            if not cleaned:
+            # ── Remove author information ──────────────────────────
+            # Format A:  "[Surname, GivenName] Institution, City, Country"
+            cleaned = re.sub(r"^\s*\[[^\]]*\]\s*", "", entry).strip()
+
+            # Format B:  "Surname, GivenName; Institution, City, Country"
+            # Author part: one or two words separated by comma, ending with ";"
+            cleaned = re.sub(
+                r"^[A-Z][a-z]+(?:-[A-Z][a-z]+)?,\s+[A-Z][a-z.]*(?:\s+[A-Z][a-z.]*)?;\s*",
+                "", cleaned,
+            ).strip()
+
+            if not cleaned or cleaned.lower().startswith("reprint"):
                 continue
 
-            # Skip if it's just a reprint marker
-            if cleaned.lower().startswith("reprint"):
+            # ── Extract institution name ───────────────────────────
+            tokens = [t.strip() for t in cleaned.split(",")]
+
+            # Common institution-indicating keywords
+            _inst_kw = {
+                "univ", "inst", "coll", "sch", "ctr", "lab", "dept",
+                "hosp", "acad", "corp", "inc", "ltd", "gmbh", "sa",
+                "res", "found", "council", "minist", "agcy", "authority",
+                "natl", "nation", "european", "chinese", "japan",
+                "us", "usa", "peking", "tsing", "zhejiang", "fudan",
+                "shanghai", "beijing", "nanjing", "wuhan", "harbin",
+            }
+
+            inst_name = ""
+            # Walk the first few comma-separated tokens; pick the first
+            # one that looks like a real institution name.
+            for token in tokens[:4]:
+                token_stripped = token.strip()
+                token_lower = token_stripped.lower()
+                # Single short words (likely leftover author surnames) → skip
+                words = token_stripped.split()
+                if len(words) == 1 and len(token_stripped) <= 10 and not any(
+                    kw in token_lower for kw in _inst_kw
+                ):
+                    continue
+                # Numeric / zip-code tokens → skip
+                if token_stripped.replace("-", "").isdigit():
+                    continue
+                inst_name = token_stripped
+                break
+
+            if not inst_name:
                 continue
 
-            tokens = cleaned.split(", ")
-            inst_name = tokens[0].strip() if tokens else cleaned
-
-            # Extract country (last meaningful token)
+            # ── Extract country ────────────────────────────────────
             country: str | None = None
             if len(tokens) > 1:
                 last = tokens[-1].strip().rstrip(".")
-                # Country names: all letters (maybe with spaces), no digits
-                if re.match(r"^[A-Za-z\s]{2,30}$", last) and not any(
-                    c.isdigit() for c in last
+                if (
+                    re.match(r"^[A-Za-z\s]{2,30}$", last)
+                    and not any(c.isdigit() for c in last)
                 ):
                     country = last
 
             dedup_key = inst_name.lower()
-            if dedup_key not in seen:
+            if dedup_key and dedup_key not in seen:
                 seen.add(dedup_key)
                 institutions.append(Institution(name=inst_name, country=country))
 
