@@ -10,6 +10,7 @@ Implements a 4-layer strict deduplication strategy:
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from difflib import SequenceMatcher
 
 from citationer.models.record import Record
@@ -130,8 +131,15 @@ class DedupEngine:
         self.title_threshold_low = title_threshold_low
         self._merge_log: list[dict] = []
 
-    def deduplicate(self, records: list[Record]) -> tuple[list[Record], list[dict]]:
+    def deduplicate(
+        self,
+        records: list[Record],
+        progress_callback: Callable[[int, int], None] | None = None,
+    ) -> tuple[list[Record], list[dict]]:
         """Run all deduplication layers.
+
+        If *progress_callback* is provided it is called as
+        ``callback(step: int, total: int)`` after each layer.
 
         Returns:
             (merged_records, merge_log)
@@ -139,10 +147,16 @@ class DedupEngine:
         self._merge_log = []
         working = list(records)
 
-        working = self._layer1_doi(working)
-        working = self._layer2_title_high(working)
-        working = self._layer3_title_low(working)
-        working = self._layer4_cross_language(working)
+        layers = [
+            self._layer1_doi,
+            self._layer2_title_high,
+            self._layer3_title_low,
+            self._layer4_cross_language,
+        ]
+        for i, layer_fn in enumerate(layers):
+            working = layer_fn(working)
+            if progress_callback:
+                progress_callback(i + 1, len(layers))
 
         return working, self._merge_log
 

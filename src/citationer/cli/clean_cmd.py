@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import typer
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import BarColumn, Progress, TextColumn
 from rich.table import Table
 
 from citationer.analysis.dedup import DedupEngine
@@ -101,12 +101,17 @@ def clean(
         engine = DedupEngine()
 
         with Progress(
-            SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             console=console,
         ) as progress:
-            progress.add_task("[cyan]正在执行去重…", total=None)
-            merged, merge_log = engine.deduplicate(records)
+            task_id = progress.add_task("[cyan]正在执行去重", total=4)
+
+            def _on_layer(step: int, _total: int) -> None:
+                progress.update(task_id, completed=step)
+
+            merged, merge_log = engine.deduplicate(records, progress_callback=_on_layer)
 
         dup_removed = initial_count - len(merged)
 
