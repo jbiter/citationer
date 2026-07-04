@@ -22,11 +22,11 @@ def import_data(
         None,
         help="要导入的题录文件路径（可多个）。留空则导入当前目录下所有检测到的文件。",
     ),
-    force: bool = typer.Option(
+    keep: bool = typer.Option(
         False,
-        "--force",
-        "-f",
-        help="强制重新导入（清空已有数据）",
+        "--keep",
+        "-k",
+        help="保留已有数据，新数据追加到数据库中",
     ),
     output_format: str = typer.Option(
         "table",
@@ -34,14 +34,17 @@ def import_data(
         help="输出格式: table, json",
     ),
 ) -> None:
-    """导入题录文件到本地数据库。"""
+    """导入题录文件到本地数据库。默认清除已有数据后重新导入。"""
     registry = get_registry()
     db = CitationDatabase(get_db_path())
     db.initialize()
 
-    if force:
-        db.clear_records()
-        console.print("[yellow]🔄 已清空已有数据[/yellow]")
+    # Always clear existing data unless --keep is set
+    if not keep:
+        existing = db.get_record_count()
+        if existing > 0:
+            db.clear_records()
+            console.print(f"[yellow]🔄 已清空 {existing} 条已有数据[/yellow]")
 
     # Auto-detect files if none specified
     file_list: list[Path] = list(files) if files else []
