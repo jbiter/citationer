@@ -115,7 +115,11 @@ def plot_hbar(
     title: str = "Ranking",
     max_items: int = 20,
 ) -> bool:
-    """Render a horizontal bar chart.  Labels > 24 chars are truncated.
+    """Render a horizontal bar chart.
+
+    Each bar is one plotext row; labels show the count in parentheses.
+    Chart is capped at 12 visible bars to fit a standard terminal.
+
     Returns True on success.
     """
     if not _can_render() or not labels:
@@ -123,26 +127,34 @@ def plot_hbar(
 
     import plotext as plt
 
+    # Cap bar count so the chart fits in a ~24-line terminal window.
+    # plotext renders each hbar as 2 character rows.
+    limit = min(len(labels), max_items, 12)
+
+    items = list(zip(labels[:limit], values[:limit]))
+
+    display_labels: list[str] = []
+    display_values: list[int] = []
+    for i, (lbl, val) in enumerate(items):
+        short = (lbl[:22] + "…") if len(lbl) > 24 else lbl
+        display_labels.append(f"{short} ({val})")
+        display_values.append(val)
+        if i < len(items) - 1:
+            display_labels.append(" ")
+            display_values.append(0)
+
+    display_labels.reverse()
+    display_values.reverse()
+
     plt.clf()
-    plt.plotsize(_BAR_WIDTH, min(24, len(labels) * 2 + 6))
+    # Height: 2 rows per bar + (N-1) spacers + 6 rows frame overhead
+    height = limit * 2 + (limit - 1) + 6
+    # Width: base 80 + extra if labels are particularly long
+    max_label_len = max((len(ln) for ln in display_labels), default=0)
+    width = _BAR_WIDTH + max(0, max_label_len - 28)
+    plt.plotsize(width, height)
 
-    # Build labels with values appended, and insert spacer rows between bars
-    spaced_labels: list[str] = []
-    spaced_values: list[int] = []
-    for i in range(len(labels[:max_items])):
-        lbl = labels[i]
-        val = values[i]
-        short = (lbl[:20] + "…") if len(lbl) > 22 else lbl
-        spaced_labels.append(f"{short}  {val}")
-        spaced_values.append(val)
-        if i < len(labels[:max_items]) - 1:
-            spaced_labels.append("")
-            spaced_values.append(0)
-
-    spaced_labels.reverse()
-    spaced_values.reverse()
-
-    plt.bar(spaced_labels, spaced_values, orientation="h", color=_BAR_COLOR)
+    plt.bar(display_labels, display_values, orientation="h", color=_BAR_COLOR)
     plt.title(title)
 
     _show(plt.build())
