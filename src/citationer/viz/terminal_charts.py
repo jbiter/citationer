@@ -107,6 +107,9 @@ def plot_line_dual(
 
 # ── horizontal bar chart ───────────────────────────────────────────
 
+# Unicode block element for drawing text-based bars
+_BLOCK = "█"
+
 
 def plot_hbar(
     labels: list[str],
@@ -115,47 +118,45 @@ def plot_hbar(
     title: str = "Ranking",
     max_items: int = 20,
 ) -> bool:
-    """Render a horizontal bar chart.
+    """Render a horizontal bar chart directly to stdout.
 
-    Each bar is one plotext row; labels show the count in parentheses.
-    Chart is capped at 12 visible bars to fit a standard terminal.
+    Uses simple Unicode block strings — each bar is one line, labels
+    are never truncated, and values are shown at the bar tip.
 
     Returns True on success.
     """
     if not _can_render() or not labels:
         return False
 
-    import plotext as plt
-
-    # Cap bar count so the chart fits in a ~24-line terminal window.
-    # plotext renders each hbar as 2 character rows.
-    limit = min(len(labels), max_items, 12)
+    limit = min(len(labels), max_items, 20)
 
     items = list(zip(labels[:limit], values[:limit]))
+    max_val = max(values[:limit]) if values else 1
 
-    display_labels: list[str] = []
-    display_values: list[int] = []
-    for i, (lbl, val) in enumerate(items):
-        short = (lbl[:22] + "…") if len(lbl) > 24 else lbl
-        display_labels.append(f"{short} ({val})")
-        display_values.append(val)
-        if i < len(items) - 1:
-            display_labels.append(" ")
-            display_values.append(0)
+    # Compute label column width for alignment
+    label_w = max((len(lbl) for lbl in labels[:limit]), default=0)
+    label_w = min(label_w, 36)  # don't let one long label ruin alignment
 
-    display_labels.reverse()
-    display_values.reverse()
+    # Truncate labels that exceed the column width
+    def _fmt_label(lbl: str) -> str:
+        if len(lbl) > label_w:
+            return lbl[: label_w - 1] + "…"
+        return lbl.ljust(label_w)
 
-    plt.clf()
-    # Height: 2 rows per bar + (N-1) spacers + 6 rows frame overhead
-    height = limit * 2 + (limit - 1) + 6
-    # Width: base 80 + extra if labels are particularly long
-    max_label_len = max((len(ln) for ln in display_labels), default=0)
-    width = _BAR_WIDTH + max(0, max_label_len - 28)
-    plt.plotsize(width, height)
+    # Bar width: scale to fit ~50 chars at most
+    bar_scale = 50.0 / max(max_val, 1)
 
-    plt.bar(display_labels, display_values, orientation="h", color=_BAR_COLOR)
-    plt.title(title)
+    lines: list[str] = []
+    for lbl, val in items:
+        bar_len = int(val * bar_scale)
+        bar = _BLOCK * bar_len
+        lines.append(f"  {_fmt_label(lbl)} │{bar} {val}")
 
-    _show(plt.build())
+    # Print
+    print()
+    print(f"  {title}")
+    print()
+    for line in lines:
+        print(line)
+    print()
     return True
