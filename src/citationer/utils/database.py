@@ -140,8 +140,14 @@ class CitationDatabase:
         authors: list[dict],
         keywords: list[dict],
         institutions: list[dict],
+        *,
+        _commit: bool = True,
     ) -> int | None:
-        """Insert a single record with related data. Returns the new record ID."""
+        """Insert a single record with related data.
+
+        Set *_commit* to ``False`` for batch inserts — the caller is
+        responsible for calling ``self.conn.commit()`` periodically.
+        """
         c = self.conn
         record_data["imported_at"] = datetime.now(UTC).isoformat()
         record_data.setdefault("raw_data", "{}")
@@ -202,7 +208,8 @@ class CitationDatabase:
                         inst.get("inst_type"),
                     ),
                 )
-            self.conn.commit()
+            if _commit:
+                self.conn.commit()
 
         return record_id
 

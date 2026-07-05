@@ -198,7 +198,8 @@ def _save_merged_records(db_path, merged) -> None:
     db = CitationDatabase(Path(db_path))
     db.initialize()
     db.clear_records()
-    for record in merged:
+    for i, record in enumerate(merged):
         data = record_to_db_serializable(record)
-        db.insert_record(**data)
+        db.insert_record(**data, _commit=((i + 1) % 500 == 0))
+    db.conn.commit()  # final flush
     db.close()

@@ -9,7 +9,6 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from citationer.cli.scan_cmd import get_registry
-from citationer.models.record import Record
 from citationer.utils.config import get_db_path
 from citationer.utils.database import CitationDatabase
 from citationer.utils.serialization import record_to_db_serializable
@@ -59,7 +58,7 @@ def import_data(
         console.print("[yellow]⚠ 未找到可导入的文件[/yellow]")
         return
 
-    all_records: list[Record] = []
+    total_records = 0
     parse_errors: list[str] = []
 
     with Progress(
@@ -80,8 +79,17 @@ def import_data(
 
             try:
                 records = parser.parse(filepath)
-                all_records.extend(records)
                 progress.remove_task(task_id)
+
+                # Insert per-file with batched commits (every 500 records).
+                # This avoids holding all records in memory AND eliminates
+                # per-record COMMIT overhead.
+                for i, record in enumerate(records):
+                    data = record_to_db_serializable(record)
+                    db.insert_record(**data, _commit=((i + 1) % 500 == 0))
+                db.conn.commit()  # final flush
+
+                total_records += len(records)
                 console.print(
                     f"  ✅ {filepath.name} → [green]{len(records)} 条[/green] "
                     f"({parser.source_name})"
@@ -91,18 +99,12 @@ def import_data(
                 parse_errors.append(f"{filepath.name}: {e}")
                 console.print(f"  ❌ {filepath.name} → [red]解析失败: {e}[/red]")
 
-    # Store in database
-    if all_records:
-        for record in all_records:
-            data = record_to_db_serializable(record)
-            db.insert_record(**data)
-
     db.close()
 
     # Summary
     console.print()
     console.print(
-        f"📥 导入完成: [bold green]{len(all_records)}[/bold green] 条记录 "
+        f"📥 导入完成: [bold green]{total_records}[/bold green] 条记录 "
         f"来自 [bold]{len(file_list)}[/bold] 个文件"
     )
 
@@ -114,7 +116,7 @@ def import_data(
 
     if output_format == "json":
         summary = {
-            "total_records": len(all_records),
+            "total_records": total_records,
             "files_processed": len(file_list),
             "errors": parse_errors,
         }
