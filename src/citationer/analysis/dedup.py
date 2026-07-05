@@ -139,26 +139,49 @@ class DedupEngine:
         """Run all deduplication layers.
 
         If *progress_callback* is provided it is called as
-        ``callback(step: int, total: int)`` after each layer.
+        ``callback(current: int, total: int)`` — *total* is fixed at 100
+        and *current* advances proportionally through each layer.
 
         Returns:
             (merged_records, merge_log)
         """
         self._merge_log = []
         working = list(records)
+        self._progress = progress_callback
 
-        layers = [
-            self._layer1_doi,
-            self._layer2_title_high,
-            self._layer3_title_low,
-            self._layer4_cross_language,
-        ]
-        for i, layer_fn in enumerate(layers):
-            working = layer_fn(working)
-            if progress_callback:
-                progress_callback(i + 1, len(layers))
+        # Weight layers by expected work:
+        #   Layer 1 (DOI):     5%   — fast O(n) hash lookup
+        #   Layer 2 (title):  35%   — O(bucket²) across year buckets
+        #   Layer 3 (author): 35%   — O(bucket²) across author buckets
+        #   Layer 4 (cross):  25%   — O(n²) cross-source
+        self._progress_base = 0
+        self._progress_span = 0
 
+        def _run_layer(fn, weight):
+            self._progress_base += self._progress_span
+            self._progress_span = weight
+            self._progress_step = 0
+            return fn(working)
+
+        working = _run_layer(self._layer1_doi, 5)
+        working = _run_layer(self._layer2_title_high, 35)
+        working = _run_layer(self._layer3_title_low, 35)
+        working = _run_layer(self._layer4_cross_language, 25)
+
+        if progress_callback:
+            progress_callback(100, 100)
+
+        self._progress = None
         return working, self._merge_log
+
+    def _tick(self, step: int, total: int) -> None:
+        """Report sub-step progress within the current layer."""
+        if not self._progress:
+            return
+        pct = self._progress_base + int(
+            (step / max(total, 1)) * self._progress_span
+        )
+        self._progress(pct, 100)
 
     def _layer1_doi(self, records: list[Record]) -> list[Record]:
         """DOI exact match — auto-merge."""
@@ -203,7 +226,9 @@ class DedupEngine:
         for i, r in enumerate(records):
             year_buckets.setdefault(r.year or 0, []).append(i)
 
-        for indices in year_buckets.values():
+        total_buckets = len(year_buckets)
+        for bi, indices in enumerate(year_buckets.values()):
+            self._tick(bi + 1, total_buckets)
             m = len(indices)
             for a in range(m):
                 i = indices[a]
@@ -248,7 +273,9 @@ class DedupEngine:
             key = (r.year or 0, fa.full_name.lower())
             buckets[key].append(i)
 
-        for indices in buckets.values():
+        total_buckets = len(buckets)
+        for bi, indices in enumerate(buckets.values()):
+            self._tick(bi + 1, total_buckets)
             m = len(indices)
             for a in range(m):
                 i = indices[a]

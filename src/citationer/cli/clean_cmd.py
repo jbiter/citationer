@@ -106,7 +106,7 @@ def clean(
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             console=console,
         ) as progress:
-            task_id = progress.add_task("[cyan]正在执行去重", total=4)
+            task_id = progress.add_task("[cyan]正在执行去重", total=100)
 
             def _on_layer(step: int, _total: int) -> None:
                 progress.update(task_id, completed=step)
