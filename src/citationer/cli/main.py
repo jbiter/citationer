@@ -47,6 +47,14 @@ class _RootGroup(TyperGroup):
             return ""
         return super().get_help(ctx)
 
+    def parse_args(self, ctx, args):
+        # Intercept --version before anything else
+        if "--version" in args:
+            from citationer import __version__
+            console.print(f"citationer v{__version__}")
+            ctx.exit()
+        return super().parse_args(ctx, args)
+
 
 app = typer.Typer(
     name="citationer",
