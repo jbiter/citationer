@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 from rich.console import Console
 from rich.progress import BarColumn, Progress, TextColumn
@@ -36,6 +38,11 @@ def clean(
         False,
         "--cache",
         help="清空数据库缓存文件（.citationer/cache.db）",
+    ),
+    save: bool = typer.Option(
+        False,
+        "--save",
+        help="保存清洗后的数据为 CSV 文件，方便下次直接导入",
     ),
 ) -> None:
     """数据清洗：去重、缺失字段检测、异常值检测。"""
@@ -177,6 +184,15 @@ def clean(
                 )
             else:
                 _save_merged_records(db_path, merged)
+
+                # Export cleaned data if --save
+                saved_path = None
+                if save:
+                    saved_path = _export_csv(merged, Path.cwd())
+                    console.print(
+                        f"[green]💾 清洗后数据已保存: {saved_path}[/green]"
+                    )
+
                 console.print()
                 console.print(
                     f"✅ 去重完成: [bold red]{initial_count}[/bold red] → "
@@ -191,10 +207,27 @@ def clean(
         console.print("[green]✅ 数据质量检查通过，未发现问题[/green]")
 
 
+def _export_csv(records, output_dir) -> str:
+    """Export cleaned records as CSV for reuse."""
+    import csv
+    out_path = output_dir / "cleaned_records.csv"
+    with open(out_path, "w", newline="", encoding="utf-8-sig") as f:
+        writer = csv.writer(f)
+        writer.writerow(["title", "authors", "year", "journal", "doi", "abstract"])
+        for r in records:
+            writer.writerow([
+                r.title,
+                "; ".join(a.full_name for a in r.authors),
+                r.year or "",
+                r.journal or "",
+                r.doi or "",
+                (r.abstract or "")[:200],
+            ])
+    return str(out_path)
+
+
 def _save_merged_records(db_path, merged) -> None:
     """Save merged records back to the database."""
-    from pathlib import Path
-
     db = CitationDatabase(Path(db_path))
     db.initialize()
     db.clear_records()

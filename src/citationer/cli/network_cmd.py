@@ -136,7 +136,7 @@ def coauthors(
     ),
     viz: bool = typer.Option(
         False, "--viz/--no-viz", help="生成 HTML 交互式网络图"
-    ),
+    )
 ) -> None:
     """作者/机构合作网络分析。"""
     records = _get_records()
@@ -221,7 +221,7 @@ def cocitation(
     ),
     viz: bool = typer.Option(
         False, "--viz/--no-viz", help="生成 HTML 交互式网络图"
-    ),
+    )
 ) -> None:
     """共被引分析：两篇文献同时被第三篇引用。"""
     records = _get_records()
@@ -295,7 +295,7 @@ def coupling(
     ),
     viz: bool = typer.Option(
         False, "--viz/--no-viz", help="生成 HTML 交互式网络图"
-    ),
+    )
 ) -> None:
     """文献耦合分析：两篇文献有共同参考文献。"""
     records = _get_records()

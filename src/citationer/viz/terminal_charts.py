@@ -62,11 +62,14 @@ def plot_line(
     plt.clf()
     plt.plotsize(_LINE_WIDTH, min(18, len(years) + 4))
 
+    # If many years, use integer ticks to avoid float year labels
     plt.plot(years, counts, marker="braille", color=_LINE_COLOR)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.grid(True)
+    if len(years) <= 15:
+        plt.xticks(years, [str(y) for y in years])
 
     _show(plt.build())
     return True
