@@ -467,31 +467,28 @@ $ citationer trend river --num-topics 8
 
 ### 4.6 可视化输出
 
-#### F-6.1 终端可视化
+#### F-6.1 终端可视化 ✅ 已实现
 
-- Rich 表格（彩色、可排序）
-- 终端柱状图/折线图（sparklines）
-- 终端热力图（简化版）
+- [x] Rich 表格（彩色、可排序）
+- [x] 终端折线图（plotext braille 字符，`stats yearly`）
+- [x] 终端柱状图/条形图（Unicode █ 字符，`stats journals/authors/institutions`）
+- [x] 终端热力图（Rich 表格版，`text keywords --per-year`）
 
-#### F-6.2 静态图表文件
+#### F-6.2 静态图表文件 ⚠️ 代码已有，CLI 未接线
 
-| 图表类型 | 用途 | 格式 |
+| 图表类型 | 状态 | 说明 |
 |----------|------|------|
-| 年度发文折线图 | 发表趋势 | PNG/SVG/PDF |
-| 期刊/机构/作者柱状图 | Top-N 排序 | PNG/SVG/PDF |
-| 关键词词云 | 高频关键词 | PNG/SVG |
-| 共现网络图 | 关键词/合作 | PNG/HTML |
-| 战略坐标图 | 主题定位 | PNG/SVG |
-| 主题河流图 | 主题演化 | HTML |
-| 热力图 | 关键词×年份 | PNG/SVG |
-| 桑基图 | 主题流动 | HTML |
+| 年度发文折线图 (PNG/SVG) | ⚠️ | `viz/charts.py` 已有，CLI 无 flag |
+| 期刊/机构/作者柱状图 (PNG/SVG) | ⚠️ | 同上 |
+| 关键词词云 (PNG) | ⚠️ | `generate_keyword_wordcloud()` 已有，CLI 无 flag |
+| 共现网络图 (HTML) | ✅ | `network --viz` 生成 Plotly HTML |
+| 战略坐标图、河流图、桑基图 | 🔜 | Phase 3 |
 
-#### F-6.3 HTML 交互式报告
+#### F-6.3 HTML 交互式报告 ✅ 已实现
 
-- 包含交互式 Plotly/ECharts 图表
-- 可折叠面板
-- 数据表格支持搜索和排序
-- 可独立部署（单文件 HTML）
+- [x] 交互式 Plotly 网络图（`network --viz`）
+- [x] 可独立部署（单文件 HTML）
+- [ ] 可折叠面板、搜索排序表格 → Phase 3 report 命令
 
 ---
 
@@ -898,24 +895,24 @@ class Record(BaseModel):
 
 ## 7. 开发路线图
 
-### Phase 1: MVP（最小可行产品）— 预计 4-6 周
+### Phase 1: MVP（最小可行产品）— ✅ 已完成
 
 **目标**: 解析 CNKI + WoS 数据，完成基础描述统计，在终端输出，搭建 CI/CD
 
-- [ ] 项目脚手架搭建（Poetry, Typer, Rich, pytest）
-- [ ] CNKI Excel 格式解析器
-- [ ] WoS 纯文本/制表符分隔格式解析器
-- [ ] 统一数据模型 (Pydantic)
-- [ ] 严格去重引擎 (DOI + 标题模糊 + 标题+作者)
-- [ ] `scan` / `status` 命令（扫描目录）
-- [ ] `import` 命令（导入数据）
-- [ ] `clean` 命令（清洗/去重）
-- [ ] `stats overview` / `stats yearly` / `stats journals` / `stats authors` / `stats institutions`
-- [ ] 终端表格输出（Rich Tables）
-- [ ] 基础 PNG 图表导出（matplotlib: 年度趋势、Top-N 柱状图）
-- [ ] `.citationer/` 缓存机制 (SQLite)
-- [ ] GitHub Actions CI (lint + test)
-- [ ] PyPI 发布（自动从 GitHub Release 触发）
+- [x] 项目脚手架搭建（setuptools, Typer, Rich, pytest）
+- [x] CNKI Excel 格式解析器
+- [x] WoS 纯文本/制表符分隔/Excel 格式解析器
+- [x] 统一数据模型 (Pydantic)
+- [x] 严格去重引擎 (DOI + 标题模糊 + 标题+作者 + 跨语言)
+- [x] `scan` / `status` 命令（扫描目录）
+- [x] `import` 命令（导入数据）
+- [x] `clean` 命令（清洗/去重，含 --cache 清缓存）
+- [x] `stats overview` / `stats yearly` / `stats journals` / `stats authors` / `stats institutions`
+- [x] 终端表格输出（Rich Tables）+ 终端图表（plotext braille 折线 + Unicode 条形图）
+- [x] PNG 图表导出（matplotlib: 年度趋势、Top-N 柱状图）— 代码有，CLI 未接线
+- [x] `.citationer/` 缓存机制 (SQLite + 批量提交优化)
+- [x] GitHub Actions CI (lint + test)
+- [x] PyPI 发布（自动从 GitHub Release 触发）
 
 ### Phase 2: 文本挖掘 + LLM + 网络分析 — 进行中
 
@@ -938,7 +935,23 @@ class Record(BaseModel):
 - [x] `text` / `network` / `ai` / `config` 命令组
 - [x] CLI 配置管理 (config show/set/init)
 - [x] LLM 多提供商可配置 (api_key/model/base_url/temperature/max_tokens)
-- [ ] Help 系统完善 (rich-click 集成，L1/L2/L3 三级 help)
+- [x] Help 系统完善 (rich-click 集成，L1/L2/L3 三级 help，自定义 L1 布局)
+- [x] `--version` 命令
+- [x] `output/` 目录自动创建 (cls/ + viz/)
+- [x] 性能优化：import 批量提交 (50× 加速)、去重 quick_ratio 预过滤、stats 单次遍历、DB 批量加载、spaCy 缓存
+- [x] 图标风格统一
+
+#### Phase 2 收尾工作（2026-07-05）
+
+以下为 PRD 与实现之间的差距，需在 Phase 2 正式收尾前完成：
+
+| # | 工作项 | 来源 | 说明 |
+|---|--------|------|------|
+| 1 | **PNG/SVG 图表导出接 CLI** | F-6.2 + Phase 1 | `viz/charts.py` 已有 `generate_yearly_chart()` / `generate_top_n_chart()` / `generate_keyword_wordcloud()`，但 stats 命令没有 flag 来触发。需在 `stats yearly` / `stats journals` / `stats authors` 增加 `--save-png` / `--save-svg` 选项 |
+| 2 | **词云暴露给 CLI** | F-6.2 | `text keywords` 增加 `--wordcloud` flag，将关键词生成词云 PNG 保存到 `output/viz/` |
+| 3 | **关键词年代热力图** | Phase 3 | `text keywords --per-year` 已有表格版热力图，可考虑 plotext 热力图或保存为 PNG |
+| 4 | **`export` 命令** | F-1.3 | 数据导出（CSV/JSON/BibTeX/RIS/Excel）— 目前仅 clean --save 支持 CSV，需独立命令 |
+| 5 | **`config` 初始化体验** | F-8.1 | 首次运行 `ai` 命令时自动提示配置 API Key |
 
 ### Phase 3: 趋势分析与报告 — 预计 3-4 周
 
