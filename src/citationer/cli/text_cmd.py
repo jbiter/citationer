@@ -112,6 +112,9 @@ def keywords(
     output_file: Path | None = typer.Option(
         None, "--output", "-o", help="保存到文件"
     ),
+    wordcloud: bool = typer.Option(
+        False, "--wordcloud", help="生成关键词词云 PNG"
+    ),
 ) -> None:
     """关键词频次统计与年代分布分析。"""
     records = _get_records()
@@ -172,6 +175,20 @@ def keywords(
     if per_year and result.yearly_distribution:
         console.print()
         _print_yearly_heatmap(result.top_keywords[:20], result.yearly_distribution)
+
+    if wordcloud:
+        try:
+            from citationer.viz.charts import generate_keyword_wordcloud
+            out = Path.cwd() / "output" / "viz"
+            out.mkdir(parents=True, exist_ok=True)
+            wc_path = out / "wordcloud.png"
+            kw_list = []
+            for kw, cnt in result.top_keywords:
+                kw_list.extend([kw] * cnt)
+            generate_keyword_wordcloud(kw_list[:5000], wc_path)
+            console.print(f"[green]☁ 词云已保存: {wc_path}[/green]")
+        except ImportError:
+            console.print("[yellow]词云需要 wordcloud 库: pip install wordcloud[/yellow]")
 
 
 def _print_yearly_heatmap(

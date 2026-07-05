@@ -24,6 +24,7 @@ from citationer.cli import (
     ai_cmd,
     clean_cmd,
     config_cmd,
+    export_cmd,
     import_cmd,
     network_cmd,
     scan_cmd,
@@ -78,6 +79,7 @@ app.add_typer(text_cmd.app, name="text")
 app.add_typer(ai_cmd.app, name="ai")
 app.add_typer(network_cmd.app, name="network")
 app.add_typer(config_cmd.app, name="config")
+app.add_typer(export_cmd.app, name="export")
 
 
 @app.callback()

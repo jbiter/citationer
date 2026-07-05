@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -9,6 +11,7 @@ from rich.table import Table
 from citationer.analysis.stats import StatsEngine
 from citationer.utils.config import get_db_path
 from citationer.utils.db_loader import load_records_from_db
+from citationer.viz.charts import generate_top_n_chart, generate_yearly_chart
 from citationer.viz.terminal_charts import plot_hbar, plot_line, plot_line_dual
 
 app = typer.Typer(
@@ -18,6 +21,15 @@ app = typer.Typer(
 )
 
 console = Console()
+
+
+def _resolve_png(path: Path | None, default_name: str) -> Path:
+    """Resolve PNG output path. Defaults to output/viz/<name>."""
+    if path:
+        return path
+    out = Path.cwd() / "output" / "viz"
+    out.mkdir(parents=True, exist_ok=True)
+    return out / default_name
 
 
 def _get_records() -> list:
@@ -102,6 +114,9 @@ def yearly(
     table: bool = typer.Option(
         False, "--table", "-t", help="同时显示数据表格"
     ),
+    save_png: Path | None = typer.Option(
+        None, "--save-png", help="保存为 PNG 图片（默认 output/viz/）"
+    ),
 ) -> None:
     """年度发表趋势分析。默认显示 braille 折线图。"""
     records = _get_records()
@@ -117,6 +132,12 @@ def yearly(
 
     years = sorted(stats.year_counts)
     counts = [stats.year_counts[y] for y in years]
+
+    # ── PNG export ──
+    if save_png:
+        out = _resolve_png(save_png, "yearly_trend.png")
+        generate_yearly_chart(records, out, cumulative=cumulative)
+        console.print(f"[green]📈 PNG 已保存: {out}[/green]")
 
     # ── Chart (always, if TTY) ──
     if cumulative:
@@ -170,6 +191,9 @@ def journals(
     table: bool = typer.Option(
         False, "--table", "-t", help="同时显示数据表格"
     ),
+    save_png: Path | None = typer.Option(
+        None, "--save-png", help="保存为 PNG 图片（默认 output/viz/）"
+    ),
 ) -> None:
     """期刊/来源分析：Top-N 高产期刊。默认显示水平条形图。"""
     records = _get_records()
@@ -184,6 +208,14 @@ def journals(
         labels = [name for name, _ in result.items]
         values = [count for _, count in result.items]
         plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Journals")
+
+    if save_png:
+        out = _resolve_png(save_png, "top_journals.png")
+        generate_top_n_chart(
+            result.items, out, title=f"Top {min(top, len(result.items))} Journals",
+            xlabel="Publications",
+        )
+        console.print(f"[green]📰 PNG 已保存: {out}[/green]")
 
     console.print(f"[dim]共 {result.total_unique} 个不同期刊/来源[/dim]")
 
@@ -216,6 +248,9 @@ def authors(
     table: bool = typer.Option(
         False, "--table", "-t", help="同时显示数据表格"
     ),
+    save_png: Path | None = typer.Option(
+        None, "--save-png", help="保存为 PNG 图片（默认 output/viz/）"
+    ),
 ) -> None:
     """作者分析：高产作者、独著率、合作率等。默认显示水平条形图。"""
     records = _get_records()
@@ -230,6 +265,15 @@ def authors(
         labels = [name for name, _ in result.top_authors.items]
         values = [count for _, count in result.top_authors.items]
         plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Authors")
+
+    if save_png:
+        out = _resolve_png(save_png, "top_authors.png")
+        generate_top_n_chart(
+            result.top_authors.items, out,
+            title=f"Top {min(top, len(result.top_authors.items))} Authors",
+            xlabel="Publications",
+        )
+        console.print(f"[green]👤 PNG 已保存: {out}[/green]")
 
     # ── Always show key stats ──
     console.print(f"[dim]作者总数: {result.top_authors.total_unique} · "
@@ -286,6 +330,9 @@ def institutions(
     table: bool = typer.Option(
         False, "--table", "-t", help="同时显示数据表格"
     ),
+    save_png: Path | None = typer.Option(
+        None, "--save-png", help="保存为 PNG 图片（默认 output/viz/）"
+    ),
 ) -> None:
     """机构分析：Top-N 高产机构和分布。默认显示水平条形图。"""
     records = _get_records()
@@ -300,6 +347,14 @@ def institutions(
         labels = [name for name, _ in result.items]
         values = [count for _, count in result.items]
         plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Institutions")
+
+    if save_png:
+        out = _resolve_png(save_png, "top_institutions.png")
+        generate_top_n_chart(
+            result.items, out, title=f"Top {min(top, len(result.items))} Institutions",
+            xlabel="Publications",
+        )
+        console.print(f"[green]🏛 PNG 已保存: {out}[/green]")
 
     console.print(f"[dim]共 {result.total_unique} 个不同机构[/dim]")
 

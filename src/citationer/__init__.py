@@ -1,3 +1,3 @@
 """citationer — One-click bibliometric analysis CLI tool."""
 
-__version__ = "2.1.8"
+__version__ = "2.1.9"

@@ -48,8 +48,18 @@ def _get_client(*, dry_run: bool = False) -> LLMClient | None:
         if dry_run:
             return LLMClient(LLMConfig(api_key="dry-run-skip"))
         console.print(
-            "[red]❌ LLM API Key 未配置[/red]\n"
-            "运行 [bold]citationer config set llm.api_key <your-key>[/bold] 进行配置"
+            "[red]❌ LLM API Key 未配置[/red]\n\n"
+            "首次使用 AI 功能，请按以下步骤配置:\n\n"
+            "  [bold]1.[/bold] 获取 API Key:\n"
+            "     DeepSeek: https://platform.deepseek.com\n"
+            "     OpenAI:   https://platform.openai.com\n"
+            "     Ollama:   本地运行无需 Key\n\n"
+            "  [bold]2.[/bold] 配置:\n"
+            "     [bold]ctr config set llm.api_key <your-key>[/bold]\n"
+            "     [bold]ctr config set llm.model deepseek-chat[/bold]  (或其他模型)\n\n"
+            "  [bold]3.[/bold] 验证:\n"
+            "     [bold]ctr ai info[/bold]\n\n"
+            "[dim]或使用环境变量: export CITATIONER_LLM_API_KEY=sk-xxx[/dim]"
         )
         return None
     return LLMClient(
