@@ -32,9 +32,31 @@ def clean(
         "--dry-run",
         help="仅检测，不执行合并",
     ),
+    clear_cache: bool = typer.Option(
+        False,
+        "--cache",
+        help="清空数据库缓存文件（.citationer/cache.db）",
+    ),
 ) -> None:
     """数据清洗：去重、缺失字段检测、异常值检测。"""
     db_path = get_db_path()
+
+    if clear_cache:
+        if db_path.exists():
+            size = db_path.stat().st_size
+            db_path.unlink()
+            # Also clean WAL files
+            for ext in ("-shm", "-wal"):
+                p = db_path.with_suffix(db_path.suffix + ext)
+                if p.exists():
+                    p.unlink()
+            console.print(
+                f"[green]✅ 已清空缓存 (释放 {size / 1024 / 1024:.1f} MB)[/green]"
+            )
+        else:
+            console.print("[dim]缓存文件不存在，无需清理[/dim]")
+        return
+
     if not db_path.exists():
         console.print("[yellow]⚠ 尚未导入数据，请先运行 citationer import[/yellow]")
         return
