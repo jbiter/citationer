@@ -188,7 +188,7 @@ Environment variables override the config file: `CITATIONER_LLM_API_KEY`, `CITAT
 ## Development
 
 ```bash
-# Install with dev dependencies
+# Install with all dependencies
 pip install --no-build-isolation -e ".[all,dev]"
 
 # Run tests
