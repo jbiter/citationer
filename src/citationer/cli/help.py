@@ -55,6 +55,14 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("classify", "多维分类"),
         ("info", "配置状态查看"),
     ]),
+    ("trend", "研究趋势分析", [
+        ("hotspots", "关键词突变检测"),
+    ]),
+    ("export", "数据导出", [
+        ("csv", "导出 CSV"),
+        ("json", "导出 JSON"),
+        ("bibtex", "导出 BibTeX"),
+    ]),
 ]
 
 _TOOLS: list[tuple[str, str]] = [

@@ -914,7 +914,7 @@ class Record(BaseModel):
 - [x] GitHub Actions CI (lint + test)
 - [x] PyPI 发布（自动从 GitHub Release 触发）
 
-### Phase 2: 文本挖掘 + LLM + 网络分析 — 进行中
+### Phase 2: 文本挖掘 + LLM + 网络分析 — ✅ 已完成 (v2.1.9)
 
 - [x] 中文分词 (jieba) + 英文 NLP（内置停用词表，spaCy 可选）
 - [x] 内置中英文学术语停用词表
@@ -953,9 +953,9 @@ class Record(BaseModel):
 | 4 | **`export` 命令** | F-1.3 | 数据导出（CSV/JSON/BibTeX/RIS/Excel）— 目前仅 clean --save 支持 CSV，需独立命令 |
 | 5 | **`config` 初始化体验** | F-8.1 | 首次运行 `ai` 命令时自动提示配置 API Key |
 
-### Phase 3: 趋势分析与报告 — 预计 3-4 周
+### Phase 3: 趋势分析与报告 — 进行中 (v2.10.0+)
 
-- [ ] 关键词年代热力图
+- [x] 关键词突变检测 (trend hotspots)
 - [ ] 突变检测（Burst Detection）
 - [ ] 战略坐标图
 - [ ] 主题河流图

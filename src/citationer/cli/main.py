@@ -30,6 +30,7 @@ from citationer.cli import (
     scan_cmd,
     stats_cmd,
     text_cmd,
+    trend_cmd,
 )
 from citationer.cli.help import render_l1_overview
 
@@ -80,6 +81,7 @@ app.add_typer(ai_cmd.app, name="ai")
 app.add_typer(network_cmd.app, name="network")
 app.add_typer(config_cmd.app, name="config")
 app.add_typer(export_cmd.app, name="export")
+app.add_typer(trend_cmd.app, name="trend")
 
 
 @app.callback()
