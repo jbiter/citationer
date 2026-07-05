@@ -41,7 +41,7 @@ pip install "citationer[all]"
 # From source
 git clone https://github.com/JasonCENG/citationer.git
 cd citationer
-pip install -e ".[all,dev]"
+pip install --no-build-isolation -e ".[all,dev]"
 ```
 
 ---
@@ -189,7 +189,7 @@ Environment variables override the config file: `CITATIONER_LLM_API_KEY`, `CITAT
 
 ```bash
 # Install with dev dependencies
-pip install -e ".[all,dev]"
+pip install --no-build-isolation -e ".[all,dev]"
 
 # Run tests
 pytest tests/ -v
