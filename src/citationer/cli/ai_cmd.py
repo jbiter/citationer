@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import os
 
 import typer
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 
@@ -123,6 +125,13 @@ def topics(
         if response.cached:
             console.print("[dim](结果来自缓存)[/dim]")
 
+        # Parse LLM JSON response into label dict
+        labels_map: dict[str, str] = {}
+        try:
+            labels_map = json.loads(response.content)
+        except json.JSONDecodeError:
+            pass
+
         console.print()
         table = Table(
             title="🏷 LLM 主题标签",
@@ -135,21 +144,10 @@ def topics(
 
         for i, terms in enumerate(topic_result.topics):
             term_str = ", ".join(t for t, _ in terms[:5])
-            table.add_row(
-                f"Topic {i + 1}",
-                term_str,
-                "(见下方 LLM 输出)",
-            )
-        console.print(table)
+            label = labels_map.get(str(i + 1), "-")
+            table.add_row(f"Topic {i + 1}", term_str, label)
 
-        console.print()
-        console.print(
-            Panel(
-                response.content,
-                title="LLM 主题标签输出",
-                border_style="green",
-            )
-        )
+        console.print(table)
         console.print(f"[dim]Token 消耗: {response.tokens_used}[/dim]")
     else:
         # Just show the raw topic terms without LLM
@@ -219,7 +217,7 @@ def summarize(
     console.print()
     console.print(
         Panel(
-            response.content,
+            Markdown(response.content),
             title="📄 LLM 文献综述",
             border_style="cyan",
         )
@@ -312,7 +310,7 @@ def trends(
     console.print()
     console.print(
         Panel(
-            response.content,
+            Markdown(response.content),
             title="📈 LLM 趋势分析",
             border_style="cyan",
         )
@@ -377,7 +375,7 @@ def classify(
     console.print()
     console.print(
         Panel(
-            response.content,
+            Markdown(response.content),
             title=f"🏷 LLM 多维分类 ({dim_desc})",
             border_style="cyan",
         )

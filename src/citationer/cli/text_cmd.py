@@ -9,7 +9,6 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 
 from citationer.analysis.text import TextEngine
 from citationer.utils.db_loader import get_records
@@ -253,35 +252,33 @@ def topics(
         console.print("[yellow]未能发现主题，请检查数据量是否足够[/yellow]")
         return
 
-    console.print()
     score_info = ""
     if result.coherence_score is not None:
         score_info = f" · 一致性分数: {result.coherence_score:.3f}"
 
+    console.print()
     console.print(
         f"[bold]发现 {result.num_topics} 个主题[/bold] "
         f"({result.method.upper()}){score_info}"
     )
     console.print()
 
-    for i, topic_terms in enumerate(result.topics):
-        term_text = Text()
-        for j, (term, weight) in enumerate(topic_terms):
-            if j > 0:
-                term_text.append("  ")
-            # Color intensity by weight
-            if weight > 0.03:
-                term_text.append(term, style="bold cyan")
-            else:
-                term_text.append(term, style="dim")
+    # Render as a table for clean output
+    table = Table(
+        title="🧠 主题建模结果",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    table.add_column("主题", justify="center")
+    table.add_column(f"关键词 (Top-{max_terms})")
+    table.add_column("一致性", justify="center")
 
-        panel = Panel(
-            term_text,
-            title=f"Topic {i + 1}",
-            title_align="left",
-            border_style="blue",
-        )
-        console.print(panel)
+    for i, topic_terms in enumerate(result.topics):
+        term_str = ", ".join(t for t, _ in topic_terms[:max_terms])
+        coh = f"{result.coherence_score:.3f}" if result.coherence_score else "-"
+        table.add_row(f"Topic {i + 1}", term_str, coh)
+
+    console.print(table)
 
     # Optional JSON export
     if output_file:
