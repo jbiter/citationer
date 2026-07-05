@@ -1,6 +1,6 @@
 [project]
 name = "citationer"
-version = "2.1.7"
+version = "2.1.8"
 description = "One-click bibliometric analysis CLI tool"
 readme = "README.md"
 requires-python = ">=3.11"

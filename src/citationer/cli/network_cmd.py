@@ -26,10 +26,12 @@ _get_records = get_records
 def _get_output_path(
     output: Path | None, default_name: str, fmt: str
 ) -> Path:
-    """Resolve the output file path."""
+    """Resolve the output file path. Defaults to output/viz/<name>.<fmt>."""
     if output:
         return output
-    return Path.cwd() / f"{default_name}.{fmt}"
+    viz_dir = Path.cwd() / "output" / "viz"
+    viz_dir.mkdir(parents=True, exist_ok=True)
+    return viz_dir / f"{default_name}.{fmt}"
 
 
 # ------------------------------------------------------------------

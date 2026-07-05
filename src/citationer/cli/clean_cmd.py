@@ -207,10 +207,12 @@ def clean(
         console.print("[green]✅ 数据质量检查通过，未发现问题[/green]")
 
 
-def _export_csv(records, output_dir) -> str:
-    """Export cleaned records as CSV for reuse."""
+def _export_csv(records, base_dir) -> str:
+    """Export cleaned records as CSV for reuse. Saves to output/cls/."""
     import csv
-    out_path = output_dir / "cleaned_records.csv"
+    cls_dir = base_dir / "output" / "cls"
+    cls_dir.mkdir(parents=True, exist_ok=True)
+    out_path = cls_dir / "cleaned_records.csv"
     with open(out_path, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.writer(f)
         writer.writerow(["title", "authors", "year", "journal", "doi", "abstract"])
