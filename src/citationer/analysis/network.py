@@ -275,41 +275,44 @@ class NetworkEngine:
     def bibliographic_coupling(self, top_n: int = 30) -> CitationGraph:
         """Bibliographic coupling: two papers that share references.
 
-        Falls back to keyword-based coupling if reference data is unavailable.
+        Uses an inverted index (ref → paper_ids) for O(total_refs) instead of
+        O(n²) performance.  Falls back to keyword-based coupling when no
+        reference data is available.
         """
-        # First attempt: reference-based coupling
-        paper_refs: list[set[str]] = []
-        has_refs = False
-        for r in self._records:
-            if r.references:
-                paper_refs.append({ref.strip() for ref in r.references if ref.strip()})
-                has_refs = True
-            else:
-                paper_refs.append(set())
+        # Build inverted index: reference → list of paper indices
+        ref_to_papers: dict[str, list[int]] = {}
+        for i, r in enumerate(self._records):
+            refs = r.references
+            if not refs:
+                continue
+            for ref in refs:
+                ref_stripped = ref.strip()
+                if ref_stripped:
+                    ref_to_papers.setdefault(ref_stripped, []).append(i)
 
-        if not has_refs:
+        if not ref_to_papers:
             return self._keyword_coupling(top_n)
 
-        # Count shared references between papers
-        pair_counter: Counter[tuple[int, int]] = Counter()
-        n = len(paper_refs)
-        for i in range(n):
-            if not paper_refs[i]:
+        # For each reference shared by ≥ 2 papers, increment pair counts
+        from collections import defaultdict
+        pair_counter: dict[tuple[int, int], int] = defaultdict(int)
+        for paper_ids in ref_to_papers.values():
+            m = len(paper_ids)
+            if m < 2:
                 continue
-            for j in range(i + 1, n):
-                if not paper_refs[j]:
-                    continue
-                shared = len(paper_refs[i] & paper_refs[j])
-                if shared > 0:
-                    pair_counter[(i, j)] = shared
+            for a in range(m):
+                for b in range(a + 1, m):
+                    i, j = paper_ids[a], paper_ids[b]
+                    pair_key = (i, j) if i < j else (j, i)
+                    pair_counter[pair_key] += 1
 
-        top_pairs = pair_counter.most_common(top_n)
+        # Top-N by shared reference count
+        import heapq
+        top_pairs = heapq.nlargest(
+            top_n, pair_counter.items(), key=lambda x: x[1]
+        )
         edges = [
-            (
-                self._records[i].title[:80],
-                self._records[j].title[:80],
-                w,
-            )
+            (self._records[i].title[:80], self._records[j].title[:80], w)
             for (i, j), w in top_pairs
         ]
 
@@ -320,33 +323,35 @@ class NetworkEngine:
         )
 
     def _keyword_coupling(self, top_n: int = 30) -> CitationGraph:
-        """Fallback: keyword-based bibliographic coupling."""
-        paper_kw: list[set[str]] = []
-        for r in self._records:
-            kw_set = set(r.keywords)
+        """Fallback: keyword-based bibliographic coupling (inverted index)."""
+        from collections import defaultdict
+
+        # Inverted index: keyword → list of paper indices
+        kw_to_papers: dict[str, list[int]] = defaultdict(list)
+        for i, r in enumerate(self._records):
+            for kw in r.keywords:
+                kw_to_papers[kw.strip().lower()].append(i)
             if r.keywords_en:
-                kw_set.update(r.keywords_en)
-            paper_kw.append({k.strip().lower() for k in kw_set if k.strip()})
+                for kw in r.keywords_en:
+                    kw_to_papers[kw.strip().lower()].append(i)
 
-        pair_counter: Counter[tuple[int, int]] = Counter()
-        n = len(paper_kw)
-        for i in range(n):
-            if not paper_kw[i]:
+        pair_counter: dict[tuple[int, int], int] = defaultdict(int)
+        for paper_ids in kw_to_papers.values():
+            m = len(paper_ids)
+            if m < 2:
                 continue
-            for j in range(i + 1, n):
-                if not paper_kw[j]:
-                    continue
-                shared = len(paper_kw[i] & paper_kw[j])
-                if shared > 0:
-                    pair_counter[(i, j)] = shared
+            for a in range(m):
+                for b in range(a + 1, m):
+                    i, j = paper_ids[a], paper_ids[b]
+                    pair_key = (i, j) if i < j else (j, i)
+                    pair_counter[pair_key] += 1
 
-        top_pairs = pair_counter.most_common(top_n)
+        import heapq
+        top_pairs = heapq.nlargest(
+            top_n, pair_counter.items(), key=lambda x: x[1]
+        )
         edges = [
-            (
-                self._records[i].title[:80],
-                self._records[j].title[:80],
-                w,
-            )
+            (self._records[i].title[:80], self._records[j].title[:80], w)
             for (i, j), w in top_pairs
         ]
 

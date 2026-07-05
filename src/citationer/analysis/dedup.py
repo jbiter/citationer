@@ -29,13 +29,21 @@ def _normalize_title(title: str) -> str:
     return title.strip()
 
 
-def _title_similarity(title1: str, title2: str) -> float:
-    """Calculate title similarity using SequenceMatcher on normalized titles."""
+def _title_similarity(title1: str, title2: str, threshold: float = 0.0) -> float:
+    """Calculate title similarity using SequenceMatcher on normalized titles.
+
+    Uses *quick_ratio()* as a fast pre-filter — if the upper-bound estimate is
+    already below *threshold*, returns 0.0 immediately without the full O(N*M)
+    comparison.
+    """
     t1 = _normalize_title(title1)
     t2 = _normalize_title(title2)
     if not t1 or not t2:
         return 0.0
-    return SequenceMatcher(None, t1, t2).ratio()
+    m = SequenceMatcher(None, t1, t2)
+    if threshold > 0 and m.quick_ratio() < threshold:
+        return 0.0
+    return m.ratio()
 
 
 def _merge_records(r1: Record, r2: Record) -> Record:
@@ -44,7 +52,14 @@ def _merge_records(r1: Record, r2: Record) -> Record:
     r1 is considered the primary (kept) record.
     Fields from r2 fill in gaps in r1.
     """
-    merged = r1.model_copy(deep=True)
+    # Shallow copy + deep-copy only the mutable collections we actually modify.
+    merged = r1.model_copy(deep=False)
+    merged.keywords = list(merged.keywords)
+    merged.keywords_en = list(merged.keywords_en) if merged.keywords_en else None
+    merged.authors = list(merged.authors)
+    merged.institutions = list(merged.institutions)
+    merged.funding = list(merged.funding) if merged.funding else None
+    merged.raw_data = dict(merged.raw_data)
 
     # Merge simple fields: prefer non-empty from r2 if r1 is empty
     simple_fields = [
@@ -240,7 +255,8 @@ class DedupEngine:
                         continue
                     r1, r2 = records[i], records[j]
 
-                    sim = _title_similarity(r1.title, r2.title)
+                    sim = _title_similarity(r1.title, r2.title,
+                                            threshold=self.title_threshold_high)
                     if sim >= self.title_threshold_high:
                         self._merge_log.append({
                             "layer": 2,
@@ -287,7 +303,8 @@ class DedupEngine:
                         continue
                     r1, r2 = records[i], records[j]
 
-                    sim = _title_similarity(r1.title, r2.title)
+                    sim = _title_similarity(r1.title, r2.title,
+                                            threshold=self.title_threshold_low)
                     if sim >= self.title_threshold_low:
                         fa = r1.first_author
                         self._merge_log.append({
@@ -306,74 +323,71 @@ class DedupEngine:
     def _layer4_cross_language(self, records: list[Record]) -> list[Record]:
         """Cross-language dedup (CN ↔ EN).
 
-        For CNKI (Chinese titles) vs WoS (English titles):
-        - Priority: DOI match (already handled in layer 1)
-        - Fallback: same first author + same year + same journal + same volume/pages
+        Bucketed by (year, first-author-surname) for O(bucket²) instead of O(n²).
+        Only cross-source pairs within the same bucket are compared.
         """
-        # Layer 1 already handles DOI matching across databases.
-        # This layer adds author+year+journal+pages matching.
+        from collections import defaultdict
+
         merged_indices: set[int] = set()
-        n = len(records)
 
-        for i in range(n):
-            if i in merged_indices:
+        # Bucket by (year, first_author_surname)
+        buckets: dict[tuple[int, str], list[int]] = defaultdict(list)
+        for i, r in enumerate(records):
+            fa = r.first_author
+            if not fa or r.year is None:
                 continue
-            for j in range(i + 1, n):
-                if j in merged_indices:
+            surname = (fa.surname or fa.full_name).lower()
+            if not surname:
+                continue
+            buckets[(r.year, surname)].append(i)
+
+        self._tick(1, 1)  # one logical step for the progress bar
+
+        for indices in buckets.values():
+            m = len(indices)
+            for a in range(m):
+                i = indices[a]
+                if i in merged_indices:
                     continue
-                r1, r2 = records[i], records[j]
+                for b in range(a + 1, m):
+                    j = indices[b]
+                    if j in merged_indices:
+                        continue
+                    r1, r2 = records[i], records[j]
 
-                # Only cross-source
-                if r1.source_database == r2.source_database:
-                    continue
+                    # Only cross-source
+                    if r1.source_database == r2.source_database:
+                        continue
 
-                # Year must match
-                if r1.year is None or r2.year is None or r1.year != r2.year:
-                    continue
+                    # Journal match (fuzzy)
+                    j1 = (r1.journal or "").lower()
+                    j2 = (r2.journal or "").lower()
+                    journal_sim = SequenceMatcher(None, j1, j2).ratio() if j1 and j2 else 0
 
-                # First author surname match
-                fa1 = r1.first_author
-                fa2 = r2.first_author
-                if not fa1 or not fa2:
-                    continue
+                    # Pages match
+                    pages_match = bool(
+                        r1.pages and r2.pages
+                        and r1.pages.strip() == r2.pages.strip()
+                    )
 
-                # Check surname or full name match
-                s1 = (fa1.surname or fa1.full_name).lower()
-                s2 = (fa2.surname or fa2.full_name).lower()
-                if s1 != s2:
-                    continue
+                    # Volume match
+                    vol_match = bool(
+                        r1.volume and r2.volume
+                        and r1.volume.strip() == r2.volume.strip()
+                    )
 
-                # Journal match (fuzzy)
-                j1 = (r1.journal or "").lower()
-                j2 = (r2.journal or "").lower()
-                journal_sim = SequenceMatcher(None, j1, j2).ratio() if j1 and j2 else 0
-
-                # Pages match
-                pages_match = bool(
-                    r1.pages
-                    and r2.pages
-                    and r1.pages.strip() == r2.pages.strip()
-                )
-
-                # Volume match
-                vol_match = bool(
-                    r1.volume
-                    and r2.volume
-                    and r1.volume.strip() == r2.volume.strip()
-                )
-
-                # Require at least 2 of 3 (journal, pages, volume) to match
-                evidence = sum([journal_sim >= 0.8, pages_match, vol_match])
-                if evidence >= 2:
-                    self._merge_log.append({
-                        "layer": 4,
-                        "type": "cross_language",
-                        "kept": r1.title,
-                        "merged": r2.title,
-                        "db1": r1.source_database,
-                        "db2": r2.source_database,
-                    })
-                    records[i] = _merge_records(r1, r2)
-                    merged_indices.add(j)
+                    # Require at least 2 of 3 (journal, pages, volume) to match
+                    evidence = sum([journal_sim >= 0.8, pages_match, vol_match])
+                    if evidence >= 2:
+                        self._merge_log.append({
+                            "layer": 4,
+                            "type": "cross_language",
+                            "kept": r1.title,
+                            "merged": r2.title,
+                            "db1": r1.source_database,
+                            "db2": r2.source_database,
+                        })
+                        records[i] = _merge_records(r1, r2)
+                        merged_indices.add(j)
 
         return [r for i, r in enumerate(records) if i not in merged_indices]

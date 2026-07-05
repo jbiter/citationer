@@ -11,6 +11,7 @@ import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from citationer.models.record import Record
 
@@ -46,6 +47,7 @@ def _load_stopwords(filename: str) -> set[str]:
 
 _STOPWORDS_ZH: set[str] | None = None
 _STOPWORDS_EN: set[str] | None = None
+_SPACY_NLP: Any = None  # cached spaCy model
 
 # Minimal built-in stop words — used as fallback if the bundled data files
 # cannot be loaded (e.g. when package data is not installed).
@@ -237,18 +239,17 @@ class TextEngine:
 
     def _tokenize_en(self, text: str) -> list[str]:
         """Tokenize English text using simple regex (spaCy as optional upgrade)."""
-        # Try spaCy first
+        global _SPACY_NLP
         try:
             import spacy
-
-            try:
-                nlp = spacy.load("en_core_web_sm")
-            except OSError:
-                # Model not downloaded — fall back to regex
-                return self._tokenize_en_simple(text)
+            if _SPACY_NLP is None:
+                try:
+                    _SPACY_NLP = spacy.load("en_core_web_sm")
+                except OSError:
+                    return self._tokenize_en_simple(text)
 
             stopwords = _get_stopwords_en()
-            doc = nlp(text)
+            doc = _SPACY_NLP(text)
             tokens: list[str] = []
             for token in doc:
                 if token.is_alpha and not token.is_stop:

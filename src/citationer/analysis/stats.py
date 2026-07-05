@@ -69,79 +69,73 @@ class StatsEngine:
     # ------------------------------------------------------------------
 
     def overview(self) -> OverviewStats:
-        """Generate an overview dashboard."""
+        """Generate an overview dashboard — single pass over records."""
         records = self._records
         n = len(records)
 
         stats = OverviewStats()
         stats.total_records = n
-        # Unique is the same as total after dedup (caller handles dedup first)
         stats.unique_records = n
 
-        # Year range
-        years = [r.year for r in records if r.year is not None]
-        if years:
-            stats.year_min = min(years)
-            stats.year_max = max(years)
-
-        # Journal count
+        # Accumulators for single-pass collection
+        years_list: list[int] = []
         journals: set[str] = set()
-        for r in records:
-            if r.journal:
-                journals.add(r.journal.lower())
-        stats.num_journals = len(journals)
-
-        # Author stats
         author_set: set[str] = set()
         solo = 0
         coop = 0
-        author_counts: list[int] = []
+        inst_set: set[str] = set()
+        country_set: set[str] = set()
+        lang_dist: dict[str, int] = {}
+        dt_dist: dict[str, int] = {}
+        citations: list[int] = []
+
         for r in records:
+            # Year
+            if r.year is not None:
+                years_list.append(r.year)
+            # Journal
+            if r.journal:
+                journals.add(r.journal.lower())
+            # Authors
             n_auth = r.author_count
-            author_counts.append(n_auth)
             for a in r.authors:
                 author_set.add(a.full_name.lower())
             if n_auth == 1:
                 solo += 1
             elif n_auth > 1:
                 coop += 1
-
-        stats.num_authors = len(author_set)
-        if n > 0:
-            stats.solo_rate = solo / n
-            stats.coop_rate = coop / n
-
-        # Institutions
-        inst_set: set[str] = set()
-        country_set: set[str] = set()
-        for r in records:
+            # Institutions
             for inst in r.institutions:
                 inst_set.add(inst.name)
                 if inst.country:
                     country_set.add(inst.country)
-        stats.num_institutions = len(inst_set)
-        stats.num_countries = len(country_set)
-
-        # Language distribution
-        lang_dist: dict[str, int] = {}
-        for r in records:
+            # Language
             lang = r.language or "unknown"
             lang_dist[lang] = lang_dist.get(lang, 0) + 1
-        stats.language_dist = dict(sorted(lang_dist.items(), key=lambda x: -x[1]))
-
-        # Document type distribution
-        dt_dist: dict[str, int] = {}
-        for r in records:
+            # Doc type
             dt = r.doc_type.value
             dt_dist[dt] = dt_dist.get(dt, 0) + 1
-        stats.doc_type_dist = dict(sorted(dt_dist.items(), key=lambda x: -x[1]))
+            # Citations
+            if r.citation_count is not None and r.citation_count > 0:
+                citations.append(r.citation_count)
 
-        # Citation stats
-        citations = [
-            r.citation_count
-            for r in records
-            if r.citation_count is not None and r.citation_count > 0
-        ]
+        # ── Finalise stats ──
+        if years_list:
+            stats.year_min = min(years_list)
+            stats.year_max = max(years_list)
+        stats.num_journals = len(journals)
+        stats.num_authors = len(author_set)
+        if n > 0:
+            stats.solo_rate = solo / n
+            stats.coop_rate = coop / n
+        stats.num_institutions = len(inst_set)
+        stats.num_countries = len(country_set)
+        stats.language_dist = dict(
+            sorted(lang_dist.items(), key=lambda x: -x[1])
+        )
+        stats.doc_type_dist = dict(
+            sorted(dt_dist.items(), key=lambda x: -x[1])
+        )
         if citations:
             stats.avg_citations = sum(citations) / len(citations)
             stats.h_index = self._compute_h_index(citations)

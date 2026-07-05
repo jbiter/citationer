@@ -652,20 +652,22 @@ class WosExcelParser(BaseParser):
         import openpyxl
 
         wb = openpyxl.load_workbook(filepath, read_only=True, data_only=True)
-        try:
-            ws = wb.active
-            if ws is None:
-                return []
-
-            rows = list(ws.iter_rows(values_only=True))
-        finally:
+        ws = wb.active
+        if ws is None:
             wb.close()
-
-        if len(rows) < 2:
             return []
 
-        headers = [str(c).strip() if c else "" for c in rows[0]]
-        return self._rows_to_records(headers, rows[1:], filepath.name)
+        rows_iter = ws.iter_rows(values_only=True)
+        first = next(rows_iter, None)
+        if first is None:
+            wb.close()
+            return []
+
+        headers = [str(c).strip() if c else "" for c in first]
+        # Generator consumed inside _rows_to_records; close workbook after.
+        result = self._rows_to_records(headers, rows_iter, filepath.name)
+        wb.close()
+        return result
 
     def _parse_xls(self, filepath: Path) -> list[Record]:
         """Parse .xls file with xlrd."""
