@@ -49,7 +49,10 @@ pip install -e ".[all,dev]"
 ## Quick Start
 
 ```bash
-# 1. Navigate to your literature directory
+# 1. Check version
+citationer --version
+
+# 2. Navigate to your literature directory
 cd /path/to/literature
 
 # 2. Scan for bibliographic files
@@ -83,9 +86,9 @@ citationer clean                 # Validate & deduplicate records
 
 ```bash
 citationer stats overview             # Dashboard: totals, years, h-index, languages
-citationer stats yearly               # Braille line chart + table
+citationer stats yearly               # Braille line chart
 citationer stats yearly --cumulative  # Dual bar+line chart
-citationer stats yearly --no-chart    # Table only (pipe-friendly)
+citationer stats yearly --table       # Data table
 citationer stats journals --top 20    # Horizontal bar chart
 citationer stats authors --top 20     # Bar chart + Price's Law core authors
 citationer stats institutions --top 20 # Bar chart
@@ -203,9 +206,11 @@ pytest tests/ --cov=src/citationer --cov-report=term-missing
 
 ## Documentation
 
-- **[User Manual](https://github.com/jbiter/citationer/wiki/)** — Full user manual (English)
-- **[Handbook (中文)](https://github.com/jbiter/citationer/wiki/Handbook_zh)** — Chinese user manual
-- **[PRD v2.0](docs/PRD-v2.0.md)** — Product requirements document
+- **[Wiki Home](https://github.com/jbiter/citationer/wiki/)** — Links to all docs
+- **[Handbook](https://github.com/jbiter/citationer/wiki/Handbook)** — Full user manual (English)
+- **[用户手册](https://github.com/jbiter/citationer/wiki/Handbook_zh)** — 中文用户手册
+- **[PRD v2.1](docs/PRD-v2.1.md)** — Latest product requirements
+- **[PRD v2.0](docs/PRD-v2.0.md)** — v2.0 requirements (historical)
 - **[PRD v1.0](docs/PRD-v1.0.md)** — Original PRD (historical)
 
 ---
