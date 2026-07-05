@@ -444,7 +444,7 @@ $ citationer trend hotspots --window 3
 #### F-5.2 战略坐标图 (Strategic Diagram)
 
 ```
-$ citationer trend strategic-diagram
+$ citationer trend strategy
 ```
 
 **需求**:
@@ -955,14 +955,12 @@ class Record(BaseModel):
 
 ### Phase 3: 趋势分析与报告 — 进行中 (v2.10.0+)
 
-- [x] 关键词突变检测 (trend hotspots)
-- [ ] 突变检测（Burst Detection）
-- [ ] 战略坐标图
-- [ ] 主题河流图
-- [ ] `trend` 命令组
-- [ ] `report quick` 报告生成（Markdown / HTML / PDF）
-- [ ] Jinja2 报告模板（学术风 / PPT风 / 简洁风）
-- [ ] LLM 增强报告（生成「研究发现与展望」章节）
+- [x] 关键词突变检测 — `trend hotspots`
+- [ ] 战略坐标图 — `trend strategy` (X=向心度, Y=密度, 四象限主题定位)
+- [ ] 主题河流图 — `trend river` (主题强度随时间变化)
+- [ ] 快速报告 — `report quick` (Markdown / HTML / PDF)
+- [ ] 自定义报告 — `report custom` (Jinja2 模板，学术/PPT/简洁风)
+- [ ] LLM 增强报告 — AI 生成「研究发现与展望」章节
 
 ### Phase 4: 扩展与打磨 — 预计 4-6 周
 
