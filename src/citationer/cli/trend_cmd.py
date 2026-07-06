@@ -220,59 +220,54 @@ def river(
         console.print("[yellow]数据不足以生成河流图[/yellow]")
         return
 
-    # Table
-    table = Table(
-        title=f"🌊 关键词演化 (窗口={window}年)",
-        show_header=True,
-        header_style="bold cyan",
+    # ── Summary ──
+    rising_kw = []
+    for kw in result.keywords:
+        shares = result.matrix.get(kw, [])
+        if len(shares) >= 2 and shares[-1] > shares[-2]:
+            rising_kw.append(kw)
+
+    console.print()
+    console.print(
+        f"[bold]🌊 关键词演化趋势[/bold] · "
+        f"{len(result.keywords)} 个关键词 · "
+        f"{len(result.windows)} 个时间窗口 (每{window}年) · "
+        f"{len(rising_kw)} 个上升趋势"
     )
-    table.add_column("关键词", style="dim")
-    for w in result.windows:
-        table.add_column(w, justify="right")
+    console.print()
+
+    # ── Sparkline per keyword ──
+    bars = " ▁▂▃▄▅▆▇█"
 
     for kw in result.keywords[:12]:
         shares = result.matrix.get(kw, [])
-        row = [kw]
-        for s in shares:
-            row.append(f"{s:.1f}%" if s > 0 else "-")
-        table.add_row(*row)
-
-    console.print(table)
-
-    # Terminal stacked bar chart
-    _plot_river(result)
-
-
-def _plot_river(result) -> None:
-    """Render a multi-line chart for the thematic river."""
-    if not result.keywords or not result.windows:
-        return
-
-    try:
-        import plotext as plt
-    except ImportError:
-        return
-
-    plt.clf()
-    plt.plotsize(80, min(20, len(result.keywords) + 6))
-
-    x_indices = list(range(len(result.windows)))
-
-    for kw in result.keywords[:6]:
-        shares = result.matrix.get(kw, [])
         if not shares:
             continue
-        while len(shares) < len(result.windows):
-            shares.append(0.0)
-        plt.plot(x_indices, shares, marker="braille", label=kw[:15])
 
-    plt.xticks(x_indices, result.windows)
-    plt.title("Thematic River")
-    plt.xlabel("Time Window")
-    plt.ylabel("Share (%)")
+        # Per-keyword scaling: each sparkline uses its own max
+        kw_max = max(shares) if shares else 1
 
-    import re
-    _sgr_re = re.compile(r"\x1b\[[0-9;]*m")
-    chart = plt.build()
-    if chart:
-        print(_sgr_re.sub("", chart))
+        spark = ""
+        for s in shares:
+            idx = min(int(s / max(kw_max, 1) * 8), 8)
+            spark += bars[idx]
+        # Pad to full width
+        spark = spark.ljust(len(result.windows))
+
+        # Stats
+        peak = max(shares)
+        peak_idx = shares.index(peak)
+        peak_label = result.windows[peak_idx] if peak_idx < len(result.windows) else "?"
+        trend = "📈" if len(shares) >= 2 and shares[-1] > shares[-2] else "📉"
+        current = f"{shares[-1]:.1f}%" if shares else "-"
+
+        kw_label = kw[:22].ljust(24)
+        console.print(
+            f"  {trend} {kw_label} {spark}  {current}  "
+            f"[dim](峰值 {peak:.0f}% @ {peak_label})[/dim]"
+        )
+
+    console.print()
+    console.print(
+        "[dim]每个关键词一行，字符高度反映该窗口的文献占比[/dim]"
+    )
