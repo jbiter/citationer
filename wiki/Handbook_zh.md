@@ -1,4 +1,4 @@
-# Citationer v2 — 用户手册
+# Citationer v3 — 用户手册
 
 > **一键式文献题录分析 CLI 工具** —— 从原始导出文件到分析洞察。
 
@@ -664,4 +664,4 @@ your-project/
 
 ---
 
-*Citationer v2 — 2026年7月*
+*Citationer v3 — 2026年7月*

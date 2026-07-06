@@ -1,4 +1,4 @@
-# Citationer v2
+# Citationer v3
 
 > One-click bibliometric analysis CLI tool.
 
