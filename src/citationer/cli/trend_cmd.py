@@ -191,3 +191,96 @@ def _plot_strategy_quadrant(result) -> None:
     chart = plt.build()
     if chart:
         print(_sgr_re.sub("", chart))
+
+
+# ------------------------------------------------------------------
+# trend river
+# ------------------------------------------------------------------
+
+
+@app.command(name="river")
+def river(
+    top_n: int = typer.Option(
+        8, "--top", "-n", help="追踪前 N 个关键词"
+    ),
+    window: int = typer.Option(
+        5, "--window", "-w", help="时间窗口大小（年）"
+    ),
+) -> None:
+    """主题河流图：追踪关键词热度随时间的演化。"""
+    records = _get_records()
+    if not records:
+        return
+
+    console.print("[dim]正在计算关键词时间演化…[/dim]")
+    engine = TrendEngine(records)
+    result = engine.river(top_n=top_n, window=window)
+
+    if not result.keywords:
+        console.print("[yellow]数据不足以生成河流图[/yellow]")
+        return
+
+    # Table
+    table = Table(
+        title=f"🌊 关键词演化 (窗口={window}年)",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    table.add_column("关键词", style="dim")
+    for w in result.windows:
+        table.add_column(w, justify="right")
+
+    for kw in result.keywords[:12]:
+        shares = result.matrix.get(kw, [])
+        row = [kw]
+        for s in shares:
+            row.append(f"{s:.1f}%" if s > 0 else "-")
+        table.add_row(*row)
+
+    console.print(table)
+
+    # Terminal stacked bar chart
+    _plot_river(result)
+
+
+def _plot_river(result) -> None:
+    """Render a stacked bar chart for the thematic river."""
+    if not result.keywords or not result.windows:
+        return
+
+    try:
+        import plotext as plt
+    except ImportError:
+        return
+
+    plt.clf()
+    plt.plotsize(80, min(20, len(result.keywords) + 6))
+
+    # Build stacked bars
+    x_indices = list(range(len(result.windows)))
+    bottom = [0.0] * len(result.windows)
+
+    for kw in result.keywords[:8]:
+        shares = result.matrix.get(kw, [])
+        if not shares:
+            continue
+        # Pad if needed
+        while len(shares) < len(result.windows):
+            shares.append(0.0)
+        plt.bar(
+            x_indices, shares, bottom=bottom,
+            label=kw[:15],
+            orientation="v",
+        )
+        bottom = [b + s for b, s in zip(bottom, shares)]
+
+    plt.xticks(x_indices, result.windows)
+    plt.title("Thematic River")
+    plt.xlabel("Time Window")
+    plt.ylabel("Share (%)")
+
+    import re
+    _sgr_re = re.compile(r"\x1b\[[0-9;]*m")
+    chart = plt.build()
+    if chart:
+        print(_sgr_re.sub("", chart))

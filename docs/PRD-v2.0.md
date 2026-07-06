@@ -953,14 +953,14 @@ class Record(BaseModel):
 | 4 | **`export` 命令** | F-1.3 | 数据导出（CSV/JSON/BibTeX/RIS/Excel）— 目前仅 clean --save 支持 CSV，需独立命令 |
 | 5 | **`config` 初始化体验** | F-8.1 | 首次运行 `ai` 命令时自动提示配置 API Key |
 
-### Phase 3: 趋势分析与报告 — 进行中 (v2.10.0+)
+### Phase 3: 趋势分析与报告 — ✅ 已完成 (v2.10.0–v3.0.0)
 
 - [x] 关键词突变检测 — `trend hotspots`
 - [x] 战略坐标图 — `trend strategy` (X=向心度, Y=密度, 四象限主题定位)
-- [ ] 主题河流图 — `trend river` (主题强度随时间变化)
-- [ ] 快速报告 — `report quick` (Markdown / HTML / PDF)
-- [ ] 自定义报告 — `report custom` (Jinja2 模板，学术/PPT/简洁风)
-- [ ] LLM 增强报告 — AI 生成「研究发现与展望」章节
+- [x] 主题河流图 — `trend river` (主题强度随时间变化)
+- [x] 快速报告 — `report quick` (Markdown / HTML)
+- [x] 自定义报告 — `report custom` (YAML 配置)
+- [x] LLM 增强报告 — `report quick --enhance` (AI 生成「研究发现与展望」)
 
 ### Phase 4: 扩展与打磨 — 预计 4-6 周
 

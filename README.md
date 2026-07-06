@@ -122,6 +122,15 @@ citationer export json -o data.json       # Export to JSON
 citationer export bibtex -o refs.bib     # Export to BibTeX
 ```
 
+### Reports (`report`)
+
+```bash
+citationer report quick -o report.md       # One-click Markdown report
+citationer report quick -o report.html     # HTML report
+citationer report quick --enhance -o r.md  # LLM-enhanced report
+citationer report custom cfg.yaml -o r.md  # Custom YAML-configured report
+```
+
 ### Network Analysis (`network`)
 
 ```bash

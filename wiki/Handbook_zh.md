@@ -16,9 +16,10 @@
 8. [LLM 驱动的 AI 分析](#8-llm-驱动的-ai-分析)
 9. [配置管理](#9-配置管理)
 10. [趋势分析](#10-趋势分析)
-11. [导出与互操作](#11-导出与互操作)
-12. [支持的题录格式](#12-支持的题录格式)
-13. [帮助系统](#13-帮助系统)
+11. [报告生成](#11-报告生成)
+12. [导出与互操作](#12-导出与互操作)
+13. [支持的题录格式](#13-支持的题录格式)
+14. [帮助系统](#14-帮助系统)
 
 ---
 
@@ -517,7 +518,45 @@ citationer trend strategy --top 50        # 分析前 50 个关键词
 
 ---
 
-## 11. 导出与互操作
+---
+
+## 11. 报告生成
+
+### `report quick` — 一键报告
+
+一键生成包含所有分析结果的 Markdown 或 HTML 报告。
+
+```bash
+citationer report quick -o report.md       # Markdown 报告
+citationer report quick -o report.html     # HTML 报告
+citationer report quick --enhance -o r.md  # LLM 增强，AI 生成研究发现章节
+```
+
+**报告内容**: 概览、年度趋势、高产期刊/作者、关键词、主题建模、共现网络。
+
+### `report custom` — 自定义报告
+
+使用 YAML 配置文件定制报告内容。
+
+```bash
+citationer report custom config.yaml -o report.md
+```
+
+**示例 config.yaml**:
+```yaml
+title: "我的文献分析报告"
+sections:
+  - overview
+  - yearly
+  - journals
+  - authors
+  - keywords
+  - topics
+```
+
+---
+
+## 12. 导出与互操作
 
 ### 网络导出格式
 
@@ -548,7 +587,7 @@ citationer text keywords --format json | jq '.keywords[:5]'
 
 ---
 
-## 12. 支持的题录格式
+## 13. 支持的题录格式
 
 | 来源 | 格式 | 扩展名 | 解析器 | 状态 |
 |------|------|--------|--------|------|
@@ -573,7 +612,7 @@ CNKI Excel 导出通过特征中文列标题（题名、作者、来源、关键
 
 ---
 
-## 13. 帮助系统
+## 14. 帮助系统
 
 Citationer 提供三级帮助体系：
 

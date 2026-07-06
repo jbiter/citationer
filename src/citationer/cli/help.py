@@ -57,6 +57,12 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
     ]),
     ("trend", "研究趋势分析", [
         ("hotspots", "关键词突变检测"),
+        ("strategy", "战略坐标图"),
+        ("river", "主题河流图"),
+    ]),
+    ("report", "报告生成", [
+        ("quick", "一键生成报告"),
+        ("custom", "自定义报告"),
     ]),
     ("export", "数据导出", [
         ("csv", "导出 CSV"),

@@ -331,3 +331,82 @@ class TrendEngine:
             )
 
         return StrategyDiagram()
+
+    # ------------------------------------------------------------------
+    # Thematic river
+    # ------------------------------------------------------------------
+
+    def river(self, top_n: int = 8, window: int = 5) -> RiverData:
+        """Build thematic river data: keyword share per time window.
+
+        Splits the publication timeline into sliding windows and tracks
+        the percentage of papers containing each top keyword over time.
+        """
+        from dataclasses import dataclass as _dc
+        from dataclasses import field as _f
+
+        @_dc
+        class _River:
+            windows: list[str] = _f(default_factory=list)
+            keywords: list[str] = _f(default_factory=list)
+            matrix: dict[str, list[float]] = _f(default_factory=dict)
+
+        # Get top keywords
+        kw_counter: dict[str, int] = defaultdict(int)
+        year_kw: dict[int, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        year_total: dict[int, int] = defaultdict(int)
+
+        for r in self._records:
+            y = r.year
+            if y is None:
+                continue
+            all_kw = list(r.keywords)
+            if r.keywords_en:
+                all_kw.extend(r.keywords_en)
+            kws = [k.strip() for k in all_kw if len(k.strip()) >= 2]
+            year_total[y] += 1
+            for kw in kws:
+                kw_counter[kw] += 1
+                year_kw[y][kw] += 1
+
+        top_kw = [kw for kw, _ in sorted(kw_counter.items(), key=lambda x: -x[1])[:top_n]]
+
+        # Build time windows
+        years = sorted(year_total)
+        if len(years) < window:
+            return RiverData()
+
+        window_labels = []
+        for start in range(years[0], years[-1] - window + 2, window):
+            end = start + window - 1
+            window_labels.append(f"{start}-{end}")
+
+        matrix: dict[str, list[float]] = {}
+        for kw in top_kw:
+            shares = []
+            for start in range(years[0], years[-1] - window + 2, window):
+                end = start + window - 1
+                total = 0
+                kw_count = 0
+                for y in range(start, end + 1):
+                    total += year_total.get(y, 0)
+                    kw_count += year_kw.get(y, {}).get(kw, 0)
+                share = (kw_count / total * 100) if total > 0 else 0.0
+                shares.append(round(share, 1))
+            matrix[kw] = shares
+
+        return RiverData(
+            windows=window_labels,
+            keywords=top_kw,
+            matrix=matrix,
+        )
+
+
+# Re-export the inner dataclass at module level
+@dataclass
+class RiverData:
+    """Thematic river data for rendering."""
+
+    windows: list[str] = field(default_factory=list)
+    keywords: list[str] = field(default_factory=list)
+    matrix: dict[str, list[float]] = field(default_factory=dict)

@@ -16,9 +16,10 @@
 8. [LLM-Powered AI Analysis](#8-llm-powered-ai-analysis)
 9. [Configuration](#9-configuration)
 10. [Trend Analysis](#10-trend-analysis)
-11. [Export & Interoperability](#11-export--interoperability)
-12. [Supported Formats](#12-supported-formats)
-13. [Help System](#13-help-system)
+11. [Report Generation](#11-report-generation)
+12. [Export & Interoperability](#12-export--interoperability)
+13. [Supported Formats](#13-supported-formats)
+14. [Help System](#14-help-system)
 
 ---
 
@@ -517,7 +518,45 @@ citationer trend strategy --top 50        # Top-50 keywords
 
 ---
 
-## 11. Export & Interoperability
+---
+
+## 11. Report Generation
+
+### `report quick` — One-click report
+
+Generates a comprehensive Markdown or HTML report including all analysis results.
+
+```bash
+citationer report quick -o report.md       # Markdown report
+citationer report quick -o report.html     # HTML report
+citationer report quick --enhance -o r.md  # LLM-enhanced with AI findings
+```
+
+**Report contents**: Overview, yearly trend, top journals/authors, keywords, topic modeling, co-occurrence network.
+
+### `report custom` — Custom report
+
+Generate a report using a YAML configuration file.
+
+```bash
+citationer report custom config.yaml -o report.md
+```
+
+**Example config.yaml**:
+```yaml
+title: "My Literature Analysis"
+sections:
+  - overview
+  - yearly
+  - journals
+  - authors
+  - keywords
+  - topics
+```
+
+---
+
+## 12. Export & Interoperability
 
 ### Network Export Formats
 
@@ -548,7 +587,7 @@ citationer text keywords --format json | jq '.keywords[:5]'
 
 ---
 
-## 12. Supported Formats
+## 13. Supported Formats
 
 | Source | Format | Extension | Parser | Status |
 |--------|--------|-----------|--------|--------|
@@ -573,7 +612,7 @@ CNKI Excel exports are identified by characteristic Chinese column headers (题�
 
 ---
 
-## 13. Help System
+## 14. Help System
 
 Citationer has a three-tier help system:
 

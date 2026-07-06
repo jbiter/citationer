@@ -27,6 +27,7 @@ from citationer.cli import (
     export_cmd,
     import_cmd,
     network_cmd,
+    report_cmd,
     scan_cmd,
     stats_cmd,
     text_cmd,
@@ -82,6 +83,7 @@ app.add_typer(network_cmd.app, name="network")
 app.add_typer(config_cmd.app, name="config")
 app.add_typer(export_cmd.app, name="export")
 app.add_typer(trend_cmd.app, name="trend")
+app.add_typer(report_cmd.app, name="report")
 
 
 @app.callback()
