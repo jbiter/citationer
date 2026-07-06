@@ -15,9 +15,10 @@
 7. [Network Analysis](#7-network-analysis)
 8. [LLM-Powered AI Analysis](#8-llm-powered-ai-analysis)
 9. [Configuration](#9-configuration)
-10. [Export & Interoperability](#10-export--interoperability)
-11. [Supported Formats](#11-supported-formats)
-12. [Help System](#12-help-system)
+10. [Trend Analysis](#10-trend-analysis)
+11. [Export & Interoperability](#11-export--interoperability)
+12. [Supported Formats](#12-supported-formats)
+13. [Help System](#13-help-system)
 
 ---
 
@@ -477,7 +478,46 @@ citationer config set llm.api_key ollama    # Ollama doesn't require a real key
 
 ---
 
-## 10. Export & Interoperability
+## 10. Trend Analysis
+
+### `trend hotspots` — Keyword burst detection
+
+Identifies keywords that suddenly spike in frequency, revealing emerging research topics.
+
+```bash
+citationer trend hotspots --top 30        # Top-30 keywords
+citationer trend hotspots --gamma 0.5     # More sensitive (detects weaker bursts)
+citationer trend hotspots --min-years 3   # Min 3 consecutive years
+```
+
+**Parameters**:
+- `--top N`: Number of top keywords to analyze (default 30)
+- `--gamma`: Sensitivity (0.5 = sensitive, 2.0 = only strong bursts)
+- `--min-years`: Minimum consecutive years to qualify as a burst
+
+**Output**: Table of detected bursts with keyword, time period, strength, and trend direction (📈 rising / 📉 declining).
+
+### `trend strategy` — Strategic diagram
+
+Builds a keyword co-occurrence network, detects theme clusters, and plots them on a centrality × density quadrant diagram.
+
+```bash
+citationer trend strategy --top 50        # Top-50 keywords
+```
+
+**Quadrants**:
+| Quadrant | Name | Meaning |
+|----------|------|---------|
+| Q1 (high C, high D) | 🚀 Motor | Well-developed, central themes |
+| Q2 (low C, high D) | 🔬 Niche | Well-developed, peripheral themes |
+| Q3 (low C, low D) | 🌱 Emerging | Under-developed, weak connections |
+| Q4 (high C, low D) | 📚 Basic | Important but under-developed |
+
+**Output**: Table of themes with centrality/density scores + terminal scatter plot.
+
+---
+
+## 11. Export & Interoperability
 
 ### Network Export Formats
 
@@ -508,7 +548,7 @@ citationer text keywords --format json | jq '.keywords[:5]'
 
 ---
 
-## 11. Supported Formats
+## 12. Supported Formats
 
 | Source | Format | Extension | Parser | Status |
 |--------|--------|-----------|--------|--------|
@@ -533,7 +573,7 @@ CNKI Excel exports are identified by characteristic Chinese column headers (题�
 
 ---
 
-## 12. Help System
+## 13. Help System
 
 Citationer has a three-tier help system:
 

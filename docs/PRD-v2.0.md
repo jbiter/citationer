@@ -956,7 +956,7 @@ class Record(BaseModel):
 ### Phase 3: 趋势分析与报告 — 进行中 (v2.10.0+)
 
 - [x] 关键词突变检测 — `trend hotspots`
-- [ ] 战略坐标图 — `trend strategy` (X=向心度, Y=密度, 四象限主题定位)
+- [x] 战略坐标图 — `trend strategy` (X=向心度, Y=密度, 四象限主题定位)
 - [ ] 主题河流图 — `trend river` (主题强度随时间变化)
 - [ ] 快速报告 — `report quick` (Markdown / HTML / PDF)
 - [ ] 自定义报告 — `report custom` (Jinja2 模板，学术/PPT/简洁风)

@@ -106,6 +106,22 @@ citationer text summarize              # TF-IDF extractive summary
 citationer text cluster --method kmeans  # Document clustering
 ```
 
+### Trend Analysis (`trend`)
+
+```bash
+citationer trend hotspots --top 30        # Keyword burst detection
+citationer trend hotspots --gamma 0.5     # More sensitive (detects weaker bursts)
+citationer trend strategy --top 50        # Strategic diagram (centrality × density)
+```
+
+### Export (`export`)
+
+```bash
+citationer export csv -o data.csv         # Export to CSV
+citationer export json -o data.json       # Export to JSON
+citationer export bibtex -o refs.bib     # Export to BibTeX
+```
+
 ### Network Analysis (`network`)
 
 ```bash
