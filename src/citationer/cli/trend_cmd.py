@@ -244,7 +244,7 @@ def river(
 
 
 def _plot_river(result) -> None:
-    """Render a stacked bar chart for the thematic river."""
+    """Render a multi-line chart for the thematic river."""
     if not result.keywords or not result.windows:
         return
 
@@ -256,23 +256,15 @@ def _plot_river(result) -> None:
     plt.clf()
     plt.plotsize(80, min(20, len(result.keywords) + 6))
 
-    # Build stacked bars
     x_indices = list(range(len(result.windows)))
-    bottom = [0.0] * len(result.windows)
 
-    for kw in result.keywords[:8]:
+    for kw in result.keywords[:6]:
         shares = result.matrix.get(kw, [])
         if not shares:
             continue
-        # Pad if needed
         while len(shares) < len(result.windows):
             shares.append(0.0)
-        plt.bar(
-            x_indices, shares, bottom=bottom,
-            label=kw[:15],
-            orientation="v",
-        )
-        bottom = [b + s for b, s in zip(bottom, shares)]
+        plt.plot(x_indices, shares, marker="braille", label=kw[:15])
 
     plt.xticks(x_indices, result.windows)
     plt.title("Thematic River")
