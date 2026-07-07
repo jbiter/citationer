@@ -96,23 +96,22 @@ class CnkiExcelParser(BaseParser):
             wb.close()
             return []
 
-        rows = list(ws.iter_rows(values_only=True))
-        wb.close()
-
-        if not rows:
+        rows_iter = ws.iter_rows(values_only=True)
+        first = next(rows_iter, None)
+        if first is None:
+            wb.close()
             return []
 
-        header_row = [str(c).strip() if c else "" for c in rows[0]]
+        header_row = [str(c).strip() if c else "" for c in first]
         col_index = self._build_column_index(header_row)
 
         records: list[Record] = []
-        for row in rows[1:]:
+        for row in rows_iter:
             if all(c is None or str(c).strip() == "" for c in row):
                 continue
+            records.append(self._parse_row(row, col_index, filepath.name))
 
-            record = self._parse_row(row, col_index, filepath.name)
-            records.append(record)
-
+        wb.close()
         return records
 
     def _build_column_index(self, headers: list[str]) -> dict[str, int]:
