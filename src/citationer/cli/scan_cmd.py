@@ -10,6 +10,8 @@ from rich.table import Table
 
 from citationer.parsers.base import ParserRegistry
 from citationer.parsers.cnki import CnkiExcelParser
+from citationer.parsers.cssci import CssciParser
+from citationer.parsers.pubmed import PubMedParser
 from citationer.parsers.scopus import ScopusParser
 from citationer.parsers.wos import WosExcelParser, WosTabDelimitedParser, WosTextParser
 
@@ -30,6 +32,8 @@ def get_registry() -> ParserRegistry:
         _registry.register(WosTextParser())
         _registry.register(WosExcelParser())
         _registry.register(ScopusParser())
+        _registry.register(PubMedParser())
+        _registry.register(CssciParser())
     return _registry
 
 
