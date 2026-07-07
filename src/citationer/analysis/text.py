@@ -474,24 +474,42 @@ class TextEngine:
         except ImportError:
             return SummarizeResult()
 
-        # Collect all sentences from titles + abstracts
+        # Collect sentences; cap at 5000 to keep TF-IDF matrix manageable.
+        # For large datasets the first pass collects titles only (which are
+        # shorter and more informative), falling back to abstracts only if
+        # needed.
+        max_input = 5000
         all_sentences: list[str] = []
+
+        # First pass: titles (most informative, fewer sentences)
         for r in self._records:
-            for field_name in ("title", "abstract"):
-                text = getattr(r, field_name, None)
-                if text:
-                    sents = re.split(r"[.。！!？?\n]+", str(text))
+            if r.title:
+                sents = re.split(r"[.。！!？?\n]+", str(r.title))
+                all_sentences.extend(s.strip() for s in sents if len(s.strip()) > 10)
+                if len(all_sentences) >= max_input:
+                    break
+
+        # Second pass: abstracts (only if we have room)
+        if len(all_sentences) < max_input:
+            for r in self._records:
+                if r.abstract:
+                    sents = re.split(r"[.。！!？?\n]+", str(r.abstract))
                     all_sentences.extend(s.strip() for s in sents if len(s.strip()) > 10)
+                    if len(all_sentences) >= max_input:
+                        break
 
         if not all_sentences:
             return SummarizeResult()
+
+        # Cap total input
+        all_sentences = all_sentences[:max_input]
 
         # TF-IDF vectorize
         vectorizer = TfidfVectorizer(stop_words="english", max_features=1000)
         tfidf_matrix = vectorizer.fit_transform(all_sentences)
 
         # Score each sentence by sum of TF-IDF weights
-        scores = [tfidf_matrix[i].sum() for i in range(len(all_sentences))]
+        scores = tfidf_matrix.sum(axis=1).A1  # dense array from sparse sums
 
         # Select top sentences
         ranked = sorted(

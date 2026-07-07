@@ -11,9 +11,20 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from difflib import SequenceMatcher
 
 from citationer.models.record import Record
+
+# Prefer rapidfuzz (C implementation, 5-10× faster) over difflib.
+try:
+    from rapidfuzz import fuzz as _fuzz
+
+    def _str_similarity(t1: str, t2: str) -> float:
+        return _fuzz.ratio(t1, t2) / 100.0
+except ImportError:
+    from difflib import SequenceMatcher
+
+    def _str_similarity(t1: str, t2: str) -> float:
+        return SequenceMatcher(None, t1, t2).ratio()
 
 
 def _normalize_title(title: str) -> str:
@@ -30,20 +41,16 @@ def _normalize_title(title: str) -> str:
 
 
 def _title_similarity(title1: str, title2: str, threshold: float = 0.0) -> float:
-    """Calculate title similarity using SequenceMatcher on normalized titles.
+    """Calculate title similarity using rapidfuzz or difflib.
 
-    Uses *quick_ratio()* as a fast pre-filter — if the upper-bound estimate is
-    already below *threshold*, returns 0.0 immediately without the full O(N*M)
-    comparison.
+    When rapidfuzz is installed the comparison uses a C implementation of
+    Levenshtein ratio, which is 5-10× faster than difflib.SequenceMatcher.
     """
     t1 = _normalize_title(title1)
     t2 = _normalize_title(title2)
     if not t1 or not t2:
         return 0.0
-    m = SequenceMatcher(None, t1, t2)
-    if threshold > 0 and m.quick_ratio() < threshold:
-        return 0.0
-    return m.ratio()
+    return _str_similarity(t1, t2)
 
 
 def _merge_records(r1: Record, r2: Record) -> Record:
@@ -362,7 +369,7 @@ class DedupEngine:
                     # Journal match (fuzzy)
                     j1 = (r1.journal or "").lower()
                     j2 = (r2.journal or "").lower()
-                    journal_sim = SequenceMatcher(None, j1, j2).ratio() if j1 and j2 else 0
+                    journal_sim = _str_similarity(j1, j2) if j1 and j2 else 0
 
                     # Pages match
                     pages_match = bool(

@@ -48,6 +48,7 @@ all = [
     "jieba>=0.42",
     "gensim>=4.3",
     "scikit-learn>=1.4",
+    "rapidfuzz>=3.0",
     "networkx>=3.2",
     "python-louvain>=0.16",
     "plotly>=5.18",
