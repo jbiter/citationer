@@ -9,9 +9,11 @@ from rich.console import Console
 from rich.table import Table
 
 from citationer.parsers.base import ParserRegistry
+from citationer.parsers.bibtex import BibTeXParser
 from citationer.parsers.cnki import CnkiExcelParser
 from citationer.parsers.cssci import CssciParser
 from citationer.parsers.pubmed import PubMedParser
+from citationer.parsers.ris import RISParser
 from citationer.parsers.scopus import ScopusParser
 from citationer.parsers.wos import WosExcelParser, WosTabDelimitedParser, WosTextParser
 
@@ -34,6 +36,8 @@ def get_registry() -> ParserRegistry:
         _registry.register(ScopusParser())
         _registry.register(PubMedParser())
         _registry.register(CssciParser())
+        _registry.register(BibTeXParser())
+        _registry.register(RISParser())
     return _registry
 
 
