@@ -37,7 +37,12 @@ jobs:
         run: mypy src/ --ignore-missing-imports
 
       - name: Test with pytest
-        run: pytest tests/ -v --cov=src/citationer --cov-report=term-missing
+        run: pytest tests/ -v --cov=src/citationer --cov-report=term-missing --cov-fail-under=75
+
+      # NOTE: Coverage gate is set at 75% (current level).
+      # Goal: raise to 80% in next phase (see issue #18 + P4-1 follow-up).
+      # CLI modules with 0-30% coverage (clean_cmd, interactive_cmd, run_cmd)
+      # need additional test work to reach 80%.
 
   publish:
     needs: test
