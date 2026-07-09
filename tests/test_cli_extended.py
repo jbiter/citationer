@@ -14,15 +14,11 @@ Focuses on:
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
-from openpyxl import Workbook
-from typer.testing import CliRunner
 
 from citationer.cli.main import app
-
 
 # ===========================================================================
 # Helper: rich dataset for exercising real paths
@@ -500,7 +496,6 @@ class TestRunExtended:
             "    args:\n"
             "      type: overview\n"
         )
-        out_dir = clean_cwd / "output_run"
         # Without -o flag (which may have argparse issues in test env)
         result = cli_runner.invoke(app, ["run", str(f)])
         # Either succeeds or reports data issue — both are valid

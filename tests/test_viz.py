@@ -10,8 +10,6 @@ We don't visually inspect charts, but we verify:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import matplotlib
 import pytest
 
@@ -22,7 +20,6 @@ from citationer.viz.charts import (
     setup_chinese_font,
 )
 from citationer.viz.terminal_charts import plot_hbar, plot_line, plot_line_dual
-
 
 # Use non-GUI backend for headless testing
 matplotlib.use("Agg")
@@ -49,7 +46,6 @@ class TestSetupChineseFont:
 
 class TestGenerateYearlyChart:
     def test_creates_png_file(self, tmp_path):
-        from citationer.analysis.stats import StatsEngine
         from citationer.models.record import Author, Record
 
         records = [

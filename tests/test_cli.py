@@ -12,16 +12,12 @@ Covers:
 from __future__ import annotations
 
 import json
-import sqlite3
 from pathlib import Path
 
-import pytest
 from openpyxl import Workbook
-from typer.testing import CliRunner
 
 from citationer.cli.main import app
-from citationer.utils.config import get_config_path, get_db_path
-
+from citationer.utils.config import get_config_path
 
 # ===========================================================================
 # Main app: --version, --help
@@ -128,15 +124,14 @@ class TestCleanCommand:
 
 def _setup_test_data(clean_cwd: Path) -> None:
     """Insert a few test records into the database for CLI tests."""
-    import tempfile
 
     # Create the .citationer dir
     db_dir = clean_cwd / ".citationer"
     db_dir.mkdir(exist_ok=True)
 
     # Direct DB insert (bypass import command for speed)
-    from citationer.utils.database import CitationDatabase
     from citationer.models.record import Author, Record
+    from citationer.utils.database import CitationDatabase
     from citationer.utils.serialization import record_to_db_serializable
 
     db = CitationDatabase(db_dir / "cache.db")
@@ -352,7 +347,9 @@ class TestAiCommands:
         result = cli_runner.invoke(app, ["ai", "summarize", "--dry-run"])
         assert result.exit_code == 0
 
-    def test_summarize_with_mock(self, cli_runner, clean_cwd, monkeypatch, mock_llm_response, stub_api_key):
+    def test_summarize_with_mock(
+        self, cli_runner, clean_cwd, monkeypatch, mock_llm_response, stub_api_key
+    ):
         """ai summarize with stubbed LLM (skipped if mock signature incompatible)."""
         mock_llm_response(content="This is a stubbed literature review.")
         _setup_test_data(clean_cwd)

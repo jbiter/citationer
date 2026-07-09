@@ -22,7 +22,6 @@ from citationer.analysis.trend import (
 )
 from citationer.models.record import Author, Record
 
-
 # ===========================================================================
 # Test fixtures: tailored records for trend analysis scenarios
 # ===========================================================================
@@ -297,8 +296,6 @@ class TestHotspots:
         result = engine.hotspots(top_n=5)
         # The burst detection should aggregate by token (both 机器学习 and machine learning
         # are distinct tokens, so 2 separate keywords)
-        all_kws = {b.keyword for b in result.bursts}
-        # Both should appear (or at least be analyzed)
         # Not a strict assertion on bursts (depends on baseline)
         assert isinstance(result.bursts, list)
 

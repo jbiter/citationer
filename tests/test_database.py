@@ -10,17 +10,13 @@ Covers:
 from __future__ import annotations
 
 import json
-import sqlite3
 from datetime import datetime
 from pathlib import Path
-
-import pytest
 
 from citationer.models.record import Author, DocType, Institution, Record
 from citationer.utils.database import CitationDatabase
 from citationer.utils.db_loader import load_records_from_db
 from citationer.utils.serialization import record_to_db_serializable
-
 
 # ===========================================================================
 # CitationDatabase — initialization

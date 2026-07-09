@@ -15,12 +15,10 @@ Covers:
 
 from __future__ import annotations
 
-import pytest
 from xml.etree import ElementTree
 
 from citationer.models.record import DocType
 from citationer.parsers.pubmed import PubMedParser
-
 
 # ===========================================================================
 # Detection
@@ -31,14 +29,16 @@ class TestPubMedDetect:
     def test_detect_xml_pubmed(self, tmp_path):
         f = tmp_path / "test.xml"
         f.write_text(
-            '<?xml version="1.0"?><PubmedArticleSet><PubmedArticle></PubmedArticle></PubmedArticleSet>'
+            '<?xml version="1.0"?><PubmedArticleSet>'
+            "<PubmedArticle></PubmedArticle></PubmedArticleSet>"
         )
         assert PubMedParser().detect(f) is True
 
     def test_detect_medline_xml(self, tmp_path):
         f = tmp_path / "test.xml"
         f.write_text(
-            '<?xml version="1.0"?><MedlineCitationSet><MedlineCitation></MedlineCitation></MedlineCitationSet>'
+            '<?xml version="1.0"?><MedlineCitationSet>'
+            "<MedlineCitation></MedlineCitation></MedlineCitationSet>"
         )
         assert PubMedParser().detect(f) is True
 

@@ -9,7 +9,6 @@ These fixtures provide:
 
 from __future__ import annotations
 
-import os
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -18,7 +17,6 @@ from typer.testing import CliRunner
 
 from citationer.models.record import Author, DocType, Institution, Record
 from citationer.utils.database import CitationDatabase
-
 
 # ---------------------------------------------------------------------------
 # Records

@@ -13,16 +13,9 @@ Covers:
 
 from __future__ import annotations
 
-import csv
-import io
-from pathlib import Path
-
-import openpyxl
-import pytest
 from openpyxl import Workbook
 
 from citationer.parsers.wos import WosExcelParser, WosTabDelimitedParser, WosTextParser
-
 
 # ===========================================================================
 # WosTextParser
@@ -293,7 +286,8 @@ class TestWosTextParse:
         )
         r = WosTextParser().parse(f)[0]
         # Funding is parsed and stored
-        assert r.funding is not None or "funding" in r.raw_data or True  # implementation may store differently
+        # implementation may store differently
+        assert r.funding is not None or "funding" in r.raw_data or True
 
 
 # ===========================================================================
@@ -441,7 +435,10 @@ class TestWosExcelParse:
     def test_parse_column_aliases(self, tmp_path):
         """Column names may use 'Journal' instead of 'Source Title'."""
         f = tmp_path / "alias.xlsx"
-        headers = ["Publication Type", "Article Title", "Authors", "Journal", "Publication Year", "DOI"]
+        headers = [
+            "Publication Type", "Article Title", "Authors",
+            "Journal", "Publication Year", "DOI",
+        ]
         _make_wos_xlsx(
             headers,
             [["Article", "Test", "Smith, J", "Nature", 2024, "10.1000/x"]],

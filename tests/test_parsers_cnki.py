@@ -14,8 +14,6 @@ Covers:
 
 from __future__ import annotations
 
-import openpyxl
-import pytest
 from openpyxl import Workbook
 
 from citationer.models.record import DocType
@@ -156,7 +154,10 @@ class TestCnkiParse:
         f = tmp_path / "test.xlsx"
         _make_cnki_xlsx(
             CNKI_HEADERS,
-            [["论文", "", "清华大学;北京大学;中科院", "期刊", "2024", "", "", "", "", "", "", "", "", ""]],
+            [[
+                "论文", "", "清华大学;北京大学;中科院", "期刊", "2024",
+                "", "", "", "", "", "", "", "", "",
+            ]],
             f,
         )
         r = CnkiExcelParser().parse(f)[0]
@@ -168,7 +169,11 @@ class TestCnkiParse:
         f = tmp_path / "test.xlsx"
         _make_cnki_xlsx(
             CNKI_HEADERS,
-            [["论文", "", "", "期刊", "2024", "深度学习;;图像识别;;神经网络", "", "", "", "", "", "", "", ""]],
+            [[
+                "论文", "", "", "期刊", "2024",
+                "深度学习;;图像识别;;神经网络",
+                "", "", "", "", "", "", "", "",
+            ]],
             f,
         )
         r = CnkiExcelParser().parse(f)[0]
@@ -188,7 +193,11 @@ class TestCnkiParse:
         f = tmp_path / "test.xlsx"
         _make_cnki_xlsx(
             CNKI_HEADERS,
-            [["论文", "", "", "期刊", "2024", "", "", "", "国家自然科学基金;国家重点研发计划", "", "", "", "", ""]],
+            [[
+                "论文", "", "", "期刊", "2024", "", "", "",
+                "国家自然科学基金;国家重点研发计划",
+                "", "", "", "", "",
+            ]],
             f,
         )
         r = CnkiExcelParser().parse(f)[0]
