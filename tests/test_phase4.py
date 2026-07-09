@@ -328,7 +328,7 @@ class TestScopusParser:
 
 
 class TestPipelineRunner:
-    def test_run_stats_overview(self, tmp_path):
+    def test_run_stats_overview(self, tmp_path, monkeypatch):
         from typer.testing import CliRunner
 
         from citationer.cli.run_cmd import app
@@ -359,17 +359,16 @@ class TestPipelineRunner:
             encoding="utf-8",
         )
 
-        # Mock DB path
-        from citationer.utils import config as cfg_module
-        original = cfg_module.get_db_path
-        cfg_module.get_db_path = lambda: db_path
-        try:
-            runner = CliRunner()
-            result = runner.invoke(app, [str(cfg)])
-            assert result.exit_code == 0
-            assert (tmp_path / "out" / "overview.txt").exists()
-        finally:
-            cfg_module.get_db_path = original
+        # Mock DB path using pytest monkeypatch
+        import citationer.cli.run_cmd as run_mod
+        import citationer.utils.config as cfg_mod
+        monkeypatch.setattr(cfg_mod, "get_db_path", lambda: db_path)
+        monkeypatch.setattr(run_mod, "get_db_path", lambda: db_path)
+
+        runner = CliRunner()
+        result = runner.invoke(app, [str(cfg)])
+        assert result.exit_code == 0
+        assert (tmp_path / "out" / "overview.txt").exists()
 
     def test_pipeline_validation(self, tmp_path):
         import pytest as _pytest
