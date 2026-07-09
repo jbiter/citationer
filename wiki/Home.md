@@ -1,4 +1,4 @@
-# Citationer v3
+# Citationer
 
 > A terminal-first bibliometric analysis CLI tool.
 
