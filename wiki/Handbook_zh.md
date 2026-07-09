@@ -595,10 +595,11 @@ citationer text keywords --format json | jq '.keywords[:5]'
 | Web of Science | 制表符分隔 | `.txt`、`.tsv`、`.csv` | `WosTabDelimitedParser` | ✅ |
 | Web of Science | Excel 导出 | `.xlsx`、`.xls` | `WosExcelParser` | ✅ |
 | CNKI（知网） | Excel 导出 | `.xlsx` | `CnkiExcelParser` | ✅ |
-| Scopus | CSV/Excel | `.csv`、`.xlsx` | — | 🔜 Phase 3 |
-| PubMed | XML/MEDLINE | `.xml`、`.nbib` | — | 🔜 Phase 3 |
-| BibTeX | 通用格式 | `.bib` | — | 🔜 Phase 3 |
-| RIS | 通用格式 | `.ris` | — | 🔜 Phase 3 |
+| Scopus | CSV/Excel | `.csv`、`.xlsx` | `ScopusParser` | ✅ |
+| PubMed | XML/MEDLINE | `.xml`、`.nbib` | `PubMedParser` | ✅ |
+| CSSCI | Excel/Text | `.xlsx`、`.txt`、`.csv` | `CssciParser` | ✅ |
+| BibTeX | 通用格式 | `.bib` | `BibTeXParser` | ✅ |
+| RIS | 通用格式 | `.ris`、`.txt` | `RISParser` | ✅ |
 
 ### CNKI 文件识别
 

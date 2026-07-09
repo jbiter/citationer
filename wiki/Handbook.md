@@ -595,10 +595,11 @@ citationer text keywords --format json | jq '.keywords[:5]'
 | Web of Science | Tab-delimited | `.txt`, `.tsv`, `.csv` | `WosTabDelimitedParser` | ✅ |
 | Web of Science | Excel export | `.xlsx`, `.xls` | `WosExcelParser` | ✅ |
 | CNKI (知网) | Excel export | `.xlsx` | `CnkiExcelParser` | ✅ |
-| Scopus | CSV/Excel | `.csv`, `.xlsx` | — | 🔜 Phase 3 |
-| PubMed | XML/MEDLINE | `.xml`, `.nbib` | — | 🔜 Phase 3 |
-| BibTeX | Generic | `.bib` | — | 🔜 Phase 3 |
-| RIS | Generic | `.ris` | — | 🔜 Phase 3 |
+| Scopus | CSV/Excel | `.csv`, `.xlsx` | `ScopusParser` | ✅ |
+| PubMed | XML/MEDLINE | `.xml`, `.nbib` | `PubMedParser` | ✅ |
+| CSSCI | Excel/Text | `.xlsx`, `.txt`, `.csv` | `CssciParser` | ✅ |
+| BibTeX | Generic | `.bib` | `BibTeXParser` | ✅ |
+| RIS | Generic | `.ris`, `.txt` | `RISParser` | ✅ |
 
 ### File Naming for CNKI Detection
 

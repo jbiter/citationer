@@ -14,13 +14,15 @@
 
 | Category | Capability |
 |----------|-----------|
-| 🔍 **Format Detection** | Auto-detect CNKI, Web of Science exports (.xlsx, .txt, .ciw) |
+| 🔍 **7 Parsers** | CNKI, WoS, Scopus, PubMed, CSSCI, BibTeX, RIS — auto-detection |
 | 📊 **Descriptive Stats** | Yearly trends, top journals/authors/institutions, h-index — with **terminal charts** |
 | 📈 **Terminal Charts** | Braille line charts + Unicode bar charts rendered directly in terminal |
 | 🔗 **Network Analysis** | Keyword co-occurrence, author/institution collaboration, co-citation, bibliographic coupling |
-| 📝 **Text Mining** | Tokenization (jieba + spaCy), keyword frequency, LDA/NMF topic modeling, TF-IDF summarization, clustering |
-| 🤖 **LLM-Powered AI** | Topic labeling, literature review generation, trend identification, multi-dimensional classification — supports DeepSeek, OpenAI, Ollama |
-| ⚙ **Configurable** | CLI-driven config (`config show/set/init`), env-var support, multi-provider LLM |
+| 📝 **Text Mining** | Tokenization, keyword frequency, LDA/NMF topic modeling, TF-IDF summarization, clustering |
+| 🤖 **LLM-Powered AI** | Topic labeling, literature review, trend identification, classification — DeepSeek/OpenAI/Ollama |
+| 🆕 **Interactive Mode** | Step-by-step wizard (`citationer interactive`) |
+| 🆕 **Pipeline Runner** | Declarative YAML pipeline (`citationer run pipeline.yaml`) |
+| ⚙ **Configurable** | CLI-driven config, env-var support, multi-provider LLM |
 | 🎨 **Rich Terminal** | Color tables, progress bars, interactive HTML network graphs (Plotly) |
 | 📦 **Pipe-friendly** | JSON/CSV/GEXF/GraphML export — works with `grep`, `jq`, Gephi, Cytoscape |
 
@@ -162,6 +164,18 @@ citationer ai info                    # View LLM config & cache stats
 citationer ai summarize --dry-run
 ```
 
+### Interactive Mode (`interactive`)
+
+```bash
+citationer interactive              # Step-by-step guided analysis wizard
+```
+
+### Pipeline Runner (`run`)
+
+```bash
+citationer run pipeline.yaml         # Execute declarative YAML pipeline
+```
+
 ### Configuration (`config`)
 
 ```bash
@@ -202,11 +216,13 @@ Environment variables override the config file: `CITATIONER_LLM_API_KEY`, `CITAT
 
 | Source | Format | Extensions | Status |
 |--------|--------|-----------|--------|
-| **Web of Science** | Plain text / Tab-delimited / Excel | `.txt`, `.ciw`, `.xlsx`, `.xls` | ✅ Stable |
-| **CNKI (知网)** | Excel export | `.xlsx` | ✅ Stable |
-| Scopus | CSV/Excel | `.csv`, `.xlsx` | 🔜 Phase 3 |
-| PubMed | XML/MEDLINE | `.xml`, `.nbib` | 🔜 Phase 3 |
-| BibTeX / RIS | Generic | `.bib`, `.ris` | 🔜 Phase 3 |
+| **Web of Science** | Plain text / Tab-delimited / Excel | `.txt`, `.ciw`, `.xlsx`, `.xls` | ✅ |
+| **CNKI (知网)** | Excel export | `.xlsx` | ✅ |
+| **Scopus** | CSV / Excel | `.csv`, `.xlsx` | ✅ |
+| **PubMed** | XML / MEDLINE | `.xml`, `.nbib` | ✅ |
+| **CSSCI** | Excel / Text | `.xlsx`, `.txt`, `.csv` | ✅ |
+| **BibTeX** | Generic | `.bib` | ✅ |
+| **RIS** | Generic | `.ris`, `.txt` | ✅ |
 
 ---
 
