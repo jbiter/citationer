@@ -70,6 +70,14 @@ def _import_report():
     from citationer.cli import report_cmd
     return report_cmd
 
+def _import_interactive():
+    from citationer.cli import interactive_cmd
+    return interactive_cmd
+
+def _import_run():
+    from citationer.cli import run_cmd
+    return run_cmd
+
 
 class _RootGroup(TyperGroup):
     """Custom TyperGroup that shows our L1 overview for top-level --help.
@@ -161,6 +169,8 @@ def _register():
     app.add_typer(_import_export().app, name="export")
     app.add_typer(_import_trend().app, name="trend")
     app.add_typer(_import_report().app, name="report")
+    app.add_typer(_import_interactive().app, name="interactive")
+    app.add_typer(_import_run().app, name="run")
 
 _register._done = False  # type: ignore[attr-defined]
 

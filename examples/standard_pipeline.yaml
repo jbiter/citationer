@@ -1,0 +1,70 @@
+# Standard Citationer analysis pipeline
+# Run with: ctr run examples/standard_pipeline.yaml
+name: standard_analysis
+output_dir: output/standard
+
+steps:
+  - name: overview
+    action: stats
+    type: overview
+    output: stats_overview.txt
+
+  - name: yearly
+    action: stats
+    type: yearly
+    output: stats_yearly.csv
+
+  - name: top_journals
+    action: stats
+    type: journals
+    top: 20
+    output: stats_journals.csv
+
+  - name: top_authors
+    action: stats
+    type: authors
+    top: 20
+    output: stats_authors.csv
+
+  - name: top_institutions
+    action: stats
+    type: institutions
+    top: 20
+    output: stats_institutions.csv
+
+  - name: keywords
+    action: text
+    type: keywords
+    top: 30
+    output: text_keywords.csv
+
+  - name: topics
+    action: text
+    type: topics
+    num_topics: 5
+    method: lda
+    output: text_topics.txt
+
+  - name: cooccurrence
+    action: network
+    type: keywords
+    top: 30
+    threshold: 3
+    output: network_cooccurrence.csv
+
+  - name: coauthors
+    action: network
+    type: coauthors
+    min_papers: 2
+    output: network_coauthors.csv
+
+  - name: hotspots
+    action: trend
+    type: hotspots
+    top: 30
+    output: trend_hotspots.csv
+
+  - name: export
+    action: export
+    format: csv
+    output: final_export.csv
