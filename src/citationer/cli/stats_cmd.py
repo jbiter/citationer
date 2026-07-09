@@ -114,8 +114,8 @@ def yearly(
     table: bool = typer.Option(
         False, "--table", "-t", help="同时显示数据表格"
     ),
-    save_png: Path | None = typer.Option(
-        None, "--save-png", help="保存为 PNG 图片（默认 output/viz/）"
+    save_img: Path | None = typer.Option(
+        None, "--save", help="保存为 PNG/SVG 图片（默认 output/viz/）"
     ),
 ) -> None:
     """年度发表趋势分析。默认显示 braille 折线图。"""
@@ -134,8 +134,8 @@ def yearly(
     counts = [stats.year_counts[y] for y in years]
 
     # ── PNG export ──
-    if save_png:
-        out = _resolve_png(save_png, "yearly_trend.png")
+    if save_img:
+        out = _resolve_png(save_img, "yearly_trend.png")
         generate_yearly_chart(records, out, cumulative=cumulative)
         console.print(f"[green]📈 PNG 已保存: {out}[/green]")
 
@@ -191,8 +191,8 @@ def journals(
     table: bool = typer.Option(
         False, "--table", "-t", help="同时显示数据表格"
     ),
-    save_png: Path | None = typer.Option(
-        None, "--save-png", help="保存为 PNG 图片（默认 output/viz/）"
+    save_img: Path | None = typer.Option(
+        None, "--save", help="保存为 PNG/SVG 图片（默认 output/viz/）"
     ),
 ) -> None:
     """期刊/来源分析：Top-N 高产期刊。默认显示水平条形图。"""
@@ -209,8 +209,8 @@ def journals(
         values = [count for _, count in result.items]
         plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Journals")
 
-    if save_png:
-        out = _resolve_png(save_png, "top_journals.png")
+    if save_img:
+        out = _resolve_png(save_img, "top_journals.png")
         generate_top_n_chart(
             result.items, out, title=f"Top {min(top, len(result.items))} Journals",
             xlabel="Publications",
@@ -248,8 +248,8 @@ def authors(
     table: bool = typer.Option(
         False, "--table", "-t", help="同时显示数据表格"
     ),
-    save_png: Path | None = typer.Option(
-        None, "--save-png", help="保存为 PNG 图片（默认 output/viz/）"
+    save_img: Path | None = typer.Option(
+        None, "--save", help="保存为 PNG/SVG 图片（默认 output/viz/）"
     ),
 ) -> None:
     """作者分析：高产作者、独著率、合作率等。默认显示水平条形图。"""
@@ -266,8 +266,8 @@ def authors(
         values = [count for _, count in result.top_authors.items]
         plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Authors")
 
-    if save_png:
-        out = _resolve_png(save_png, "top_authors.png")
+    if save_img:
+        out = _resolve_png(save_img, "top_authors.png")
         generate_top_n_chart(
             result.top_authors.items, out,
             title=f"Top {min(top, len(result.top_authors.items))} Authors",
@@ -330,8 +330,8 @@ def institutions(
     table: bool = typer.Option(
         False, "--table", "-t", help="同时显示数据表格"
     ),
-    save_png: Path | None = typer.Option(
-        None, "--save-png", help="保存为 PNG 图片（默认 output/viz/）"
+    save_img: Path | None = typer.Option(
+        None, "--save", help="保存为 PNG/SVG 图片（默认 output/viz/）"
     ),
 ) -> None:
     """机构分析：Top-N 高产机构和分布。默认显示水平条形图。"""
@@ -348,8 +348,8 @@ def institutions(
         values = [count for _, count in result.items]
         plot_hbar(labels, values, title=f"Top {min(top, len(labels))} Institutions")
 
-    if save_png:
-        out = _resolve_png(save_png, "top_institutions.png")
+    if save_img:
+        out = _resolve_png(save_img, "top_institutions.png")
         generate_top_n_chart(
             result.items, out, title=f"Top {min(top, len(result.items))} Institutions",
             xlabel="Publications",
@@ -376,3 +376,49 @@ def institutions(
 
     console.print(tbl)
     console.print(f"共 {result.total_unique} 个不同机构")
+
+
+# ── citations ─────────────────────────────────────────────────────
+
+
+@app.command(name="citations")
+def citations(
+    top_n: int = typer.Option(20, "--top", "-n", help="显示 Top-N 高被引论文"),
+) -> None:
+    """引用分析：高被引论文排名、引用分布统计。"""
+    records = _get_records()
+    if not records:
+        return
+
+    # Top cited papers
+    cited = [(r, r.citation_count or 0) for r in records if r.citation_count]
+    cited.sort(key=lambda x: -x[1])
+    top = cited[:top_n]
+
+    table = Table(
+        title=f"📖 Top-{min(top_n, len(top))} 高被引论文",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    table.add_column("#", justify="right", style="dim")
+    table.add_column("标题")
+    table.add_column("引用数", justify="right")
+    table.add_column("年份", justify="center")
+
+    for i, (r, cnt) in enumerate(top, 1):
+        title = r.title[:60] + "…" if len(r.title) > 60 else r.title
+        table.add_row(str(i), title, str(cnt), str(r.year or "-"))
+
+    console.print(table)
+
+    # Citation distribution
+    if cited:
+        counts = [c for _, c in cited]
+        avg = sum(counts) / len(counts)
+        median = sorted(counts)[len(counts) // 2]
+        console.print()
+        console.print(
+            f"[dim]引用分布: 均值 {avg:.1f} · 中位数 {median} · "
+            f"范围 {min(counts)}–{max(counts)} · "
+            f"总被引 {sum(counts)}[/dim]"
+        )

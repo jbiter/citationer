@@ -60,6 +60,22 @@ def load_records_from_db(db_path: Path) -> list[Record]:
             )
         )
 
+    # Funding
+    fund_map: dict[int, list[str]] = {rid: [] for rid in record_ids}
+    for frow in db.conn.execute(
+        f"SELECT record_id, funder FROM record_funding WHERE record_id IN ({placeholders})",
+        record_ids,
+    ).fetchall():
+        fund_map[frow["record_id"]].append(frow["funder"])
+
+    # References
+    ref_map: dict[int, list[str]] = {rid: [] for rid in record_ids}
+    for rrow in db.conn.execute(
+        f"SELECT record_id, ref_text FROM record_references WHERE record_id IN ({placeholders})",
+        record_ids,
+    ).fetchall():
+        ref_map[rrow["record_id"]].append(rrow["ref_text"])
+
     kw_map: dict[int, list[str]] = {rid: [] for rid in record_ids}
     for krow in db.conn.execute(
         f"SELECT record_id, keyword FROM record_keywords WHERE record_id IN ({placeholders})",
@@ -117,6 +133,8 @@ def load_records_from_db(db_path: Path) -> list[Record]:
                 source_database=row["source_database"] or "",
                 source_file=row["source_file"] or "",
                 raw_data=raw_data,
+                funding=fund_map.get(rid) or None,
+                references=ref_map.get(rid) or None,
             )
         )
 

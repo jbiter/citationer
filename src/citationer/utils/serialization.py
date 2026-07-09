@@ -68,4 +68,6 @@ def record_to_db_serializable(record: Record) -> dict:
         "authors": authors_data,
         "keywords": keywords_data,
         "institutions": institutions_data,
+        "funding": record.funding,
+        "references": record.references,
     }

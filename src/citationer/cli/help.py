@@ -34,6 +34,7 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("journals", "期刊/来源分析"),
         ("authors", "作者分析"),
         ("institutions", "机构分析"),
+        ("citations", "引用分析"),
     ]),
     ("text", "文本挖掘与 NLP", [
         ("preprocess", "分词 + 语言检测"),
@@ -54,6 +55,7 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("trends", "研究趋势识别"),
         ("classify", "多维分类"),
         ("info", "配置状态查看"),
+        ("key-papers", "关键文献识别"),
     ]),
     ("trend", "研究趋势分析", [
         ("hotspots", "关键词突变检测"),

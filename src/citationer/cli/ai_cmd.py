@@ -394,6 +394,63 @@ def classify(
 
 
 # ------------------------------------------------------------------
+# ai key-papers
+# ------------------------------------------------------------------
+
+
+@app.command(name="key-papers")
+def key_papers(
+    max_records: int = typer.Option(
+        100, "--max-records", "-n", help="限制处理的文献数"
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="预览将发送给 LLM 的内容"
+    ),
+) -> None:
+    """LLM 识别关键文献：奠基性论文和最新突破性论文。"""
+    records = _get_records()
+    if not records:
+        return
+
+    client = _get_client(dry_run=dry_run)
+    if client is None:
+        return
+
+    if max_records > 0 and max_records < len(records):
+        records = records[:max_records]
+        console.print(f"[dim]限制为前 {max_records} 篇文献[/dim]")
+
+    prompt = (
+        f"Review the following {len(records)} academic papers. "
+        "Identify: (1) 3-5 foundational papers that established key concepts, "
+        "(2) 3-5 recent breakthrough papers that advance the field. "
+        "For each paper, explain why it is important (1-2 sentences). "
+        "Return the result with clear headings for Foundational and Recent papers."
+    )
+
+    console.print("[dim]正在调用 LLM 识别关键文献…[/dim]")
+    response = client.query(prompt, records, dry_run=dry_run)
+
+    if dry_run:
+        console.print("[yellow]🔍 Dry-run 模式 — 将发送以下数据:[/yellow]")
+        console.print_json(response.content)
+        return
+
+    if response.cached:
+        console.print("[dim](结果来自缓存)[/dim]")
+
+    console.print()
+    console.print(
+        Panel(
+            Markdown(response.content),
+            title="🔬 LLM 关键文献识别",
+            border_style="cyan",
+        )
+    )
+    console.print(f"[dim]Token 消耗: {response.tokens_used}[/dim]")
+
+
+# ------------------------------------------------------------------
 # ai info
 # ------------------------------------------------------------------
 

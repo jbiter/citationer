@@ -100,6 +100,20 @@ class CitationDatabase:
                 FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS record_funding (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                record_id INTEGER NOT NULL,
+                funder TEXT NOT NULL,
+                FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS record_references (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                record_id INTEGER NOT NULL,
+                ref_text TEXT NOT NULL,
+                FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS llm_cache (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 cache_key TEXT UNIQUE NOT NULL,
@@ -128,6 +142,8 @@ class CitationDatabase:
     def clear_records(self) -> None:
         """Delete all parsed records."""
         c = self.conn
+        c.execute("DELETE FROM record_references")
+        c.execute("DELETE FROM record_funding")
         c.execute("DELETE FROM record_institutions")
         c.execute("DELETE FROM record_keywords")
         c.execute("DELETE FROM record_authors")
@@ -141,6 +157,8 @@ class CitationDatabase:
         keywords: list[dict],
         institutions: list[dict],
         *,
+        funding: list[str] | None = None,
+        references: list[str] | None = None,
         _commit: bool = True,
     ) -> int | None:
         """Insert a single record with related data.
@@ -208,6 +226,18 @@ class CitationDatabase:
                         inst.get("inst_type"),
                     ),
                 )
+            if funding:
+                for funder in funding:
+                    c.execute(
+                        "INSERT INTO record_funding (record_id, funder) VALUES (?, ?)",
+                        (record_id, funder),
+                    )
+            if references:
+                for ref in references:
+                    c.execute(
+                        "INSERT INTO record_references (record_id, ref_text) VALUES (?, ?)",
+                        (record_id, ref),
+                    )
             if _commit:
                 self.conn.commit()
 
