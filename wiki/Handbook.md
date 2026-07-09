@@ -1,6 +1,6 @@
 # Citationer v3 — User Handbook
 
-> **One-click bibliometric analysis CLI tool** — from raw export files to insights.
+> **A terminal-first bibliometric analysis CLI tool** — from raw export files to insights.
 
 ---
 
@@ -522,7 +522,7 @@ citationer trend strategy --top 50        # Top-50 keywords
 
 ## 11. Report Generation
 
-### `report quick` — One-click report
+### `report quick` — Quick report
 
 Generates a comprehensive Markdown or HTML report including all analysis results.
 

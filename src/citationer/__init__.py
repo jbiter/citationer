@@ -1,3 +1,3 @@
-"""citationer — One-click bibliometric analysis CLI tool."""
+"""citationer — A terminal-first bibliometric analysis CLI tool."""
 
-__version__ = "4.0.0"
+__version__ = "4.0.1"

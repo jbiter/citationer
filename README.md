@@ -1,6 +1,6 @@
 # Citationer
 
-> **One-click bibliometric analysis CLI tool** — scan, import, analyze, and visualize your literature collection in the terminal.
+> **A terminal-first bibliometric analysis CLI tool** — scan, import, analyze, and visualize your literature collection.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
@@ -125,7 +125,7 @@ citationer export bibtex -o refs.bib     # Export to BibTeX
 ### Reports (`report`)
 
 ```bash
-citationer report quick -o report.md       # One-click Markdown report
+citationer report quick -o report.md       # Generate Markdown report
 citationer report quick -o report.html     # HTML report
 citationer report quick --enhance -o r.md  # LLM-enhanced report
 citationer report custom cfg.yaml -o r.md  # Custom YAML-configured report

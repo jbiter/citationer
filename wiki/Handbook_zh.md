@@ -1,6 +1,6 @@
 # Citationer v3 — 用户手册
 
-> **一键式文献题录分析 CLI 工具** —— 从原始导出文件到分析洞察。
+> **终端优先的文献题录分析 CLI 工具** —— 从原始导出文件到分析洞察。
 
 ---
 
@@ -91,7 +91,7 @@ citationer --help
 
 ## 3. 快速开始
 
-一键式工作流仅需 4 条命令：
+核心工作流仅需 4 条命令：
 
 ```bash
 cd /path/to/your/literature     # 1. 进入题录文件目录
@@ -522,9 +522,9 @@ citationer trend strategy --top 50        # 分析前 50 个关键词
 
 ## 11. 报告生成
 
-### `report quick` — 一键报告
+### `report quick` — 快速报告
 
-一键生成包含所有分析结果的 Markdown 或 HTML 报告。
+生成包含所有分析结果的 Markdown 或 HTML 报告。
 
 ```bash
 citationer report quick -o report.md       # Markdown 报告

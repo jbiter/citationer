@@ -61,7 +61,7 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("river", "主题河流图"),
     ]),
     ("report", "报告生成", [
-        ("quick", "一键生成报告"),
+        ("quick", "快速生成报告"),
         ("custom", "自定义报告"),
     ]),
     ("export", "数据导出", [
@@ -93,7 +93,7 @@ def _header(console: Console) -> None:
     console.print()
     console.print(
         Panel(
-            Text("citationer —— 一键式文献题录分析 CLI 工具", style="bold white"),
+            Text("citationer —— 文献题录分析 CLI 工具", style="bold white"),
             border_style="cyan",
         )
     )

@@ -1,6 +1,6 @@
 # Citationer v3
 
-> One-click bibliometric analysis CLI tool.
+> A terminal-first bibliometric analysis CLI tool.
 
 ---
 

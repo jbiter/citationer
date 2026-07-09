@@ -113,7 +113,7 @@ class _LazyTyper(typer.Typer):
 
 app = _LazyTyper(
     name="citationer",
-    help="一键式文献题录分析 CLI 工具",
+    help="文献题录分析 CLI 工具",
     add_completion=True,
     no_args_is_help=True,
     cls=_RootGroup,
@@ -136,6 +136,9 @@ def main(
     ),
     no_color: bool = typer.Option(
         False, "--no-color", help="禁用彩色输出"
+    ),
+    config_path: Path | None = typer.Option(
+        None, "--config", "-c", help="指定配置文件路径"
     ),
 ) -> None:
     """Citationer — 文献题录分析工具
