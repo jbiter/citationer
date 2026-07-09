@@ -1,4 +1,4 @@
-# Citationer v3 — User Handbook
+# Citationer v4 — User Handbook
 
 > **A terminal-first bibliometric analysis CLI tool** — from raw export files to insights.
 
@@ -665,4 +665,4 @@ your-project/
 
 ---
 
-*Citationer v3 — July 2026*
+*Citationer v4 — July 2026*
