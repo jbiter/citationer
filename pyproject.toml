@@ -84,3 +84,6 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["citationer"]
