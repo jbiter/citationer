@@ -165,7 +165,10 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
-/site
+# Source lives under site/docs/ + site/mkdocs.yml (tracked).
+# The build output directory is ignored.
+/site/build
+/site/site
 
 # mypy
 .mypy_cache/
@@ -227,3 +230,14 @@ output/
 
 # sample data files
 data/
+
+# pyinstaller build artifacts
+/build
+/dist
+/citationer.spec
+
+# but track our spec
+!packaging/pyinstaller.spec
+
+# local docs build test
+/tmp_build

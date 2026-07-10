@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build-binary:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build deps
+        run: pip install pyinstaller
+
+      - name: Build (Unix)
+        if: matrix.os != 'windows-latest'
+        run: pyinstaller packaging/pyinstaller.spec --noconfirm --clean
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        run: pyinstaller packaging/pyinstaller.spec --noconfirm --clean
+
+      - name: Rename artifact (Windows)
+        if: matrix.os == 'windows-latest'
+        run: mv dist/citationer.exe dist/citationer-windows.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: citationer-${{ matrix.os }}
+          path: dist/citationer*
+
+  attach-to-release:
+    needs: build-binary
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: List binaries
+        run: ls -la dist/
+
+      - name: Attach to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/citationer-ubuntu-latest/*
+            dist/citationer-macos-latest/*
+            dist/citationer-windows-latest/*
