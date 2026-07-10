@@ -3,6 +3,10 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v4.2.0 — 2026-07-10
+
+MkDocs documentation site with GitHub Pages deployment.
+
 ## v4.1.2 — 2026-07-10
 
 Bug fixes only. No new features.
