@@ -101,6 +101,16 @@ def load_records_from_db(db_path: Path) -> list[Record]:
     db.close()
 
     # ── Assemble Record objects ───────────────────────────────
+    def _opt_int(value):
+        """Convert empty string / None to None; pass through ints."""
+        if value is None:
+            return None
+        if isinstance(value, int):
+            return value
+        if value == "" or str(value).strip() == "":
+            return None
+        return value
+
     records: list[Record] = []
     for row in rows:
         rid = row["id"]
@@ -116,7 +126,7 @@ def load_records_from_db(db_path: Path) -> list[Record]:
                 title=row["title"] or "",
                 title_en=row["title_en"],
                 authors=author_map.get(rid, []),
-                year=row["year"],
+                year=_opt_int(row["year"]),
                 journal=row["journal"],
                 volume=row["volume"],
                 issue=row["issue"],
@@ -129,7 +139,7 @@ def load_records_from_db(db_path: Path) -> list[Record]:
                 doc_type=DocType(row["doc_type"] or "unknown"),
                 language=row["language"],
                 institutions=inst_map.get(rid, []),
-                citation_count=row["citation_count"],
+                citation_count=_opt_int(row["citation_count"]),
                 source_database=row["source_database"] or "",
                 source_file=row["source_file"] or "",
                 raw_data=raw_data,

@@ -544,6 +544,84 @@ class TestDatabaseLifecycle:
 # ===========================================================================
 
 
+class TestBug001Regression:
+    """Regression tests for BUG-001: empty-string int fields in DB.
+
+    Before fix: load_records_from_db() crashed with Pydantic ValidationError
+    when year/citation_count was stored as '' in SQLite.
+    After fix: helper converts empty strings → None.
+    """
+
+    def test_load_with_null_year(self, tmp_db_path: Path):
+        """Records with year=NULL should load with year=None."""
+        from citationer.models.record import Record
+
+        db = CitationDatabase(tmp_db_path)
+        r = Record(title="NoYear", year=None, authors=[],
+                   source_database="T")
+        payload = record_to_db_serializable(r)
+        db.insert_record(
+            record_data=payload["record_data"],
+            authors=payload["authors"],
+            keywords=payload["keywords"],
+            institutions=payload["institutions"],
+        )
+        db.close()
+
+        loaded = load_records_from_db(tmp_db_path)
+        assert len(loaded) == 1
+        assert loaded[0].year is None
+
+    def test_load_with_empty_string_year(self, tmp_db_path: Path):
+        """SQLite stores missing year as '' → should load as None."""
+        db = CitationDatabase(tmp_db_path)
+        rid = db.insert_record(
+            record_data={"title": "T", "source_database": "X", "source_file": "x"},
+            authors=[],
+            keywords=[],
+            institutions=[],
+        )
+        # Manually set year to NULL (SQLite stores as '')
+        db.conn.execute(
+            "UPDATE records SET year = ?, citation_count = ? WHERE id = ?",
+            (None, None, rid),
+        )
+        db.conn.commit()
+        db.close()
+
+        loaded = load_records_from_db(tmp_db_path)
+        assert loaded[0].year is None
+        assert loaded[0].citation_count is None
+
+    def test_round_trip_orphan_record(self, tmp_db_path: Path):
+        """Full round-trip for record with missing year/citation_count."""
+        from citationer.models.record import Record
+
+        original = Record(
+            title="Orphan Paper",
+            year=None,
+            doi=None,
+            citation_count=None,
+            authors=[],
+            keywords=[],
+            source_database="T",
+        )
+        db = CitationDatabase(tmp_db_path)
+        payload = record_to_db_serializable(original)
+        db.insert_record(
+            record_data=payload["record_data"],
+            authors=payload["authors"],
+            keywords=payload["keywords"],
+            institutions=payload["institutions"],
+        )
+        db.close()
+
+        loaded = load_records_from_db(tmp_db_path)
+        assert loaded[0].year is None
+        assert loaded[0].citation_count is None
+        assert loaded[0].title == "Orphan Paper"
+
+
 class TestLoadRecordsFromDB:
     def test_empty_db_returns_empty(self, tmp_db_path: Path):
         """Empty database returns empty list, no error."""
