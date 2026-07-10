@@ -66,3 +66,6 @@ jobs:
         with:
           username: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
+          # Skip upload if a file with the same hash already exists on
+          # PyPI (idempotent retries after a transient pipeline failure).
+          skip_existing: true
