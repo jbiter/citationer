@@ -43,7 +43,14 @@ dev = [
     "ruff>=0.4",
     "mypy>=1.0",
     "types-pyyaml",
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.4",
 ]
+
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.4",
+]  # noqa: E501
 all = [
     "jieba>=0.42",
     "gensim>=4.3",
