@@ -24,17 +24,20 @@ def record_to_db_serializable(record: Record) -> dict:
         for a in record.authors
     ]
 
+    # Tag both lists with field-specific markers so the loader can
+    # distinguish them regardless of record.language (BUG-003 fix).
     keywords_data = [
-        {"keyword": k, "lang": record.language or "zh"} for k in record.keywords
+        {"keyword": k, "lang": "__keywords__"} for k in record.keywords
     ]
     if record.keywords_en:
         keywords_data.extend(
-            {"keyword": k, "lang": "en"} for k in record.keywords_en
+            {"keyword": k, "lang": "__keywords_en__"} for k in record.keywords_en
         )
 
     institutions_data = [
         {
             "name": i.name,
+            "name_en": i.name_en,
             "country": i.country,
             "province": i.province,
             "city": i.city,

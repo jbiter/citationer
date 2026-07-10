@@ -76,12 +76,18 @@ def load_records_from_db(db_path: Path) -> list[Record]:
     ).fetchall():
         ref_map[rrow["record_id"]].append(rrow["ref_text"])
 
-    kw_map: dict[int, list[str]] = {rid: [] for rid in record_ids}
+    kw_main_map: dict[int, list[str]] = {rid: [] for rid in record_ids}
+    kw_en_explicit: dict[int, list[str]] = {rid: [] for rid in record_ids}
     for krow in db.conn.execute(
-        f"SELECT record_id, keyword FROM record_keywords WHERE record_id IN ({placeholders})",
+        f"SELECT record_id, keyword, lang FROM record_keywords WHERE record_id IN ({placeholders})",
         record_ids,
     ).fetchall():
-        kw_map[krow["record_id"]].append(krow["keyword"])
+        lang = krow["lang"] or ""
+        if lang == "__keywords__":
+            kw_main_map[krow["record_id"]].append(krow["keyword"])
+        elif lang == "__keywords_en__":
+            kw_en_explicit[krow["record_id"]].append(krow["keyword"])
+        # Legacy: lang="en"/"zh" rows are ignored (BUG-003 fix)
 
     inst_map: dict[int, list] = {rid: [] for rid in record_ids}
     for irow in db.conn.execute(
@@ -120,6 +126,12 @@ def load_records_from_db(db_path: Path) -> list[Record]:
         except (_json.JSONDecodeError, TypeError):
             pass
 
+        # BUG-003 fix: serializer tags record.keywords with "__keywords__"
+        # and record.keywords_en with "__keywords_en__" so we can preserve
+        # the original split round-trip (independent of record.language).
+        primary_kw = kw_main_map.get(rid, [])
+        secondary_kw = kw_en_explicit.get(rid, []) or None
+
         records.append(
             Record(
                 id=rid,
@@ -135,7 +147,8 @@ def load_records_from_db(db_path: Path) -> list[Record]:
                 issn=row["issn"],
                 abstract=row["abstract"],
                 abstract_en=row["abstract_en"],
-                keywords=kw_map.get(rid, []),
+                keywords=primary_kw,
+                keywords_en=secondary_kw,
                 doc_type=DocType(row["doc_type"] or "unknown"),
                 language=row["language"],
                 institutions=inst_map.get(rid, []),

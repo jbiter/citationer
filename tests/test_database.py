@@ -659,18 +659,15 @@ class TestLoadRecordsFromDB:
         assert loaded.language == r.language
         assert loaded.source_database == r.source_database
         assert len(loaded.authors) == 2
-        # All keywords (zh + en) end up in `loaded.keywords` after load
-        # (load_records_from_db concatenates them).  The split is lost.
-        all_kw = set(loaded.keywords)
-        assert "machine learning" in all_kw
-        assert "healthcare" in all_kw
-        assert "ML" in all_kw
-        assert "health" in all_kw
+        # After BUG-003 fix: zh keywords in `keywords`, en in `keywords_en`
+        assert "machine learning" in loaded.keywords
+        assert "healthcare" in loaded.keywords
+        assert loaded.keywords_en == ["ML", "health"]
         # doc_type round-trips through enum
         assert loaded.doc_type == r.doc_type
 
     def test_round_trip_with_en_keywords(self, tmp_db_path: Path):
-        """English keywords are stored in keywords_en field."""
+        """English keywords restored into keywords_en field (BUG-003 fix)."""
         r = Record(
             title="EN Kw Test",
             year=2024,
@@ -689,11 +686,11 @@ class TestLoadRecordsFromDB:
         db.close()
 
         loaded = load_records_from_db(tmp_db_path)[0]
-        # Both zh and en keywords end up in `keywords` (the loading code
-        # does not split them back).  Verify both are present.
-        all_kw = set(loaded.keywords)
-        assert "中文关键词" in all_kw
-        assert "english keyword" in all_kw
+        # After BUG-003 fix: zh/en split correctly
+        assert "中文关键词" in loaded.keywords
+        assert loaded.keywords_en == ["english keyword"] or loaded.keywords_en == [
+            "english keyword"
+        ] or sorted(loaded.keywords_en or []) == ["english keyword"]  # noqa: E501
 
     def test_round_trip_funding_and_refs(self, tmp_db_path: Path):
         """Funding and references survive round-trip."""
@@ -824,7 +821,7 @@ class TestRecordToDbSerializable:
         assert out["record_data"]["doc_type"] == "article"
 
     def test_keywords_with_lang(self):
-        """Chinese keywords get lang='zh', English get lang='en'."""
+        """After BUG-003 fix: keywords tagged with field-specific markers."""
         r = Record(
             title="T",
             keywords=["机器学习"],
@@ -832,25 +829,25 @@ class TestRecordToDbSerializable:
             language="zh",
         )
         out = record_to_db_serializable(r)
-        # Chinese keyword tagged with record.language
+        # Primary .keywords tagged with field marker
         assert out["keywords"][0]["keyword"] == "机器学习"
-        assert out["keywords"][0]["lang"] == "zh"
-        # English keyword tagged 'en'
+        assert out["keywords"][0]["lang"] == "__keywords__"
+        # .keywords_en tagged with separate marker
         assert out["keywords"][1]["keyword"] == "machine learning"
-        assert out["keywords"][1]["lang"] == "en"
+        assert out["keywords"][1]["lang"] == "__keywords_en__"
 
     def test_keywords_default_lang_zh(self):
-        """When language is None, default to 'zh'."""
+        """Primary keywords always get the __keywords__ marker."""
         r = Record(title="T", keywords=["kw"], language=None)
         out = record_to_db_serializable(r)
-        assert out["keywords"][0]["lang"] == "zh"
+        assert out["keywords"][0]["lang"] == "__keywords__"
 
     def test_no_en_keywords_does_not_add_en(self):
-        """When keywords_en is None/empty, don't add 'en' entries."""
+        """When keywords_en is None/empty, only primary keywords are stored."""
         r = Record(title="T", keywords=["a", "b"], keywords_en=None)
         out = record_to_db_serializable(r)
         assert len(out["keywords"]) == 2
-        assert all(k["lang"] == "zh" for k in out["keywords"])
+        assert all(k["lang"] == "__keywords__" for k in out["keywords"])
 
     def test_funding_passed_through(self):
         """funding list is passed through as-is."""
@@ -893,12 +890,7 @@ class TestRecordToDbSerializable:
         assert ad["email"] == "smith@mit.edu"
 
     def test_institution_dict_has_all_fields(self):
-        """Documents the current serialization behavior for Institution.
-
-        NOTE: As of v4.0.4, `name_en` is NOT included in the serialized
-        dict — see BUG-002 in the test report.  This test asserts the
-        current (buggy) behavior; will be updated when fixed.
-        """
+        """Institution serialization includes name_en (BUG-002 fix in v4.1.2)."""
         i = Institution(
             name="MIT",
             name_en="Massachusetts Institute of Technology",
@@ -911,8 +903,7 @@ class TestRecordToDbSerializable:
         out = record_to_db_serializable(r)
         id_ = out["institutions"][0]
         assert id_["name"] == "MIT"
-        # TODO: assert id_["name_en"] == "..." once BUG-002 is fixed
-        assert "name_en" not in id_  # documents current behavior
+        assert id_["name_en"] == "Massachusetts Institute of Technology"
         assert id_["country"] == "USA"
 
     def test_record_data_all_fields(self):

@@ -107,11 +107,13 @@ class TrendEngine:
             years = sorted(yearly)
             counts = [yearly[y] for y in years]
 
-            # Compute baseline (median of non-zero years)
-            nonzero = [c for c in counts if c > 0]
+            # Compute baseline (Q1 / 25th percentile of non-zero years)
+            # Using Q1 instead of median to be robust to burst spikes
+            # that would otherwise pull the median up and prevent detection.
+            nonzero = sorted(c for c in counts if c > 0)
             if not nonzero:
                 continue
-            baseline = sorted(nonzero)[len(nonzero) // 2]
+            baseline = nonzero[max(0, len(nonzero) // 4 - 1)]
 
             # Detect burst periods: consecutive years where count
             # exceeds baseline * gamma
@@ -121,7 +123,7 @@ class TrendEngine:
 
             for y, c in zip(years, counts):
                 threshold = baseline * gamma
-                if c > threshold and c >= 2:
+                if c > threshold:
                     if not in_burst:
                         in_burst = True
                         burst_start = y
@@ -224,6 +226,7 @@ class TrendEngine:
         themes: list[StrategyTheme] = []
         all_centralities: list[float] = []
         all_densities: list[float] = []
+        cluster_stats: list[tuple[set, float, float]] = []
 
         for ci, cluster in enumerate(communities):
             if len(cluster) < 2:
@@ -262,45 +265,16 @@ class TrendEngine:
             top_kw = max(cluster, key=lambda k: kw_counter.get(k, 0))
             keywords = sorted(cluster, key=lambda k: -kw_counter.get(k, 0))[:5]
 
+            cluster_stats.append((cluster, centrality, density))
             all_centralities.append(centrality)
             all_densities.append(density)
 
-        # Determine quadrant boundaries (medians)
-        if all_centralities and all_densities:
+        # Determine quadrant boundaries (medians) using cached values
+        if cluster_stats:
             c_med = sorted(all_centralities)[len(all_centralities) // 2]
             d_med = sorted(all_densities)[len(all_densities) // 2]
 
-            for ci, cluster in enumerate(communities):
-                if len(cluster) < 2:
-                    continue
-
-                # Recompute (we lost the computed values in the loop above)
-                cluster_list = list(cluster)
-                internal_edges = 0
-                internal_weight = 0
-                for ai in range(len(cluster_list)):
-                    for bi in range(ai + 1, len(cluster_list)):
-                        ka, kb = cluster_list[ai], cluster_list[bi]
-                        key = (ka, kb) if ka < kb else (kb, ka)
-                        w = pair_counter.get(key, 0)
-                        if w > 0:
-                            internal_edges += 1
-                            internal_weight += w
-                density = (internal_weight / internal_edges) if internal_edges > 0 else 0
-
-                external_weight = 0
-                external_count = 0
-                for kw in cluster:
-                    for other_kw in top_set:
-                        if other_kw in cluster or other_kw == kw:
-                            continue
-                        key = (kw, other_kw) if kw < other_kw else (other_kw, kw)
-                        w = pair_counter.get(key, 0)
-                        if w > 0:
-                            external_weight += w
-                            external_count += 1
-                centrality = (external_weight / external_count) if external_count > 0 else 0
-
+            for cluster, centrality, density in cluster_stats:
                 # Quadrant
                 if centrality >= c_med and density >= d_med:
                     quadrant = 1  # Motor
