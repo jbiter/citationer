@@ -14,6 +14,7 @@ from citationer.analysis.network import NetworkEngine
 from citationer.analysis.stats import StatsEngine
 from citationer.analysis.text import TextEngine
 from citationer.analysis.trend import TrendEngine
+from citationer.cli.report_cmd import _build_markdown, _md_to_html
 from citationer.cli.scan_cmd import get_registry
 from citationer.utils.config import get_db_path
 from citationer.utils.db_loader import load_records_from_db
@@ -36,6 +37,38 @@ def main(
     if ctx.invoked_subcommand is not None:
         return
     _run_wizard()
+
+
+def save_interactive_report(
+    records: list, filename: str, template: str = "academic"
+) -> Path | None:
+    """Build and save a report from the interactive wizard.
+
+    Re-uses `report_cmd` template builders so interactive and
+    `citationer report quick` produce the same output.  Supports
+    `.md` and `.html` extensions; default is markdown.
+
+    Returns the saved path, or `None` on failure.
+    """
+    from pathlib import Path
+
+    try:
+        path = Path(filename).expanduser()
+        # If user gave just a filename (no directory), save to output/report/.
+        if not path.is_absolute() and path.parent == Path("."):
+            path = Path.cwd() / "output" / "report" / path
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        md = _build_markdown(records, template=template)
+        if path.suffix.lower() == ".html":
+            title = f"Citationer Report ({template})"
+            path.write_text(_md_to_html(md, title), encoding="utf-8")
+        else:
+            path.write_text(md, encoding="utf-8")
+        return path
+    except Exception as e:
+        console.print(f"  [red]保存失败: {e}[/red]")
+        return None
 
 
 def _run_wizard() -> None:
@@ -160,8 +193,15 @@ def _interactive_stats(records) -> None:
         _show_top_institutions(engine)
 
     if Confirm.ask("  保存为报告？", default=False):
-        Prompt.ask("  文件名", default="stats_report.md")
-        console.print("  [dim]（保存功能待 report 命令完善）[/dim]")
+        name = Prompt.ask("  文件名", default="stats_report.md")
+        template = Prompt.ask(
+            "  模板", choices=["academic", "simple"], default="academic"
+        )
+        path = save_interactive_report(records, name, template=template)
+        if path:
+            console.print(f"  [green]✅ 已保存: {path}[/green]")
+        else:
+            console.print("  [red]保存失败[/red]")
 
 
 def _interactive_text(records) -> None:
