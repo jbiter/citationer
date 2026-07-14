@@ -10,6 +10,12 @@ on:
     types: [published]
   workflow_dispatch:
 
+# Silence Node.js 20 deprecation warning.  This is an action-side warning
+# from older actions/checkout, actions/setup-python, etc. that still target
+# node20.  Once the upstream actions migrate to node24, this can be removed.
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -48,6 +54,9 @@ jobs:
       github.event_name == 'release' ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
+    permissions:
+      # Recommended for PyPI trusted publishing (no API token needed).
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -64,8 +73,10 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          username: __token__
-          password: ${{ secrets.PYPI_API_TOKEN }}
           # Skip upload if a file with the same hash already exists on
           # PyPI (idempotent retries after a transient pipeline failure).
-          skip_existing: true
+          # Uses the kebab-case `skip-existing` (the snake_case form was
+          # deprecated).  Authentication falls back to PYPI_API_TOKEN env
+          # / repository secret if no trusted publisher is configured.
+          skip-existing: true
+          password: ${{ secrets.PYPI_API_TOKEN }}
