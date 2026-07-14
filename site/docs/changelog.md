@@ -3,6 +3,14 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v4.4.0 — 2026-07-10
+
+Funding analysis: `citationer stats funding`.
+
+## v4.3.0 — 2026-07-10
+
+Standalone binary build via PyInstaller (Linux/macOS/Windows).
+
 ## v4.2.0 — 2026-07-10
 
 MkDocs documentation site with GitHub Pages deployment.
