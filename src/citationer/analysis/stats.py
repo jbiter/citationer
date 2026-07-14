@@ -46,6 +46,17 @@ class TopList:
 
 
 @dataclass
+class FundingStats:
+    """Funding analysis statistics."""
+
+    funded_count: int = 0
+    unfunded_count: int = 0
+    funding_rate: float = 0.0  # funded / total
+    top_funders: TopList = field(default_factory=TopList)
+    yearly_funded: dict[int, int] = field(default_factory=dict)  # year → funded count
+
+
+@dataclass
 class AuthorStats:
     """Author-level statistics."""
 
@@ -264,6 +275,50 @@ class StatsEngine:
 
         items = counter.most_common(top_n)
         return TopList(items=items, total_unique=len(counter))
+
+    def funding(self, top_n: int = 20) -> FundingStats:
+        """Funding statistics (F-2.6).
+
+        Returns:
+          - funded/unfunded counts and overall funding rate
+          - Top-N most common funders (counting each funder once per record)
+          - yearly breakdown of funded record counts
+        """
+        funder_counter: Counter[str] = Counter()
+        yearly: dict[int, int] = defaultdict(int)
+        funded_count = 0
+        unfunded_count = 0
+
+        for r in self._records:
+            # A record is "funded" if it has at least one funding entry.
+            # Funders are counted once per record (deduped) to avoid bias
+            # from records that repeat the same funder many times.
+            if r.funding:
+                funded_count += 1
+                if r.year is not None:
+                    yearly[r.year] += 1
+                seen: set[str] = set()
+                for f in r.funding:
+                    f_norm = f.strip()
+                    if f_norm and f_norm not in seen:
+                        funder_counter[f_norm] += 1
+                        seen.add(f_norm)
+            else:
+                unfunded_count += 1
+
+        total = funded_count + unfunded_count
+        rate = funded_count / total if total else 0.0
+
+        return FundingStats(
+            funded_count=funded_count,
+            unfunded_count=unfunded_count,
+            funding_rate=rate,
+            top_funders=TopList(
+                items=funder_counter.most_common(top_n),
+                total_unique=len(funder_counter),
+            ),
+            yearly_funded=dict(yearly),
+        )
 
     # ------------------------------------------------------------------
     # Helpers

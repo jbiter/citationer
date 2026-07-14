@@ -422,3 +422,88 @@ def citations(
             f"范围 {min(counts)}–{max(counts)} · "
             f"总被引 {sum(counts)}[/dim]"
         )
+
+
+# ── funding ──────────────────────────────────────────────────────
+
+
+@app.command(name="funding")
+def funding(
+    top_n: int = typer.Option(20, "--top", "-n", help="显示 Top-N 基金来源"),
+) -> None:
+    """基金资助分析（F-2.6）：资助率、Top-N 基金来源、年度趋势。"""
+    records = _get_records()
+    if not records:
+        return
+
+    engine = StatsEngine(records)
+    stats = engine.funding(top_n=top_n)
+
+    # Overview table: funded / unfunded / rate
+    console.print()
+    overview = Table(
+        title="💰 基金资助概览",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    overview.add_column("指标")
+    overview.add_column("数量", justify="right")
+    overview.add_column("占比", justify="right")
+    total = stats.funded_count + stats.unfunded_count
+    overview.add_row(
+        "有基金标注",
+        str(stats.funded_count),
+        f"{stats.funded_count / total * 100:.1f}%" if total else "-",
+    )
+    overview.add_row(
+        "无基金标注",
+        str(stats.unfunded_count),
+        f"{stats.unfunded_count / total * 100:.1f}%" if total else "-",
+    )
+    overview.add_row(
+        "[bold]资助率[/bold]",
+        "[bold green]"
+        + f"{stats.funding_rate * 100:.1f}%"
+        + "[/bold green]",
+        "",
+    )
+    console.print(overview)
+
+    # Top funders
+    if stats.top_funders.items:
+        console.print()
+        funder_table = Table(
+            title=f"🏛️  Top-{min(top_n, len(stats.top_funders.items))} 基金来源",
+            show_header=True,
+            header_style="bold cyan",
+        )
+        funder_table.add_column("#", justify="right", style="dim")
+        funder_table.add_column("基金名称")
+        funder_table.add_column("资助论文数", justify="right")
+
+        for i, (name, cnt) in enumerate(stats.top_funders.items, 1):
+            funder_table.add_row(str(i), name, str(cnt))
+        console.print(funder_table)
+        console.print(
+            f"[dim]共 {stats.top_funders.total_unique} 个独立基金来源[/dim]"
+        )
+    else:
+        console.print("[dim]无基金来源数据[/dim]")
+
+    # Yearly funding trend (mini-bar chart in rich)
+    if stats.yearly_funded:
+        console.print()
+        trend_table = Table(
+            title="📅 年度资助趋势",
+            show_header=True,
+            header_style="bold cyan",
+        )
+        trend_table.add_column("年份", justify="center")
+        trend_table.add_column("资助论文数", justify="right")
+        trend_table.add_column("占比", justify="right")
+        max_v = max(stats.yearly_funded.values())
+        for y in sorted(stats.yearly_funded):
+            v = stats.yearly_funded[y]
+            bar = "█" * int(v / max_v * 20) if max_v else ""
+            trend_table.add_row(str(y), str(v), bar)
+        console.print(trend_table)
