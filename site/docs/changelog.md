@@ -3,6 +3,10 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v4.5.0 — 2026-07-10
+
+Report template system: `simple` template for concise summaries.
+
 ## v4.4.0 — 2026-07-10
 
 Funding analysis: `citationer stats funding`.
