@@ -243,10 +243,15 @@ class DedupEngine:
         """
         merged_indices: set[int] = set()
 
-        # Bucket records by year
+        # Bucket records by year.
+        # BUG-006 fix: skip records with year=None so they don't all
+        # collide in a synthetic "year=0" bucket (which would cause
+        # high-similarity titles to falsely merge across unknown years).
         year_buckets: dict[int, list[int]] = {}
         for i, r in enumerate(records):
-            year_buckets.setdefault(r.year or 0, []).append(i)
+            if r.year is None:
+                continue
+            year_buckets.setdefault(r.year, []).append(i)
 
         total_buckets = len(year_buckets)
         for bi, indices in enumerate(year_buckets.values()):
@@ -286,14 +291,15 @@ class DedupEngine:
         """
         merged_indices: set[int] = set()
 
-        # Bucket by (year, first_author_lower)
+        # Bucket by (year, first_author_lower).
+        # BUG-006 fix: skip year=None records (don't bucket them under year=0).
         from collections import defaultdict
         buckets: dict[tuple[int, str], list[int]] = defaultdict(list)
         for i, r in enumerate(records):
             fa = r.first_author
-            if not fa:
+            if not fa or r.year is None:
                 continue
-            key = (r.year or 0, fa.full_name.lower())
+            key = (r.year, fa.full_name.lower())
             buckets[key].append(i)
 
         total_buckets = len(buckets)
