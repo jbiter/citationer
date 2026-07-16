@@ -5,6 +5,13 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
+# Silence Node.js 20 deprecation warning emitted by older action versions
+# (checkout@v4, setup-python@v5, upload-artifact@v4, softprops/action-gh-release@v2
+# all still target node20).  Once upstream actions migrate to node24 this can
+# be removed.  See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
 jobs:
   build-binary:
     name: Build on ${{ matrix.os }}
