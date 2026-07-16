@@ -71,6 +71,19 @@ def save_interactive_report(
         return None
 
 
+def _year_range(records) -> tuple[int | None, int | None]:
+    """Return (min_year, max_year) across records with a valid year.
+
+    BUG-007 fix: previously used `min(r.year for r in records if r.year)`,
+    which raises ValueError when ALL records have year=None.  Now returns
+    (None, None) when no records have a year.
+    """
+    years = [r.year for r in records if r.year is not None]
+    if not years:
+        return None, None
+    return min(years), max(years)
+
+
 def _run_wizard() -> None:
     """Main interactive loop."""
     console.print(
@@ -95,8 +108,11 @@ def _run_wizard() -> None:
         return
 
     console.print(f"  [green]✓[/green] 已加载 [bold]{len(records)}[/bold] 条记录")
-    console.print(f"  年份范围: {min(r.year for r in records if r.year)} – "
-                  f"{max(r.year for r in records if r.year)}")
+    year_min, year_max = _year_range(records)
+    if year_min is not None:
+        console.print(f"  年份范围: {year_min} – {year_max}")
+    else:
+        console.print("  [dim]年份范围: 不可用（所有记录缺少年份）[/dim]")
     console.print()
 
     # Step 2: Main menu loop
