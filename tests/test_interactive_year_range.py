@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from citationer.cli.interactive_cmd import _year_range
 from citationer.models.record import Author, Record
 
@@ -49,7 +47,7 @@ class TestBug007Regression:
         assert _year_range(records) == (0, 2024)
 
     def test_no_false_min_year_zero(self):
-        """year=None records must NOT be treated as year=0.
+        r"""year=None records must NOT be treated as year=0.
 
         Pre-fix: \`r.year for r in records if r.year\` would skip None.
         This still worked but the OLD code called \`min(...if r.year)\`
