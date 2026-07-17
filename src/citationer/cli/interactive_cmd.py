@@ -17,6 +17,7 @@ from citationer.analysis.trend import TrendEngine
 from citationer.cli.report_cmd import _build_markdown, _md_to_html
 from citationer.cli.scan_cmd import get_registry
 from citationer.utils.config import get_db_path
+from citationer.utils.date_utils import year_range
 from citationer.utils.db_loader import load_records_from_db
 
 app = typer.Typer(
@@ -72,16 +73,12 @@ def save_interactive_report(
 
 
 def _year_range(records) -> tuple[int | None, int | None]:
-    """Return (min_year, max_year) across records with a valid year.
+    """Compatibility shim — wraps the shared utils.date_utils.year_range.
 
-    BUG-007 fix: previously used `min(r.year for r in records if r.year)`,
-    which raises ValueError when ALL records have year=None.  Now returns
-    (None, None) when no records have a year.
+    Kept for backwards compatibility with existing callers / tests.
+    New code should import :func:`citationer.utils.date_utils.year_range`.
     """
-    years = [r.year for r in records if r.year is not None]
-    if not years:
-        return None, None
-    return min(years), max(years)
+    return year_range(records)
 
 
 def _run_wizard() -> None:

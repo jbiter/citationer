@@ -90,6 +90,36 @@ class TestBug006Regression:
         assert len(merged) == 1
         assert any(entry["layer"] in (2, 3) for entry in log)
 
+    def test_layer3_alone_with_similar_titles(self):
+        """Genuinely exercise Layer 3 (title fuzzy < 85% but ≥ 70%).
+
+        With identical titles, Layer 2 fires first.  To isolate Layer 3,
+        use titles that score between the two thresholds while sharing
+        year and first author.  Uses the same record builder so the
+        (year, first_author) bucket key matches.
+        """
+        # Titles chosen to be similar but not identical:
+        # both share core phrasing; differ enough to score 70-85%.
+        r1 = _r("Neural Networks for Medical Image Analysis", year=2024)
+        r2 = _r("Neural Networks for Medical Image Classification", year=2024)
+        # Sanity: shared year and first author (from _r() default).
+        assert r1.year == 2024 == r2.year
+        assert r1.first_author.full_name == r2.first_author.full_name
+
+        engine = DedupEngine()
+        merged, log = engine.deduplicate([r1, r2])
+
+        # Verify a merge happened via Layer 3 only (not Layer 2).
+        layer3_entries = [e for e in log if e["layer"] == 3]
+        layer2_entries = [e for e in log if e["layer"] == 2]
+        assert len(merged) == 1
+        assert len(layer3_entries) >= 1, (
+            f"Expected Layer 3 to merge; got log={log!r}"
+        )
+        assert len(layer2_entries) == 0, (
+            "Layer 2 should NOT fire — titles should not be >85% similar"
+        )
+
     def test_year_none_records_dont_collide_with_year_zero(self):
         """year=None records must NOT collide with year=0 records.
 

@@ -16,6 +16,7 @@ from citationer.parsers.pubmed import PubMedParser
 from citationer.parsers.ris import RISParser
 from citationer.parsers.scopus import ScopusParser
 from citationer.parsers.wos import WosExcelParser, WosTabDelimitedParser, WosTextParser
+from citationer.utils.date_utils import year_range
 
 console = Console()
 
@@ -105,14 +106,14 @@ def scan(
                 count = len(records)
                 total_records += count
 
-                years = [r.year for r in records if r.year is not None]
-                year_range = f"{min(years)} - {max(years)}" if years else "-"
+                yr_min, yr_max = year_range(records)
+                year_range_str = f"{yr_min} - {yr_max}" if yr_min is not None else "-"
 
                 table.add_row(
                     filepath.name,
                     f"[green]{source}[/green]",
                     str(count),
-                    year_range,
+                    year_range_str,
                 )
             except Exception:
                 table.add_row(
