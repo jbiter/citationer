@@ -57,6 +57,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download all binaries
         uses: actions/download-artifact@v4
         with:
@@ -65,10 +67,61 @@ jobs:
       - name: List binaries
         run: ls -la dist/
 
-      - name: Attach to release
-        uses: softprops/action-gh-release@v2
+      # Idempotent attach: ensure a GitHub release for this tag exists, then
+      # upload each binary that is not already attached.  Re-running on
+      # the same tag (e.g. after deleting and re-pushing) is a no-op for
+      # the assets that are already present, avoiding the 404 that
+      # softprops/action-gh-release@v2 emits when it tries to clean up
+      # non-existent attachment records from a previous draft release.
+      - name: Attach to release (idempotent)
+        uses: actions/github-script@v7
         with:
-          files: |
-            dist/citationer-ubuntu-latest/*
-            dist/citationer-macos-latest/*
-            dist/citationer-windows-latest/*
+          script: |
+            const tag = context.ref.name.replace('refs/tags/', '');
+            let release;
+            try {
+              release = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: tag,
+              });
+              core.info(`Using existing release #${release.data.id} for ${tag}`);
+            } catch (err) {
+              if (err.status !== 404) throw err;
+              core.info(`No release yet for ${tag}, creating one.`);
+              release = await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tag,
+                name: tag,
+                generate_release_notes: true,
+              });
+            }
+
+            const wanted = [
+              ['dist/citationer-ubuntu-latest/citationer', 'citationer'],
+              ['dist/citationer-macos-latest/citationer', 'citationer-macos'],
+              ['dist/citationer-windows-latest/citationer-windows.exe', 'citationer-windows.exe'],
+            ];
+            const existing = new Set(release.data.assets.map(a => a.name));
+            const fs = require('fs');
+            for (const [path, label] of wanted) {
+              if (!fs.existsSync(path)) {
+                core.info(`skip ${label}: source ${path} not built`);
+                continue;
+              }
+              if (existing.has(label)) {
+                core.info(`skip ${label}: already attached to release`);
+                continue;
+              }
+              core.info(`Uploading ${label} from ${path}`);
+              const content = fs.readFileSync(path);
+              await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.data.id,
+                name: label,
+                data: content,
+              });
+            }
+            core.info('attach-to-release complete.');
