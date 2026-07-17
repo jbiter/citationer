@@ -191,7 +191,10 @@ def _interactive_stats(records) -> None:
         table.add_column("值", justify="right")
         table.add_row("总文献数", str(s.total_records))
         y_min, y_max = s.year_min, s.year_max
-        table.add_row("年份范围", f"{y_min}–{y_max}")
+        year_range = (
+            f"{y_min}–{y_max}" if y_min is not None else "-"
+        )
+        table.add_row("年份范围", year_range)
         table.add_row("作者总数", str(s.num_authors))
         table.add_row("机构总数", str(s.num_institutions))
         table.add_row("期刊数", str(s.num_journals))
