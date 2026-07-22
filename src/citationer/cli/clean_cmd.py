@@ -185,14 +185,6 @@ def clean(
             else:
                 _save_merged_records(db_path, merged)
 
-                # Export cleaned data if --save
-                saved_path = None
-                if save:
-                    saved_path = _export_csv(merged, Path.cwd())
-                    console.print(
-                        f"[green]💾 清洗后数据已保存: {saved_path}[/green]"
-                    )
-
                 console.print()
                 console.print(
                     f"✅ 去重完成: [bold red]{initial_count}[/bold red] → "
@@ -201,6 +193,15 @@ def clean(
                 )
         else:
             console.print("[green]✅ 未发现重复记录[/green]")
+
+        # Export cleaned data if --save (BUG-013 fix: independent of
+        # whether duplicates were found — the user may want the file even
+        # when no dups were detected).
+        if save:
+            saved_path = _export_csv(merged, Path.cwd())
+            console.print(
+                f"[green]💾 清洗后数据已保存: {saved_path}[/green]"
+            )
 
     if not issues and dup_removed == 0:
         console.print()

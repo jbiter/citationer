@@ -18,12 +18,21 @@ from citationer.models.record import Record
 try:
     from rapidfuzz import fuzz as _fuzz
 
-    def _str_similarity(t1: str, t2: str) -> float:
-        return _fuzz.ratio(t1, t2) / 100.0
+    def _str_similarity(t1: str, t2: str, threshold: float = 0.0) -> float:
+        # BUG-009 fix: rapidfuzz supports `score_cutoff` for short-circuit
+        # early exit when the score is guaranteed to fall below the
+        # threshold.  This makes Layer 2/3 calls faster on non-matching
+        # pairs (which is the common case in large datasets).
+        cutoff = int(threshold * 100) if threshold > 0 else 0
+        score = _fuzz.ratio(t1, t2, score_cutoff=cutoff)
+        if score == 0 and cutoff > 0:
+            return 0.0  # under threshold, returned as 0
+        return score / 100.0
 except ImportError:
     from difflib import SequenceMatcher
 
-    def _str_similarity(t1: str, t2: str) -> float:
+    def _str_similarity(t1: str, t2: str, threshold: float = 0.0) -> float:
+        # difflib has no native cutoff; just compute the full score.
         return SequenceMatcher(None, t1, t2).ratio()
 
 

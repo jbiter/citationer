@@ -105,6 +105,14 @@ def _run_pipeline(
             console.print("    [green]✓ 完成[/green]")
         except Exception as e:
             console.print(f"    [red]✗ 失败: {e}[/red]")
+            # BUG-010 fix: mark the step as None in results so subsequent
+            # steps that reference it via `name` get a clear signal (None)
+            # rather than a confusing KeyError from a stale reference.
+            if name:
+                results[name] = None
+                console.print(
+                    f"    [dim]步骤 '{name}' 输出未生成，后续引用将得到 None[/dim]"
+                )
             if step.get("on_error") == "stop":
                 raise typer.Exit(1)
         console.print()

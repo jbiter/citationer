@@ -256,11 +256,14 @@ def quick(
                 console.print(f"[dim]LLM 增强完成 (Token: {response.tokens_used})[/dim]")
             else:
                 console.print("[yellow]LLM 未配置，跳过增强[/yellow]")
-        except Exception:
-            pass
+        except Exception as e:
+            # BUG-011 fix: surface LLM errors instead of silently swallowing
+            # them.  The user explicitly opted into --enhance and should know
+            # whether the AI section is missing because of failure.
+            console.print(f"[yellow]⚠ LLM 增强失败: {e}[/yellow]")
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    if output.suffix == ".html":
+    if output.suffix.lower() == ".html":
         title = "Citationer Report" + (f" ({template})" if template else "")
         output.write_text(_md_to_html(md, title), encoding="utf-8")
     else:

@@ -223,10 +223,15 @@ class TrendEngine:
             communities.append(set(c))
 
         # ── Compute centrality & density per cluster ────────────
+        # BUG-014 fix: cache (cluster, centrality, density, top_kw, keywords)
+        # in cluster_stats so the second loop does not recompute top_kw /
+        # keywords (which were already computed in the first loop and
+        # discarded).  Also slightly reduces the number of iterations
+        # over the cluster nodes.
         themes: list[StrategyTheme] = []
         all_centralities: list[float] = []
         all_densities: list[float] = []
-        cluster_stats: list[tuple[set, float, float]] = []
+        cluster_stats: list[tuple[set, float, float, str, list[str]]] = []
 
         for ci, cluster in enumerate(communities):
             if len(cluster) < 2:
@@ -265,7 +270,7 @@ class TrendEngine:
             top_kw = max(cluster, key=lambda k: kw_counter.get(k, 0))
             keywords = sorted(cluster, key=lambda k: -kw_counter.get(k, 0))[:5]
 
-            cluster_stats.append((cluster, centrality, density))
+            cluster_stats.append((cluster, centrality, density, top_kw, keywords))
             all_centralities.append(centrality)
             all_densities.append(density)
 
@@ -274,7 +279,7 @@ class TrendEngine:
             c_med = sorted(all_centralities)[len(all_centralities) // 2]
             d_med = sorted(all_densities)[len(all_densities) // 2]
 
-            for cluster, centrality, density in cluster_stats:
+            for cluster, centrality, density, top_kw, keywords in cluster_stats:
                 # Quadrant
                 if centrality >= c_med and density >= d_med:
                     quadrant = 1  # Motor
@@ -284,9 +289,6 @@ class TrendEngine:
                     quadrant = 3  # Emerging/Declining
                 else:
                     quadrant = 4  # Basic
-
-                top_kw = max(cluster, key=lambda k: kw_counter.get(k, 0))
-                keywords = sorted(cluster, key=lambda k: -kw_counter.get(k, 0))[:5]
 
                 themes.append(StrategyTheme(
                     label=top_kw,
@@ -345,21 +347,31 @@ class TrendEngine:
 
         top_kw = [kw for kw, _ in sorted(kw_counter.items(), key=lambda x: -x[1])[:top_n]]
 
-        # Build time windows
+        # Build time windows.
+        # BUG-008 fix: include the trailing partial window so years at the
+        # end of the range aren't silently dropped.  Previously
+        # `range(years[0], years[-1] - window + 2, window)` skipped the
+        # last `window - 1` years when (years[-1] - years[0] + 1) was not
+        # divisible by `window`.
         years = sorted(year_total)
         if len(years) < window:
             return RiverData()
 
-        window_labels = []
-        for start in range(years[0], years[-1] - window + 2, window):
-            end = start + window - 1
+        window_labels: list[str] = []
+        window_starts: list[int] = []
+        start = years[0]
+        last_year = years[-1]
+        while start <= last_year:
+            end = min(start + window - 1, last_year)
             window_labels.append(f"{start}-{end}")
+            window_starts.append(start)
+            start = end + 1
 
         matrix: dict[str, list[float]] = {}
         for kw in top_kw:
             shares = []
-            for start in range(years[0], years[-1] - window + 2, window):
-                end = start + window - 1
+            for start in window_starts:
+                end = min(start + window - 1, last_year)
                 total = 0
                 kw_count = 0
                 for y in range(start, end + 1):
