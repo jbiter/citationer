@@ -3,17 +3,7 @@
 from __future__ import annotations
 
 from citationer.cli.interactive_cmd import _year_range
-from citationer.models.record import Author, Record
-
-
-def _r(title: str = "T", year: int | None = 2024) -> Record:
-    return Record(
-        title=title,
-        year=year,
-        authors=[Author(full_name="A", order=1)],
-        keywords=["x"],
-        source_database="T",
-    )
+from tests._factories import make_record as _r
 
 
 class TestBug007Regression:

@@ -62,6 +62,30 @@ def _title_similarity(title1: str, title2: str, threshold: float = 0.0) -> float
     return _str_similarity(t1, t2)
 
 
+def _bucket_by(
+    records: list[Record],
+    key_fn,
+) -> dict:
+    """Group record indices by a key function.
+
+    Records where `key_fn(r)` returns `None` are skipped.  Used by the
+    dedup layers (2, 3, 4) to bucket by year / (year, author) /
+    (year, surname) without duplicating the skip-on-None boilerplate.
+
+    Returning a plain dict (not a `defaultdict`) makes downstream
+    iteration explicit; callers iterate `buckets.values()` for the
+    index lists.
+    """
+    from collections import defaultdict
+
+    buckets: dict = defaultdict(list)
+    for i, r in enumerate(records):
+        key = key_fn(r)
+        if key is not None:
+            buckets[key].append(i)
+    return buckets
+
+
 def _merge_records(r1: Record, r2: Record) -> Record:
     """Merge two records, taking the union of their fields.
 
@@ -256,11 +280,9 @@ class DedupEngine:
         # BUG-006 fix: skip records with year=None so they don't all
         # collide in a synthetic "year=0" bucket (which would cause
         # high-similarity titles to falsely merge across unknown years).
-        year_buckets: dict[int, list[int]] = {}
-        for i, r in enumerate(records):
-            if r.year is None:
-                continue
-            year_buckets.setdefault(r.year, []).append(i)
+        year_buckets = _bucket_by(
+            records, lambda r: r.year if r.year is not None else None
+        )
 
         total_buckets = len(year_buckets)
         for bi, indices in enumerate(year_buckets.values()):
@@ -302,14 +324,14 @@ class DedupEngine:
 
         # Bucket by (year, first_author_lower).
         # BUG-006 fix: skip year=None records (don't bucket them under year=0).
-        from collections import defaultdict
-        buckets: dict[tuple[int, str], list[int]] = defaultdict(list)
-        for i, r in enumerate(records):
-            fa = r.first_author
-            if not fa or r.year is None:
-                continue
-            key = (r.year, fa.full_name.lower())
-            buckets[key].append(i)
+        buckets = _bucket_by(
+            records,
+            lambda r: (
+                (r.year, r.first_author.full_name.lower())
+                if r.year is not None and r.first_author
+                else None
+            ),
+        )
 
         total_buckets = len(buckets)
         for bi, indices in enumerate(buckets.values()):
@@ -348,20 +370,20 @@ class DedupEngine:
         Bucketed by (year, first-author-surname) for O(bucket²) instead of O(n²).
         Only cross-source pairs within the same bucket are compared.
         """
-        from collections import defaultdict
-
         merged_indices: set[int] = set()
 
-        # Bucket by (year, first_author_surname)
-        buckets: dict[tuple[int, str], list[int]] = defaultdict(list)
-        for i, r in enumerate(records):
+        # Bucket by (year, first_author_surname).  Records missing either
+        # field or with an empty surname are skipped via the None key.
+        def _layer4_key(r):
             fa = r.first_author
             if not fa or r.year is None:
-                continue
+                return None
             surname = (fa.surname or fa.full_name).lower()
             if not surname:
-                continue
-            buckets[(r.year, surname)].append(i)
+                return None
+            return (r.year, surname)
+
+        buckets = _bucket_by(records, _layer4_key)
 
         self._tick(1, 1)  # one logical step for the progress bar
 

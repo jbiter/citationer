@@ -6,26 +6,13 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from citationer.analysis.dedup import (
-    _title_similarity,
-)
+from citationer.analysis.dedup import _title_similarity
 from citationer.analysis.trend import TrendEngine
 from citationer.cli.main import app
-from citationer.models.record import Author, Record
+from citationer.models.record import Record
 from citationer.utils.database import CitationDatabase
 from citationer.utils.serialization import record_to_db_serializable
-
-
-def _r(title: str = "T", year: int | None = 2024, journal: str = "Nature") -> Record:
-    return Record(
-        title=title,
-        year=year,
-        journal=journal,
-        authors=[Author(full_name="A", order=1)],
-        keywords=["x"],
-        source_database="T",
-    )
-
+from tests._factories import make_record as _r
 
 # ===========================================================================
 # BUG-012: report HTML suffix case sensitivity

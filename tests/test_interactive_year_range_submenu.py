@@ -12,16 +12,7 @@ from pathlib import Path
 from citationer.models.record import Author, Record
 from citationer.utils.database import CitationDatabase
 from citationer.utils.serialization import record_to_db_serializable
-
-
-def _r(title: str = "T") -> Record:
-    return Record(
-        title=title,
-        year=None,
-        authors=[Author(full_name="A", order=1)],
-        keywords=["x"],
-        source_database="T",
-    )
+from tests._factories import make_record as _r
 
 
 def _setup_db_with_no_year_records(clean_cwd: Path) -> None:
