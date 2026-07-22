@@ -3,17 +3,7 @@
 from __future__ import annotations
 
 from citationer.analysis.dedup import DedupEngine
-from citationer.models.record import Author, Record
-
-
-def _r(title: str, year: int | None = None) -> Record:
-    return Record(
-        title=title,
-        year=year,
-        authors=[Author(full_name="Smith, J.", order=1)],
-        keywords=["shared_kw"],
-        source_database="TestDB",
-    )
+from tests._factories import make_record as _r
 
 
 class TestBug006Regression:
