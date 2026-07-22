@@ -77,7 +77,15 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const tag = context.ref.name.replace('refs/tags/', '');
+            // context.ref is the full ref path string, e.g.
+            // "refs/tags/v4.6.5" or "refs/heads/main".  It is NOT an
+            // object with a `.name` field — that was the previous bug
+            // that crashed the attach step.
+            if (!context.ref || !context.ref.startsWith('refs/tags/v')) {
+              core.info(`Not a tag push (ref=${context.ref}); skipping attach.`);
+              return;
+            }
+            const tag = context.ref.replace('refs/tags/', '');
             let release;
             try {
               release = await github.rest.repos.getReleaseByTag({
