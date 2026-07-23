@@ -76,7 +76,8 @@ jobs:
           # Skip upload if a file with the same hash already exists on
           # PyPI (idempotent retries after a transient pipeline failure).
           # Uses the kebab-case `skip-existing` (the snake_case form was
-          # deprecated).  Authentication falls back to PYPI_API_TOKEN env
-          # / repository secret if no trusted publisher is configured.
+          # deprecated).  Authentication uses OIDC via the
+          # `id-token: write` permission declared on this job — no
+          # PYPI_API_TOKEN secret needed once a Trusted Publisher is
+          # configured for this repo on PyPI.
           skip-existing: true
-          password: ${{ secrets.PYPI_API_TOKEN }}
