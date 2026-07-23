@@ -79,6 +79,16 @@ def _import_run():
     return run_cmd
 
 
+def _import_query():
+    from citationer.cli import query_cmd
+    return query_cmd
+
+
+def _import_query_cmd():
+    from citationer.cli import query_cmd
+    return query_cmd.query_cmd
+
+
 class _RootGroup(TyperGroup):
     """Custom TyperGroup that shows our L1 overview for top-level --help.
 
@@ -174,6 +184,7 @@ def _register():
     app.add_typer(_import_report().app, name="report")
     app.add_typer(_import_interactive().app, name="interactive")
     app.add_typer(_import_run().app, name="run")
+    app.command(name="query")(_import_query_cmd())
 
 _register._done = False  # type: ignore[attr-defined]
 
