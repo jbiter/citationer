@@ -8,15 +8,30 @@ on:
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
+# The previous implementation used `mkdocs gh-deploy` which pushed the
+# built site to the `gh-pages` branch.  This approach silently broke in
+# v4.5.0 — the `mkdocs gh-deploy --force` step exited 0 but the
+# push to `gh-pages` did not actually happen, so GitHub Pages kept
+# showing v4.4.0.  Switched to the native
+# `actions/deploy-pages@v4` flow, which is GitHub's recommended
+# approach and doesn't require the `gh-pages` branch at all.
+#
+# IMPORTANT: After this PR is merged, the repo owner must enable
+# GitHub Pages once via the web UI:
+#   Settings > Pages > Source = "GitHub Actions"
+# Until that's done, the deploy job will fail with a 404-style error.
+
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: docs
-  cancel-in-progress: true
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,11 +44,22 @@ jobs:
       - name: Install mkdocs + material
         run: pip install mkdocs mkdocs-material
 
-      - name: Build and deploy
+      - name: Build site
         working-directory: site
-        # mkdocs gh-deploy builds the site and pushes to the `gh-pages` branch.
-        # Requires GitHub Pages to be enabled in repository settings with
-        # source = "Deploy from a branch: gh-pages".
-        run: mkdocs gh-deploy --force --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: mkdocs build --strict --clean --site-dir ../site/build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
