@@ -533,9 +533,10 @@ class TestConfigCommandsExtended:
         cli_runner.invoke(app, ["config", "set", "llm.model", "gpt-4o"])
         result = cli_runner.invoke(app, ["config", "show"])
         assert result.exit_code == 0
-        assert "config.yaml" in result.output
+        assert "配置文件" in result.output
         assert "gpt-4o" in result.output
         assert "config" in result.output
+        assert get_config_path().exists()
 
     def test_show_with_api_key_unconfigured(self, cli_runner, clean_cwd):
         result = cli_runner.invoke(app, ["config", "show"])
