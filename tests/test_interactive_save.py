@@ -6,10 +6,12 @@ import pytest
 
 from citationer.cli.interactive_cmd import save_interactive_report
 from citationer.models.record import Author, Record
+from tests._factories import make_record
 
 
 def _r(title: str = "T", year: int = 2024) -> Record:
-    return Record(
+    """Minimal interactive-save test record."""
+    return make_record(
         title=title,
         year=year,
         journal="Nature",

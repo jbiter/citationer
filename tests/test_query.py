@@ -13,10 +13,9 @@ import pytest
 
 from citationer.cli.main import app
 from citationer.models.record import Author
-from citationer.utils.database import CitationDatabase
 from citationer.utils.query import Filter, matches, parse_filter
-from citationer.utils.serialization import record_to_db_serializable
 from tests._factories import make_record as _r
+from tests._helpers import seed_cli_db
 
 # ===========================================================================
 # parse_filter — unit tests for the query DSL parser
@@ -186,11 +185,6 @@ class TestMatches:
 
 def _setup_db_with_records(clean_cwd: Path) -> None:
     """Insert 5 records with varied fields."""
-    db_dir = clean_cwd / ".citationer"
-    db_dir.mkdir(exist_ok=True)
-    db = CitationDatabase(db_dir / "cache.db")
-    db.initialize()
-
     records = [
         _r(title="ML 2020", year=2020, journal="Nature", citation_count=15,
             language="en", keywords=["machine learning"]),
@@ -203,15 +197,7 @@ def _setup_db_with_records(clean_cwd: Path) -> None:
         _r(title="Chinese ML 2024", year=2024, journal="自动化学报", citation_count=8,
             language="zh", keywords=["机器学习"]),
     ]
-    for r in records:
-        payload = record_to_db_serializable(r)
-        db.insert_record(
-            record_data=payload["record_data"],
-            authors=payload["authors"],
-            keywords=payload["keywords"],
-            institutions=payload["institutions"],
-        )
-    db.close()
+    seed_cli_db(clean_cwd, records)
 
 
 class TestQueryCli:

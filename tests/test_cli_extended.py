@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 
 from citationer.cli.main import app
+from tests._helpers import seed_cli_db
 
 # ===========================================================================
 # Helper: rich dataset for exercising real paths
@@ -27,15 +28,7 @@ from citationer.cli.main import app
 
 def _setup_rich_data(clean_cwd: Path) -> None:
     """Build a DB with diverse records exercising many code paths."""
-    db_dir = clean_cwd / ".citationer"
-    db_dir.mkdir(exist_ok=True)
-
     from citationer.models.record import Author, Institution, Record
-    from citationer.utils.database import CitationDatabase
-    from citationer.utils.serialization import record_to_db_serializable
-
-    db = CitationDatabase(db_dir / "cache.db")
-    db.initialize()
 
     records = [
         # Article with full data
@@ -100,17 +93,7 @@ def _setup_rich_data(clean_cwd: Path) -> None:
             source_database="WoS",
         ),
     ]
-    for r in records:
-        payload = record_to_db_serializable(r)
-        db.insert_record(
-            record_data=payload["record_data"],
-            authors=payload["authors"],
-            keywords=payload["keywords"],
-            institutions=payload["institutions"],
-            funding=payload["funding"],
-            references=payload["references"],
-        )
-    db.close()
+    seed_cli_db(clean_cwd, records)
 
 
 # ===========================================================================

@@ -13,6 +13,7 @@ from citationer.models.record import Record
 from citationer.utils.database import CitationDatabase
 from citationer.utils.serialization import record_to_db_serializable
 from tests._factories import make_record as _r
+from tests._helpers import seed_cli_db
 
 # ===========================================================================
 # BUG-012: report HTML suffix case sensitivity
@@ -52,19 +53,7 @@ class TestBug012HtmlSuffix:
 
 
 def _setup_db(clean_cwd: Path, records: list[Record]) -> None:
-    db_dir = clean_cwd / ".citationer"
-    db_dir.mkdir(exist_ok=True)
-    db = CitationDatabase(db_dir / "cache.db")
-    db.initialize()
-    for r in records:
-        payload = record_to_db_serializable(r)
-        db.insert_record(
-            record_data=payload["record_data"],
-            authors=payload["authors"],
-            keywords=payload["keywords"],
-            institutions=payload["institutions"],
-        )
-    db.close()
+    seed_cli_db(clean_cwd, records)
 
 
 class TestBug013CleanSave:

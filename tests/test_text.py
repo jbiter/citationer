@@ -6,18 +6,7 @@ from citationer.analysis.text import (
     detect_language,
 )
 from citationer.models.record import Record
-
-
-def make_record(title="", year=2024, abstract="", keywords=None, keywords_en=None, language=None):
-    """Helper to create test records."""
-    return Record(
-        title=title,
-        year=year,
-        abstract=abstract,
-        keywords=keywords or [],
-        keywords_en=keywords_en,
-        language=language,
-    )
+from tests._factories import make_record
 
 
 class TestLanguageDetection:
@@ -281,7 +270,7 @@ class TestCluster:
 class TestPreprocessEdgeCases:
     def test_preprocess_lang_override(self):
         """Explicit lang parameter overrides auto-detection."""
-        records = [make_record(title="机器学习", abstract="深度学习应用")]
+        records = [make_record(title="机器学习", abstract="深度学习应用", language=None)]
         engine = TextEngine(records)
 
         # Auto-detect → zh

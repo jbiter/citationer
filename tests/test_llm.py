@@ -3,11 +3,7 @@
 
 from citationer.llm.client import LLMClient, LLMConfig, LLMResponse
 from citationer.models.record import Author, Institution, Record
-
-
-def make_record(title="Test", abstract="Abstract text.", year=2024, **kwargs):
-    """Helper to create test records."""
-    return Record(title=title, abstract=abstract, year=year, **kwargs)
+from tests._factories import make_record
 
 
 class TestSanitization:

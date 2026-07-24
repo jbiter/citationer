@@ -20,16 +20,11 @@ from citationer.cli.main import app
 from citationer.models.record import Author, Record
 from citationer.utils.database import CitationDatabase
 from citationer.utils.serialization import record_to_db_serializable
+from tests._helpers import seed_cli_db
 
 
 def _setup_with_anomalies(clean_cwd: Path) -> None:
     """DB with records exercising all clean_cmd paths."""
-    db_dir = clean_cwd / ".citationer"
-    db_dir.mkdir(exist_ok=True)
-
-    db = CitationDatabase(db_dir / "cache.db")
-    db.initialize()
-
     records = [
         # Missing title
         Record(title="", year=2024, authors=[Author(full_name="A", order=1)],
@@ -57,15 +52,7 @@ def _setup_with_anomalies(clean_cwd: Path) -> None:
         Record(title="Normal", year=2023, authors=[Author(full_name="Z", order=1)],
                keywords=["x"], source_database="T"),
     ]
-    for r in records:
-        payload = record_to_db_serializable(r)
-        db.insert_record(
-            record_data=payload["record_data"],
-            authors=payload["authors"],
-            keywords=payload["keywords"],
-            institutions=payload["institutions"],
-        )
-    db.close()
+    seed_cli_db(clean_cwd, records)
 
 
 class TestCleanMissingFields:

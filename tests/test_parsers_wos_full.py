@@ -287,7 +287,7 @@ class TestWosTextParse:
         r = WosTextParser().parse(f)[0]
         # Funding is parsed and stored
         # implementation may store differently
-        assert r.funding is not None or "funding" in r.raw_data or True
+        assert r.funding == ["National Science Foundation", "Grant number ABC-123"]
 
 
 # ===========================================================================
@@ -458,3 +458,187 @@ class TestWosExcelParse:
         f = tmp_path / "empty.xlsx"
         _make_wos_xlsx(WOS_HEADERS, [], f)
         assert WosExcelParser().parse(f) == []
+
+
+# ===========================================================================
+# Additional coverage for edge cases and error branches
+# ===========================================================================
+
+
+class TestWosTextEdgeCases:
+    def test_detect_rejects_non_txt_extension(self, tmp_path):
+        f = tmp_path / "article.pdf"
+        f.write_text("PT J\nER\n")
+        assert WosTextParser().detect(f) is False
+
+    def test_detect_handles_unreadable_file(self, tmp_path):
+        f = tmp_path / "unreadable.txt"
+        f.write_text("PT J\nER\n")
+        f.chmod(0o000)
+        try:
+            # Unreadable file should not crash; detection falls back to False
+            assert WosTextParser().detect(f) is False
+        finally:
+            f.chmod(0o644)
+
+    def test_parse_record_terminator_before_fields(self, tmp_path):
+        f = tmp_path / "early_er.txt"
+        f.write_text("ER\nEF")
+        records = WosTextParser().parse(f)
+        assert records == []
+
+    def test_parse_inline_er_tag_is_skipped(self, tmp_path):
+        f = tmp_path / "inline_er.txt"
+        f.write_text("PT J\nTI Title ER extra\nPY 2024\nER\n")
+        r = WosTextParser().parse(f)[0]
+        assert "ER" in r.title
+
+    def test_parse_blank_continuation_line(self, tmp_path):
+        f = tmp_path / "blank_cont.txt"
+        f.write_text("PT J\nTI Title\n   \nPY 2024\nER\n")
+        r = WosTextParser().parse(f)[0]
+        assert r.title == "Title"
+
+    def test_parse_unindented_wrapped_title(self, tmp_path):
+        f = tmp_path / "wrap.txt"
+        f.write_text("PT J\nTI A very long title\nthat wraps without indentation\nPY 2024\nER\n")
+        r = WosTextParser().parse(f)[0]
+        assert "wraps without indentation" in r.title
+
+    def test_parse_missing_trailing_er(self, tmp_path):
+        f = tmp_path / "no_er.txt"
+        f.write_text("PT J\nTI Last\nPY 2024\nEF")
+        records = WosTextParser().parse(f)
+        assert len(records) == 1
+        assert records[0].title == "Last"
+
+    def test_parse_missing_year(self, tmp_path):
+        f = tmp_path / "no_year.txt"
+        f.write_text("PT J\nTI No Year\nER\n")
+        r = WosTextParser().parse(f)[0]
+        assert r.year is None
+
+    def test_parse_non_numeric_citation_count(self, tmp_path):
+        f = tmp_path / "bad_tc.txt"
+        f.write_text("PT J\nTI T\nPY 2024\nTC not-a-number\nZ9 also-bad\nER\n")
+        r = WosTextParser().parse(f)[0]
+        assert r.citation_count is None
+
+    def test_parse_empty_author_segment(self, tmp_path):
+        f = tmp_path / "empty_au.txt"
+        f.write_text("PT J\nAU Smith, J;; Jones, M\nTI T\nPY 2024\nER\n")
+        r = WosTextParser().parse(f)[0]
+        assert len(r.authors) == 2
+
+    def test_parse_institution_reprint_line(self, tmp_path):
+        f = tmp_path / "reprint.txt"
+        f.write_text(
+            "PT J\nTI T\nPY 2024\n"
+            "C1 Reprint author, Some Univ, Beijing, China\n"
+            "ER\n"
+        )
+        r = WosTextParser().parse(f)[0]
+        # Reprint lines are skipped by the parser
+        assert all("Reprint" not in (i.name or "") for i in r.institutions)
+
+    def test_parse_institution_numeric_only(self, tmp_path):
+        f = tmp_path / "numeric.txt"
+        f.write_text(
+            "PT J\nTI T\nPY 2024\n"
+            "C1 [Smith, J] 02138, USA\n"
+            "ER\n"
+        )
+        r = WosTextParser().parse(f)[0]
+        # Numeric-only token should not produce a valid institution name
+        assert not any(i.name == "02138" for i in r.institutions)
+
+    def test_parse_institution_no_crash_on_unclear_address(self, tmp_path):
+        f = tmp_path / "no_country.txt"
+        f.write_text(
+            "PT J\nTI T\nPY 2024\n"
+            "C1 [Smith, J] Harvard Univ, Cambridge\n"
+            "ER\n"
+        )
+        r = WosTextParser().parse(f)[0]
+        # Parser should not crash even when the address does not end with a
+        # clear country token.
+        assert isinstance(r.institutions, list)
+
+
+class TestWosTabDelimitedEdgeCases:
+    def test_detect_rejects_xlsx_extension(self, tmp_path):
+        f = tmp_path / "wos.xlsx"
+        f.write_bytes(b"PK")
+        assert WosTabDelimitedParser().detect(f) is False
+
+    def test_detect_handles_unreadable_file(self, tmp_path):
+        f = tmp_path / "unreadable.txt"
+        f.write_text("PT\tAU\tTI\n")
+        f.chmod(0o000)
+        try:
+            assert WosTabDelimitedParser().detect(f) is False
+        finally:
+            f.chmod(0o644)
+
+    def test_parse_empty_tsv(self, tmp_path):
+        f = tmp_path / "empty.tsv"
+        f.write_text("")
+        records = WosTabDelimitedParser().parse(f)
+        assert records == []
+
+    def test_parse_tsv_with_only_unknown_columns(self, tmp_path):
+        f = tmp_path / "unknown.tsv"
+        f.write_text("FOO\tBAR\n1\t2\n")
+        records = WosTabDelimitedParser().parse(f)
+        assert records == []
+
+
+class TestWosExcelEdgeCases:
+    def test_parse_substring_column_match(self, tmp_path):
+        f = tmp_path / "substring.xlsx"
+        # Header contains a substring of a known marker
+        headers = [
+            "Publication Type", "Article Title (English)", "Authors",
+            "Source Title", "Publication Year",
+        ]
+        _make_wos_xlsx(
+            headers,
+            [["Article", "Sub Title", "Smith, J", "Nature", 2024]],
+            f,
+        )
+        records = WosExcelParser().parse(f)
+        assert len(records) == 1
+        assert records[0].title == "Sub Title"
+
+    def test_parse_skips_empty_row(self, tmp_path):
+        f = tmp_path / "empty_row.xlsx"
+        wb = Workbook()
+        ws = wb.active
+        ws.append(WOS_HEADERS)
+        ws.append(["Article", "First", "Smith, J", "Nature", 2024, "", "", "", "", "", "", "", ""])
+        ws.append([])  # empty row
+        ws.append(
+            ["Article", "Second", "Jones, M", "Science", 2023, "", "", "", "", "", "", "", ""]
+        )
+        wb.save(f)
+        records = WosExcelParser().parse(f)
+        assert len(records) == 2
+        assert [r.title for r in records] == ["First", "Second"]
+
+    def test_parse_short_row(self, tmp_path):
+        f = tmp_path / "short.xlsx"
+        wb = Workbook()
+        ws = wb.active
+        ws.append(WOS_HEADERS)
+        # Row with fewer cells than headers
+        ws.append(["Article", "Short"])
+        wb.save(f)
+        records = WosExcelParser().parse(f)
+        assert len(records) == 1
+        assert records[0].title == "Short"
+
+    def test_detect_handles_corrupt_xlsx(self, tmp_path):
+        f = tmp_path / "corrupt.xlsx"
+        f.write_text("not a zip")
+        assert WosExcelParser().detect(f) is False
+

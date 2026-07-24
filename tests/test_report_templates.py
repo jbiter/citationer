@@ -17,10 +17,13 @@ from citationer.cli.report_cmd import (
     _yearly_table,
 )
 from citationer.models.record import Author, Record
+from tests._factories import make_record
+from tests._helpers import seed_cli_db
 
 
 def _r(title: str, year: int = 2024, journal: str = "Journal X") -> Record:
-    return Record(
+    """Minimal record for report-template tests; keeps keywords per record."""
+    return make_record(
         title=title,
         year=year,
         journal=journal,
@@ -245,15 +248,7 @@ class TestDispatcher:
 
 
 def _setup(clean_cwd: Path) -> None:
-    db_dir = clean_cwd / ".citationer"
-    db_dir.mkdir(exist_ok=True)
-
-    from citationer.utils.database import CitationDatabase
-    from citationer.utils.serialization import record_to_db_serializable
-
-    db = CitationDatabase(db_dir / "cache.db")
-    db.initialize()
-    for r in [
+    records = [
         Record(
             title=f"P{i}",
             year=2024,
@@ -262,15 +257,8 @@ def _setup(clean_cwd: Path) -> None:
             source_database="T",
         )
         for i in range(5)
-    ]:
-        payload = record_to_db_serializable(r)
-        db.insert_record(
-            record_data=payload["record_data"],
-            authors=payload["authors"],
-            keywords=payload["keywords"],
-            institutions=payload["institutions"],
-        )
-    db.close()
+    ]
+    seed_cli_db(clean_cwd, records)
 
 
 class TestCliQuick:

@@ -3,19 +3,8 @@
 import pytest
 
 from citationer.analysis.stats import StatsEngine
-from citationer.models.record import Author, Institution, Record
-
-
-def make_record(title: str, year: int, journal: str = "", authors=None, citations=0, **kwargs):
-    """Helper to create test records quickly."""
-    return Record(
-        title=title,
-        year=year,
-        journal=journal,
-        authors=authors or [],
-        citation_count=citations,
-        **kwargs,
-    )
+from citationer.models.record import Author, Institution
+from tests._factories import make_record
 
 
 class TestOverviewStats:
@@ -27,19 +16,31 @@ class TestOverviewStats:
 
     def test_basic_overview(self):
         records = [
-            make_record("Paper A", 2024, "Journal X", [
-                Author(full_name="Author 1"),
-                Author(full_name="Author 2"),
-            ], citations=10),
-            make_record("Paper B", 2023, "Journal X", [
-                Author(full_name="Author 1"),
-                Author(full_name="Author 2"),
-            ], citations=5),
-            make_record("Paper C", 2022, "Journal X", [
-                Author(full_name="Author 3"),
-                Author(full_name="Author 4"),
-                Author(full_name="Author 5"),
-            ], citations=2),
+            make_record(
+                "Paper A", 2024, "Journal X",
+                authors=[
+                    Author(full_name="Author 1"),
+                    Author(full_name="Author 2"),
+                ],
+                citation_count=10,
+            ),
+            make_record(
+                "Paper B", 2023, "Journal X",
+                authors=[
+                    Author(full_name="Author 1"),
+                    Author(full_name="Author 2"),
+                ],
+                citation_count=5,
+            ),
+            make_record(
+                "Paper C", 2022, "Journal X",
+                authors=[
+                    Author(full_name="Author 3"),
+                    Author(full_name="Author 4"),
+                    Author(full_name="Author 5"),
+                ],
+                citation_count=2,
+            ),
         ]
 
         engine = StatsEngine(records)
@@ -56,7 +57,7 @@ class TestOverviewStats:
 
     def test_h_index(self):
         records = [
-            make_record(f"Paper {i}", 2020 + i, citations=c)
+            make_record(f"Paper {i}", 2020 + i, citation_count=c)
             for i, c in enumerate([10, 8, 5, 3, 1])
         ]
         engine = StatsEngine(records)
@@ -122,13 +123,13 @@ class TestAuthorStats:
         records = [
             make_record("A", 2024, authors=[
                 Author(full_name="Smith, J", order=1),
-            ], citations=5),
+            ], citation_count=5),
             make_record("B", 2024, authors=[
                 Author(full_name="Smith, J", order=1),
-            ], citations=3),
+            ], citation_count=3),
             make_record("C", 2024, authors=[
                 Author(full_name="Jones, M", order=1),
-            ], citations=10),
+            ], citation_count=10),
         ]
         engine = StatsEngine(records)
         result = engine.authors(top_n=2)
@@ -141,13 +142,13 @@ class TestAuthorStats:
         records = [
             make_record("A", 2024, authors=[
                 Author(full_name="Smith, J", order=1),
-            ], citations=10),
+            ], citation_count=10),
             make_record("B", 2024, authors=[
                 Author(full_name="Smith, J", order=1),
-            ], citations=5),
+            ], citation_count=5),
             make_record("C", 2024, authors=[
                 Author(full_name="Smith, J", order=1),
-            ], citations=3),
+            ], citation_count=3),
         ]
         engine = StatsEngine(records)
         result = engine.authors(top_n=1)

@@ -18,6 +18,7 @@ from openpyxl import Workbook
 
 from citationer.cli.main import app
 from citationer.utils.config import get_config_path
+from tests._helpers import seed_cli_db
 
 # ===========================================================================
 # Main app: --version, --help
@@ -124,18 +125,8 @@ class TestCleanCommand:
 
 def _setup_test_data(clean_cwd: Path) -> None:
     """Insert a few test records into the database for CLI tests."""
-
-    # Create the .citationer dir
-    db_dir = clean_cwd / ".citationer"
-    db_dir.mkdir(exist_ok=True)
-
-    # Direct DB insert (bypass import command for speed)
     from citationer.models.record import Author, Record
-    from citationer.utils.database import CitationDatabase
-    from citationer.utils.serialization import record_to_db_serializable
 
-    db = CitationDatabase(db_dir / "cache.db")
-    db.initialize()
     records = [
         Record(
             title=f"Paper {i}",
@@ -147,15 +138,7 @@ def _setup_test_data(clean_cwd: Path) -> None:
         )
         for i in range(5)
     ]
-    for r in records:
-        payload = record_to_db_serializable(r)
-        db.insert_record(
-            record_data=payload["record_data"],
-            authors=payload["authors"],
-            keywords=payload["keywords"],
-            institutions=payload["institutions"],
-        )
-    db.close()
+    seed_cli_db(clean_cwd, records)
 
 
 class TestStatsCommands:
