@@ -2,30 +2,8 @@
 
 
 from citationer.analysis.network import NetworkEngine
-from citationer.models.record import Author, Institution, Record
-
-
-def make_record(
-    title="Test",
-    year=2024,
-    authors=None,
-    keywords=None,
-    keywords_en=None,
-    institutions=None,
-    references=None,
-    **kwargs,
-):
-    """Helper to create test records."""
-    return Record(
-        title=title,
-        year=year,
-        authors=authors or [],
-        keywords=keywords or [],
-        keywords_en=keywords_en,
-        institutions=institutions or [],
-        references=references,
-        **kwargs,
-    )
+from citationer.models.record import Author, Institution
+from tests._factories import make_record
 
 
 class TestKeywordCooccurrence:

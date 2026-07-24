@@ -7,6 +7,8 @@ from pathlib import Path
 from citationer.analysis.stats import FundingStats, StatsEngine
 from citationer.cli.main import app
 from citationer.models.record import Author, Record
+from tests._factories import make_record
+from tests._helpers import seed_cli_db
 
 # ===========================================================================
 # StatsEngine.funding (unit)
@@ -18,11 +20,12 @@ def _r(
     year: int | None = 2024,
     funding: list[str] | None = None,
 ) -> Record:
-    return Record(
+    """Minimal funding test record."""
+    return make_record(
         title=title,
         year=year,
-        authors=[Author(full_name="A", order=1)],
         funding=funding,
+        authors=[Author(full_name="A", order=1)],
         source_database="T",
     )
 
@@ -171,15 +174,6 @@ class TestFundingYearly:
 
 def _setup_data(clean_cwd: Path) -> None:
     """Setup DB with records exercising funding analysis."""
-    db_dir = clean_cwd / ".citationer"
-    db_dir.mkdir(exist_ok=True)
-
-    from citationer.utils.database import CitationDatabase
-    from citationer.utils.serialization import record_to_db_serializable
-
-    db = CitationDatabase(db_dir / "cache.db")
-    db.initialize()
-
     records = [
         Record(
             title="Funded 1",
@@ -217,17 +211,7 @@ def _setup_data(clean_cwd: Path) -> None:
             source_database="Scopus",
         ),
     ]
-    for r in records:
-        payload = record_to_db_serializable(r)
-        db.insert_record(
-            record_data=payload["record_data"],
-            authors=payload["authors"],
-            keywords=payload["keywords"],
-            institutions=payload["institutions"],
-            funding=payload["funding"],
-            references=payload["references"],
-        )
-    db.close()
+    seed_cli_db(clean_cwd, records)
 
 
 class TestFundingCommand:

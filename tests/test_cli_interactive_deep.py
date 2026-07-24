@@ -21,15 +21,11 @@ from citationer.cli.interactive_cmd import (
 from citationer.cli.main import app
 from citationer.models.record import Author, Record
 from citationer.utils.database import CitationDatabase
-from citationer.utils.serialization import record_to_db_serializable
+from tests._helpers import seed_cli_db
 
 
 def _setup_db(clean_cwd: Path) -> None:
     """Setup a small DB for interactive tests."""
-    db_dir = clean_cwd / ".citationer"
-    db_dir.mkdir(exist_ok=True)
-    db = CitationDatabase(db_dir / "cache.db")
-    db.initialize()
     records = [
         Record(
             title=f"Paper {i}",
@@ -40,15 +36,7 @@ def _setup_db(clean_cwd: Path) -> None:
         )
         for i in range(3)
     ]
-    for r in records:
-        payload = record_to_db_serializable(r)
-        db.insert_record(
-            record_data=payload["record_data"],
-            authors=payload["authors"],
-            keywords=payload["keywords"],
-            institutions=payload["institutions"],
-        )
-    db.close()
+    seed_cli_db(clean_cwd, records)
 
 
 class TestInteractiveWizard:

@@ -21,15 +21,14 @@ from citationer.analysis.trend import (
     TrendEngine,
 )
 from citationer.models.record import Author, Record
-
-# ===========================================================================
-# Test fixtures: tailored records for trend analysis scenarios
-# ===========================================================================
+from tests._factories import make_record
 
 
+# Local short alias kept for the many fixture call sites; it delegates to the
+# shared factory so Record-construction logic is not duplicated.
 def _r(title: str, year: int, kws: list[str], kws_en: list[str] | None = None) -> Record:
     """Build a minimal record for trend tests."""
-    return Record(
+    return make_record(
         title=title,
         year=year,
         keywords=kws,

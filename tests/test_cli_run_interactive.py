@@ -10,19 +10,12 @@ from pathlib import Path
 import pytest
 
 from citationer.cli.main import app
+from tests._helpers import seed_cli_db
 
 
 def _setup_run_data(clean_cwd: Path) -> None:
     """Setup DB with records for run_cmd pipeline execution."""
-    db_dir = clean_cwd / ".citationer"
-    db_dir.mkdir(exist_ok=True)
-
     from citationer.models.record import Author, Record
-    from citationer.utils.database import CitationDatabase
-    from citationer.utils.serialization import record_to_db_serializable
-
-    db = CitationDatabase(db_dir / "cache.db")
-    db.initialize()
 
     records = [
         Record(
@@ -35,15 +28,7 @@ def _setup_run_data(clean_cwd: Path) -> None:
         )
         for i in range(3)
     ]
-    for r in records:
-        payload = record_to_db_serializable(r)
-        db.insert_record(
-            record_data=payload["record_data"],
-            authors=payload["authors"],
-            keywords=payload["keywords"],
-            institutions=payload["institutions"],
-        )
-    db.close()
+    seed_cli_db(clean_cwd, records)
 
 
 class TestRunValidation:

@@ -5,19 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from citationer.cli.main import app
+from tests._helpers import seed_cli_db
 
 
 def _setup_network_data(clean_cwd: Path) -> None:
     """Setup DB with records that have keyword co-occurrence."""
-    db_dir = clean_cwd / ".citationer"
-    db_dir.mkdir(exist_ok=True)
-
     from citationer.models.record import Author, Institution, Record
-    from citationer.utils.database import CitationDatabase
-    from citationer.utils.serialization import record_to_db_serializable
-
-    db = CitationDatabase(db_dir / "cache.db")
-    db.initialize()
 
     records = [
         # Pairs of papers with shared keywords
@@ -48,15 +41,7 @@ def _setup_network_data(clean_cwd: Path) -> None:
             source_database="arXiv",
         ),
     ]
-    for r in records:
-        payload = record_to_db_serializable(r)
-        db.insert_record(
-            record_data=payload["record_data"],
-            authors=payload["authors"],
-            keywords=payload["keywords"],
-            institutions=payload["institutions"],
-        )
-    db.close()
+    seed_cli_db(clean_cwd, records)
 
 
 class TestNetworkKeywords:
