@@ -3,6 +3,15 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v4.10.0 — 2026-07-25
+
+- Completed the final CLI coverage push: `ai_cmd`, `stats_cmd`, `trend_cmd`,
+  `config_cmd`, and `import_cmd` all raised above 85%.
+- Added deep tests for missing-key / dry-run / mocked LLM paths, empty-data
+  branches, `--table` / `--save` defaults, parser error handling, JSON import
+  summary, and trend no-data / ImportError / icon branches.
+- Project-wide test coverage reached ~93%.
+
 ## v4.9.0 — 2026-07-25
 
 - Resolved the remaining Phase 4 technical debt by raising test coverage across

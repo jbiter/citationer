@@ -44,5 +44,5 @@ Build from source: `pyinstaller packaging/pyinstaller.spec`
 
 ```bash
 citationer --version
-# citationer v4.9.0
+# citationer v4.10.0
 ```

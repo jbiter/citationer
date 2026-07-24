@@ -16,6 +16,7 @@ from pathlib import Path
 
 from openpyxl import Workbook
 
+from citationer.cli.config_cmd import _mask_value
 from citationer.cli.main import app
 from citationer.utils.config import get_config_path
 from tests._helpers import seed_cli_db
@@ -499,6 +500,131 @@ class TestRunCommand:
             app, ["run", str(clean_cwd / "nonexistent.yaml")]
         )
         assert result.exit_code != 0
+
+
+# ===========================================================================
+# Config deep tests
+# ===========================================================================
+
+
+class TestMaskValue:
+    def test_long_value(self):
+        assert _mask_value("sk-abcdefghijklmnopqrstuvwxyz") == "sk-abcde…wxyz"
+
+    def test_medium_value(self):
+        assert _mask_value("abcdef") == "ab…ef"
+
+    def test_short_value(self):
+        assert _mask_value("abc") == "***"
+
+    def test_empty_value(self):
+        assert _mask_value("") == ""
+
+
+class TestConfigCommandsExtended:
+    def test_show_no_config_file(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(app, ["config", "show"])
+        assert result.exit_code == 0
+        assert "配置文件未创建" in result.output
+        assert "default" in result.output
+
+    def test_show_with_config_file(self, cli_runner, clean_cwd):
+        cli_runner.invoke(app, ["config", "init"])
+        cli_runner.invoke(app, ["config", "set", "llm.model", "gpt-4o"])
+        result = cli_runner.invoke(app, ["config", "show"])
+        assert result.exit_code == 0
+        assert "config.yaml" in result.output
+        assert "gpt-4o" in result.output
+        assert "config" in result.output
+
+    def test_show_with_api_key_unconfigured(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(app, ["config", "show"])
+        assert result.exit_code == 0
+        assert "未配置" in result.output
+
+    def test_show_with_env_vars(self, cli_runner, clean_cwd, monkeypatch):
+        monkeypatch.setenv("CITATIONER_LLM_MODEL", "env-model")
+        result = cli_runner.invoke(app, ["config", "show"])
+        assert result.exit_code == 0
+        assert "env-model" in result.output
+        assert "env" in result.output
+
+    def test_set_llm_api_key(self, cli_runner, clean_cwd):
+        key = "sk-" + "x" * 30
+        result = cli_runner.invoke(
+            app, ["config", "set", "llm.api_key", key]
+        )
+        assert result.exit_code == 0
+        assert "sk-xxxx" in result.output or "…" in result.output
+
+    def test_set_llm_max_tokens_invalid(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(
+            app, ["config", "set", "llm.max_tokens", "not-a-number"]
+        )
+        assert result.exit_code == 1
+        assert "整数值" in result.output
+
+    def test_set_llm_temperature_invalid(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(
+            app, ["config", "set", "llm.temperature", "not-a-number"]
+        )
+        assert result.exit_code == 1
+        assert "浮点数值" in result.output
+
+    def test_set_language(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(app, ["config", "set", "language", "en"])
+        assert result.exit_code == 0
+        show = cli_runner.invoke(app, ["config", "show"])
+        assert "en" in show.output
+
+    def test_set_default_output_dir(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(
+            app, ["config", "set", "default_output_dir", "/tmp/out"]
+        )
+        assert result.exit_code == 0
+        assert "/tmp/out" in result.output
+
+    def test_set_title_similarity_high(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(
+            app, ["config", "set", "title_similarity_high", "0.9"]
+        )
+        assert result.exit_code == 0
+        assert "0.9" in result.output
+
+    def test_set_title_similarity_low(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(
+            app, ["config", "set", "title_similarity_low", "0.6"]
+        )
+        assert result.exit_code == 0
+        assert "0.6" in result.output
+
+    def test_set_unknown_llm_attribute(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(
+            app, ["config", "set", "llm.badkey", "value"]
+        )
+        assert result.exit_code == 1
+        assert "未知的 LLM 配置项" in result.output
+
+    def test_set_invalid_top_level_key(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(
+            app, ["config", "set", "totally.unknown", "value"]
+        )
+        assert result.exit_code == 1
+        assert "未知的配置项" in result.output
+
+    def test_init_no_force_when_exists(self, cli_runner, clean_cwd):
+        cli_runner.invoke(app, ["config", "init"])
+        result = cli_runner.invoke(app, ["config", "init"])
+        assert result.exit_code == 0
+        assert "配置文件已存在" in result.output
+
+    def test_init_force_overwrites(self, cli_runner, clean_cwd):
+        cli_runner.invoke(app, ["config", "init"])
+        cli_runner.invoke(app, ["config", "set", "llm.model", "custom-model"])
+        result = cli_runner.invoke(app, ["config", "init", "--force"])
+        assert result.exit_code == 0
+        show = cli_runner.invoke(app, ["config", "show"])
+        assert "custom-model" not in show.output
 
 
 # ===========================================================================

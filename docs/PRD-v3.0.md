@@ -4,7 +4,7 @@
 > **作者**: Jason
 > **日期**: 2026-07-25
 > **合并**: PRD v1.0（原始需求）、PRD v2.0（Phase 2–5 完整规划）、PRD v2.1（终端图表）
-> **当前版本**: v4.9.0
+> **当前版本**: v4.10.0
 > **许可证**: MIT · 开源项目
 > **仓库**: github.com/JasonCENG/citationer
 
@@ -798,12 +798,12 @@ pip install "citationer[all]"
 | `parsers/bibtex.py` | 82% | ✅ |
 | `viz/terminal_charts.py` | 99% | ✅ |
 | `cli/report_cmd.py` | 85% | ✅ |
-| `cli/trend_cmd.py` | 79% | 🟡 |
-| `cli/stats_cmd.py` | 75% | 🟡 |
-| `cli/config_cmd.py` | 76% | 🟡 |
-| `cli/import_cmd.py` | 76% | 🟡 |
-| `cli/ai_cmd.py` | 66% | 🟡 |
-| **总计** | **89%** | ✅ 目标 80% 已达成 |
+| `cli/trend_cmd.py` | 99% | ✅ |
+| `cli/stats_cmd.py` | 97% | ✅ |
+| `cli/config_cmd.py` | 98% | ✅ |
+| `cli/import_cmd.py` | 100% | ✅ |
+| `cli/ai_cmd.py` | 94% | ✅ |
+| **总计** | **93%** | ✅ 目标 80% 已达成 |
 
 ### 8.2 代码规模
 
@@ -814,7 +814,7 @@ pip install "citationer[all]"
 | CLI 模块 | 15 个文件，~2,900 行 |
 | 分析引擎 | 5 个文件 |
 | 解析器 | 9 个类（8 个文件） |
-| 测试文件 | 32 个，825 个测试 |
+| 测试文件 | 32 个，906 个测试 |
 | 数据库表 | 7 张（含 5 个索引） |
 
 ### 8.3 已知技术债
@@ -826,8 +826,7 @@ pip install "citationer[all]"
 | `parsers/scopus.py` / `parsers/cssci.py` 覆盖率 | ✅ 已解决 | v4.9.0 已提升至 97% / 97% |
 | `cli/network_cmd.py` 覆盖率低 | ✅ 已解决 | v4.9.0 已提升至 91% |
 | `llm/client.py` 覆盖率低 | ✅ 已解决 | v4.9.0 已提升至 100% |
-| `cli/ai_cmd.py` 覆盖率低 | 🟡 中 | 66%，主要依赖外部 LLM API，下一质量迭代再补 |
-| `cli/stats_cmd.py` / `cli/trend_cmd.py` / `cli/config_cmd.py` / `cli/import_cmd.py` | 🟡 中 | 75%–79%，已越过 80% 红线但仍有提升空间 |
+| `cli/ai_cmd.py` / `cli/stats_cmd.py` / `cli/trend_cmd.py` / `cli/config_cmd.py` / `cli/import_cmd.py` 覆盖率低 | ✅ 已解决 | v4.10.0 已提升至 94% / 97% / 99% / 98% / 100% |
 | 共享 test fixtures | ✅ 已解决 | `make_record` 已集中到 `tests/_factories`；DB seed 已提取到 `tests/_helpers` |
 | `report` 模板系统 | ✅ 已解决 | `simple` / `academic` 模板已实现并测试 |
 | `interactive` 保存报告 | ✅ 已解决 | v4.6.0 已实现 |
@@ -904,6 +903,7 @@ pip install "citationer[all]"
 | **PRD v2.0** | 2026-07-03 | Phase 2–5 完整规划：Text NLP、LLM、Network、Trend、Report、Help 系统 |
 | **PRD v2.1** | 2026-07-04 | 终端统计图表（plotext braille line + hbar） |
 | **PRD v3.0** | 2026-07-09 | 整合前三版，反映 v4.0.4 实际状态，重构 Phase 4–5 待办，新增质量指标与架构审计 |
+| **Release v4.10.0** | 2026-07-25 | 最终 CLI 覆盖率推进：ai/stats/trend/config/import 全部 ≥85%；项目覆盖率 ~93% |
 | **Release v4.9.0** | 2026-07-25 | 技术债清零：提升 interactive/terminal/network/llm/scopus/cssci 测试覆盖率；修复 Scopus/CSSCI 解析细节 |
 | **Release v4.8.0** | 2026-07-24 | 去重 L3 人工确认、共享 fixtures、WoS 覆盖率 96%、PRD 刷新 |
 
