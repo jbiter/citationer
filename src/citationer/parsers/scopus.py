@@ -182,21 +182,6 @@ class ScopusParser(BaseParser):
         col_map: dict[str, int],
         source_file: str,
     ) -> Record:
-        def get(field: str) -> str:
-            idx = col_map.get(field)
-            if idx is None:
-                return ""
-            if isinstance(row, dict):
-                # CSV path: row is a dict
-                for k, v in row.items():
-                    for marker, f in self.COLUMN_MAP.items():
-                        if f == field and marker.lower() == k.strip().lower():
-                            return (v or "").strip()
-                return ""
-            # XLSX path: row is a dict-like
-            return ""
-
-        # Unified path: always dict
         def _val(field: str) -> str:
             # Scan row dict for matching field
             for k, v in row.items():
@@ -304,19 +289,19 @@ class ScopusParser(BaseParser):
     @staticmethod
     def _parse_doc_type(raw: str) -> DocType:
         raw_lower = raw.strip().lower()
-        type_map: dict[str, DocType] = {
-            "article": DocType.ARTICLE,
-            "review": DocType.REVIEW,
-            "conference paper": DocType.CONFERENCE,
-            "conference proceeding": DocType.CONFERENCE,
-            "book": DocType.BOOK,
-            "book chapter": DocType.BOOK_CHAPTER,
-            "editorial": DocType.OTHER,
-            "letter": DocType.OTHER,
-            "note": DocType.OTHER,
-            "erratum": DocType.OTHER,
-        }
-        for key, dt in type_map.items():
+        type_map: list[tuple[str, DocType]] = [
+            ("conference paper", DocType.CONFERENCE),
+            ("conference proceeding", DocType.CONFERENCE),
+            ("book chapter", DocType.BOOK_CHAPTER),
+            ("book", DocType.BOOK),
+            ("article", DocType.ARTICLE),
+            ("review", DocType.REVIEW),
+            ("editorial", DocType.OTHER),
+            ("letter", DocType.OTHER),
+            ("note", DocType.OTHER),
+            ("erratum", DocType.OTHER),
+        ]
+        for key, dt in type_map:
             if key in raw_lower:
                 return dt
         return DocType.UNKNOWN

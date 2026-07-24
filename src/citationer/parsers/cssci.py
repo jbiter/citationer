@@ -155,10 +155,14 @@ class CssciParser(BaseParser):
     def _build_col_index(self, headers: list[str]) -> dict[str, int]:
         index: dict[str, int] = {}
         for i, h in enumerate(headers):
+            best_field: str | None = None
+            best_len = -1
             for marker, field in self.COLUMN_MAP.items():
-                if marker in h:
-                    index[field] = i
-                    break
+                if marker in h and len(marker) > best_len:
+                    best_len = len(marker)
+                    best_field = field
+            if best_field is not None:
+                index[best_field] = i
         return index
 
     def _parse_row(
@@ -230,6 +234,7 @@ class CssciParser(BaseParser):
             authors=authors,
             year=year,
             journal=val("journal") or None,
+            journal_en=val("journal_en") or None,
             volume=val("volume") or None,
             issue=val("issue") or None,
             pages=val("pages") or None,
