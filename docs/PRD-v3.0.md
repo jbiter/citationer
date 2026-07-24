@@ -2,9 +2,9 @@
 
 > **状态**: Phase 5 进行中（高级功能与生态）
 > **作者**: Jason
-> **日期**: 2026-07-24
+> **日期**: 2026-07-25
 > **合并**: PRD v1.0（原始需求）、PRD v2.0（Phase 2–5 完整规划）、PRD v2.1（终端图表）
-> **当前版本**: v4.8.0
+> **当前版本**: v4.9.0
 > **许可证**: MIT · 开源项目
 > **仓库**: github.com/JasonCENG/citationer
 
@@ -760,50 +760,50 @@ pip install "citationer[all]"
 
 ## 8. 当前质量指标与差距
 
-### 8.1 测试覆盖率（2026-07-24 实测）
+### 8.1 测试覆盖率（2026-07-25 实测）
 
 | 模块 | 覆盖率 | 状态 |
 |------|--------|------|
+| `llm/client.py` | 100% | ✅ |
 | `models/record.py` | 100% | ✅ |
-| `analysis/stats.py` | 100% | ✅ |
 | `utils/database.py` | 100% | ✅ |
 | `utils/serialization.py` | 100% | ✅ |
 | `utils/date_utils.py` | 100% | ✅ |
+| `analysis/stats.py` | 100% | ✅ |
+| `cli/help.py` | 100% | ✅ |
+| `cli/clean_cmd.py` | 98% | ✅ |
+| `parsers/cssci.py` | 97% | ✅ |
+| `parsers/scopus.py` | 97% | ✅ |
+| `parsers/wos.py` | 96% | ✅ |
+| `analysis/trend.py` | 96% | ✅ |
+| `analysis/dedup.py` | 95% | ✅ |
+| `utils/db_loader.py` | 94% | ✅ |
 | `parsers/cnki.py` | 93% | ✅ |
 | `parsers/pubmed.py` | 93% | ✅ |
 | `analysis/network.py` | 93% | ✅ |
-| `analysis/dedup.py` | 94% | ✅ |
-| `parsers/ris.py` | 90% | ✅ |
-| `parsers/wos.py` | 96% | ✅ |
-| `utils/db_loader.py` | 94% | ✅ |
-| `analysis/trend.py` | 96% | ✅ |
-| `parsers/bibtex.py` | 82% | ✅ |
-| `utils/query.py` | 83% | ✅ |
-| `analysis/text.py` | 84% | ✅ |
+| `cli/scan_cmd.py` | 92% | ✅ |
+| `cli/interactive_cmd.py` | 91% | ✅ |
+| `cli/network_cmd.py` | 91% | ✅ |
+| `cli/export_cmd.py` | 90% | ✅ |
+| `cli/main.py` | 90% | ✅ |
 | `viz/charts.py` | 89% | ✅ |
 | `parsers/base.py` | 88% | ✅ |
 | `utils/config.py` | 89% | ✅ |
-| `parsers/cssci.py` | 72% | 🟡 |
-| `parsers/scopus.py` | 67% | 🟡 |
-| `cli/clean_cmd.py` | 100% | ✅ |
-| `cli/help.py` | 100% | ✅ |
-| `cli/export_cmd.py` | 90% | ✅ |
-| `cli/main.py` | 90% | ✅ |
-| `cli/report_cmd.py` | 85% | ✅ |
+| `parsers/ris.py` | 90% | ✅ |
 | `cli/query_cmd.py` | 86% | ✅ |
 | `cli/run_cmd.py` | 85% | ✅ |
 | `cli/text_cmd.py` | 85% | ✅ |
-| `cli/scan_cmd.py` | 92% | ✅ |
-| `cli/stats_cmd.py` | 75% | 🟡 |
+| `analysis/text.py` | 84% | ✅ |
+| `utils/query.py` | 83% | ✅ |
+| `parsers/bibtex.py` | 82% | ✅ |
+| `viz/terminal_charts.py` | 99% | ✅ |
+| `cli/report_cmd.py` | 85% | ✅ |
 | `cli/trend_cmd.py` | 79% | 🟡 |
-| `cli/ai_cmd.py` | 66% | 🟡 |
+| `cli/stats_cmd.py` | 75% | 🟡 |
 | `cli/config_cmd.py` | 76% | 🟡 |
 | `cli/import_cmd.py` | 76% | 🟡 |
-| `cli/network_cmd.py` | 59% | 🟡 |
-| `cli/interactive_cmd.py` | 28% | 🔴 |
-| `llm/client.py` | 61% | 🟡 |
-| `viz/terminal_charts.py` | 28% | 🔴 |
-| **总计** | **81%** | ✅ 目标 80% 已达成 |
+| `cli/ai_cmd.py` | 66% | 🟡 |
+| **总计** | **89%** | ✅ 目标 80% 已达成 |
 
 ### 8.2 代码规模
 
@@ -814,18 +814,20 @@ pip install "citationer[all]"
 | CLI 模块 | 15 个文件，~2,900 行 |
 | 分析引擎 | 5 个文件 |
 | 解析器 | 9 个类（8 个文件） |
-| 测试文件 | 30 个，714 个测试 |
+| 测试文件 | 32 个，825 个测试 |
 | 数据库表 | 7 张（含 5 个索引） |
 
 ### 8.3 已知技术债
 
 | 项目 | 严重度 | 说明 |
 |------|--------|------|
-| `cli/interactive_cmd.py` 覆盖率低 | 🔴 高 | 交互式 wizard 大量分支依赖 `rich.prompt`，单元测试覆盖仅 ~28% |
-| `viz/terminal_charts.py` 覆盖率低 | 🔴 高 | 终端图表渲染依赖 Rich canvas，测试覆盖 ~28% |
-| `parsers/scopus.py` / `parsers/cssci.py` 覆盖率 | 🟡 中 | 分别为 67% / 72%，错误分支和边缘字段待补测试 |
-| `cli/network_cmd.py` 覆盖率低 | 🟡 中 | 网络图导出与可视化分支覆盖 ~59% |
-| `llm/client.py` 覆盖率低 | 🟡 中 | LLM 调用与重试逻辑覆盖 ~61%，依赖外部 API 难以完全覆盖 |
+| `cli/interactive_cmd.py` 覆盖率低 | ✅ 已解决 | v4.9.0 已提升至 91% |
+| `viz/terminal_charts.py` 覆盖率低 | ✅ 已解决 | v4.9.0 已提升至 99% |
+| `parsers/scopus.py` / `parsers/cssci.py` 覆盖率 | ✅ 已解决 | v4.9.0 已提升至 97% / 97% |
+| `cli/network_cmd.py` 覆盖率低 | ✅ 已解决 | v4.9.0 已提升至 91% |
+| `llm/client.py` 覆盖率低 | ✅ 已解决 | v4.9.0 已提升至 100% |
+| `cli/ai_cmd.py` 覆盖率低 | 🟡 中 | 66%，主要依赖外部 LLM API，下一质量迭代再补 |
+| `cli/stats_cmd.py` / `cli/trend_cmd.py` / `cli/config_cmd.py` / `cli/import_cmd.py` | 🟡 中 | 75%–79%，已越过 80% 红线但仍有提升空间 |
 | 共享 test fixtures | ✅ 已解决 | `make_record` 已集中到 `tests/_factories`；DB seed 已提取到 `tests/_helpers` |
 | `report` 模板系统 | ✅ 已解决 | `simple` / `academic` 模板已实现并测试 |
 | `interactive` 保存报告 | ✅ 已解决 | v4.6.0 已实现 |
@@ -902,7 +904,8 @@ pip install "citationer[all]"
 | **PRD v2.0** | 2026-07-03 | Phase 2–5 完整规划：Text NLP、LLM、Network、Trend、Report、Help 系统 |
 | **PRD v2.1** | 2026-07-04 | 终端统计图表（plotext braille line + hbar） |
 | **PRD v3.0** | 2026-07-09 | 整合前三版，反映 v4.0.4 实际状态，重构 Phase 4–5 待办，新增质量指标与架构审计 |
-| **Release v4.0.4** | 2026-07-09 | 当前版本：审计缺口修复 + 基金/参考文献持久化 + 统计引用 + AI 关键文献 + 导出 RIS/XLSX |
+| **Release v4.9.0** | 2026-07-25 | 技术债清零：提升 interactive/terminal/network/llm/scopus/cssci 测试覆盖率；修复 Scopus/CSSCI 解析细节 |
+| **Release v4.8.0** | 2026-07-24 | 去重 L3 人工确认、共享 fixtures、WoS 覆盖率 96%、PRD 刷新 |
 
 ---
 
