@@ -1,6 +1,6 @@
 # Citationer — 文献题录分析工具 · 产品需求文档 v1.0
 
-> **状态**: 已确认 · Phase 1 开发就绪  
+> **状态**: 已归档 · 已被 [PRD-v3.0.md](PRD-v3.0.md) 取代 · 当前版本 v4.7.0  
 > **作者**: Jason  
 > **日期**: 2026-07-02  
 > **许可证**: MIT · 开源项目  
@@ -793,18 +793,18 @@ class Record(BaseModel):
 - [ ] Jinja2 报告模板（学术风 / PPT风 / 简洁风）
 - [ ] LLM 增强报告（生成「研究发现与展望」章节）
 
-### Phase 4: 扩展与打磨 — 预计 4-6 周
+### Phase 4: 扩展与打磨 — 已完成
 
-- [ ] Scopus 解析器
-- [ ] PubMed 解析器
-- [ ] CSSCI 解析器
-- [ ] BibTeX / RIS 通用格式解析器
-- [ ] 交互模式 (`citationer interactive`)
-- [ ] 自定义配置文件与声明式分析流水线
-- [ ] Homebrew formula
-- [ ] 用户文档网站 (MkDocs / VitePress)
-- [ ] 单元测试覆盖率 ≥ 80%
-- [ ] 预编译二进制文件 (PyInstaller)
+- [x] Scopus 解析器
+- [x] PubMed 解析器
+- [x] CSSCI 解析器
+- [x] BibTeX / RIS 通用格式解析器
+- [x] 交互模式 (`citationer interactive`)
+- [x] 自定义配置文件与声明式分析流水线
+- [ ] Homebrew formula（PRD-v3.0 明确不做）
+- [x] 用户文档网站 (MkDocs)
+- [x] 单元测试覆盖率 ≥ 80%
+- [x] 预编译二进制文件 (PyInstaller)
 
 ### Phase 5: 高级功能与生态 — 持续迭代
 
@@ -812,9 +812,10 @@ class Record(BaseModel):
 - [ ] Web UI（`citationer serve` 启动本地 Web 界面）
 - [ ] 多数据集对比分析
 - [ ] 实时文献监控（RSS/API 追踪新增文献）
-- [ ] 本地 LLM 支持 (Ollama) 作为 DeepSeek 的离线替代
+- [x] 本地 LLM 支持 (Ollama) 作为 DeepSeek 的离线替代
 - [ ] conda-forge 发布
 - [ ] 多语言界面国际化
+- [x] `citationer query` 数据库查询命令（v4.7.0 完成）
 
 ---
 
