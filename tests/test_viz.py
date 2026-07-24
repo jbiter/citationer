@@ -213,3 +213,130 @@ class TestPlotHbar:
         result = plot_hbar([long_label], [10])
         # No crash, no TTY
         assert result is False
+
+
+class TestTerminalChartsRendering:
+    """Exercise terminal_charts rendering paths in a fake TTY environment."""
+
+    @pytest.fixture
+    def tty(self, monkeypatch):
+        monkeypatch.setattr(
+            "citationer.viz.terminal_charts._can_render", lambda: True
+        )
+
+    @pytest.fixture
+    def fake_plt(self, monkeypatch):
+        """Inject a minimal fake plotext module into sys.modules."""
+        import sys
+        from types import SimpleNamespace
+
+        calls = []
+
+        def _spy(name):
+            def _fn(*args, **kwargs):
+                calls.append((name, args, kwargs))
+            return _fn
+
+        fake = SimpleNamespace(
+            clf=_spy("clf"),
+            plotsize=_spy("plotsize"),
+            plot=_spy("plot"),
+            bar=_spy("bar"),
+            twinx=_spy("twinx"),
+            title=_spy("title"),
+            xlabel=_spy("xlabel"),
+            ylabel=_spy("ylabel"),
+            grid=_spy("grid"),
+            xticks=_spy("xticks"),
+            tick_params=_spy("tick_params"),
+            build=lambda: "\x1b[31mFAKE CHART\x1b[0m",
+        )
+        monkeypatch.setitem(sys.modules, "plotext", fake)
+        return calls
+
+    def test_plot_line_tty(self, tty, fake_plt, capsys):
+        from citationer.viz.terminal_charts import plot_line
+
+        result = plot_line([2020, 2021, 2022], [1, 2, 3])
+        assert result is True
+        names = [n for n, _, _ in fake_plt]
+        assert "clf" in names
+        assert "plot" in names
+        assert "title" in names
+        assert "build" not in names  # build is a lambda, not recorded
+        captured = capsys.readouterr()
+        assert "FAKE CHART" in captured.out
+        assert "\x1b[" not in captured.out
+
+    def test_plot_line_dual_tty(self, tty, fake_plt, capsys):
+        from citationer.viz.terminal_charts import plot_line_dual
+
+        result = plot_line_dual(
+            [2020, 2021], [1, 2], [1, 3], title="Dual"
+        )
+        assert result is True
+        names = {n for n, _, _ in fake_plt}
+        assert "bar" in names
+        assert "twinx" in names
+        assert "plot" in names
+        assert "title" in names
+        title_calls = [args for n, args, _ in fake_plt if n == "title"]
+        assert any("Dual" in args for args in title_calls)
+        assert "FAKE CHART" in capsys.readouterr().out
+
+    def test_plot_line_many_years_no_xticks(self, tty, fake_plt):
+        from citationer.viz.terminal_charts import plot_line
+
+        years = list(range(2000, 2025))
+        plot_line(years, [1] * len(years))
+        names = [n for n, _, _ in fake_plt]
+        assert "xticks" not in names
+
+    def test_plot_hbar_tty(self, tty, capsys):
+        from citationer.viz.terminal_charts import plot_hbar
+
+        result = plot_hbar(["A", "B", "C"], [10, 5, 1], title="Ranking")
+        assert result is True
+        out = capsys.readouterr().out
+        assert "Ranking" in out
+        assert "A" in out
+        assert "10" in out
+        assert "B" in out
+        assert "5" in out
+
+    def test_plot_hbar_tty_long_label_truncation(self, tty, capsys):
+        from citationer.viz.terminal_charts import plot_hbar
+
+        plot_hbar(["A" * 50], [10])
+        out = capsys.readouterr().out
+        assert "…" in out
+
+    def test_plot_hbar_tty_max_items(self, tty, capsys):
+        from citationer.viz.terminal_charts import plot_hbar
+
+        labels = [f"L{i}" for i in range(30)]
+        values = list(range(30))
+        plot_hbar(labels, values, max_items=5)
+        out = capsys.readouterr().out
+        assert "L0" in out
+        assert "L5" not in out
+
+    def test_show_strips_ansi(self, capsys):
+        from citationer.viz.terminal_charts import _show
+
+        _show("\x1b[32mGREEN\x1b[0m TEXT")
+        assert capsys.readouterr().out == "GREEN TEXT"
+
+    def test_can_render_false_without_tty(self):
+        from citationer.viz.terminal_charts import _can_render
+
+        assert _can_render() is False
+
+    def test_can_render_false_when_plotext_missing(self, monkeypatch):
+        import sys
+
+        from citationer.viz.terminal_charts import _can_render
+
+        monkeypatch.setattr("sys.stdout.isatty", lambda: True)
+        monkeypatch.setitem(sys.modules, "plotext", None)
+        assert _can_render() is False

@@ -3,6 +3,16 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v4.9.0 — 2026-07-25
+
+- Resolved the remaining Phase 4 technical debt by raising test coverage across
+  `interactive_cmd`, `terminal_charts`, `network_cmd`, `llm/client`, `scopus`,
+  and `cssci`.
+- Fixed minor parser issues: Scopus "Book Chapter" doc-type ordering and CSSCI
+  column matching now prefer the longest matching header.
+- Corrected the interactive wizard database-empty check and added CSSCI
+  `journal_en` output.
+
 ## v4.8.0 — 2026-07-24
 
 - Dedup Layer 3 now prompts for human confirmation in interactive `citationer clean`;

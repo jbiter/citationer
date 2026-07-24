@@ -1,6 +1,10 @@
 """Tests for the LLM client module."""
 
 
+from unittest.mock import MagicMock
+
+import pytest
+
 from citationer.llm.client import LLMClient, LLMConfig, LLMResponse
 from citationer.models.record import Author, Institution, Record
 from tests._factories import make_record
@@ -179,3 +183,156 @@ class TestDryRun:
         records = [make_record(title="Test", abstract="Some content here.")]
         response = client.query("Test.", records, dry_run=True)
         assert "total_chars" in response.content
+
+
+class TestClientConstruction:
+    def test_missing_api_key_raises(self):
+        client = LLMClient(LLMConfig(api_key=""))
+        with pytest.raises(ValueError, match="API key not configured"):
+            client._get_client()
+
+    def test_lazy_client_reused(self, monkeypatch):
+        import sys
+        from types import SimpleNamespace
+
+        fake_openai = SimpleNamespace(OpenAI=MagicMock())
+        monkeypatch.setitem(sys.modules, "openai", fake_openai)
+        client = LLMClient(LLMConfig(api_key="sk-test"))
+        c1 = client._get_client()
+        c2 = client._get_client()
+        assert c1 is c2
+        fake_openai.OpenAI.assert_called_once()
+
+
+class TestCache:
+    def test_check_cache_no_db(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(
+            "citationer.llm.client.get_db_path", lambda: tmp_path / "missing.db"
+        )
+        client = LLMClient(LLMConfig(api_key=""))
+        assert client._check_cache("any-key") is None
+
+    def test_save_and_check_cache(self, tmp_path, monkeypatch):
+        db_path = tmp_path / "cache.db"
+        from citationer.utils.database import CitationDatabase
+
+        CitationDatabase(db_path).initialize()
+        monkeypatch.setattr("citationer.llm.client.get_db_path", lambda: db_path)
+
+        client = LLMClient(LLMConfig(api_key="", model="stub"))
+        client._save_cache("key-1", "cached response", 42)
+        assert client._check_cache("key-1") == "cached response"
+
+    def test_get_cache_stats_no_db(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(
+            "citationer.llm.client.get_db_path", lambda: tmp_path / "missing.db"
+        )
+        client = LLMClient(LLMConfig(api_key=""))
+        assert client.get_cache_stats() == {
+            "cached_entries": 0,
+            "total_tokens_used": 0,
+        }
+
+    def test_get_cache_stats_with_entries(self, tmp_path, monkeypatch):
+        db_path = tmp_path / "cache.db"
+        from citationer.utils.database import CitationDatabase
+
+        CitationDatabase(db_path).initialize()
+        monkeypatch.setattr("citationer.llm.client.get_db_path", lambda: db_path)
+
+        client = LLMClient(LLMConfig(api_key="", model="stub"))
+        client._save_cache("key-1", "response 1", 10)
+        client._save_cache("key-2", "response 2", 20)
+        stats = client.get_cache_stats()
+        assert stats["cached_entries"] == 2
+        assert stats["total_tokens_used"] == 30
+
+
+class TestQueryMocked:
+    def test_query_cache_hit(self, tmp_path, monkeypatch):
+        db_path = tmp_path / "cache.db"
+        from citationer.utils.database import CitationDatabase
+
+        CitationDatabase(db_path).initialize()
+        monkeypatch.setattr("citationer.llm.client.get_db_path", lambda: db_path)
+
+        client = LLMClient(LLMConfig(api_key="", model="stub"))
+        records = [make_record(title="Cached")]
+        sanitized = client._sanitize_records(records)
+        cache_key = client._get_cache_key("Summarize.", sanitized)
+        client._save_cache(cache_key, "cached result", 0)
+
+        response = client.query("Summarize.", records)
+        assert response.cached is True
+        assert response.content == "cached result"
+        assert response.tokens_used == 0
+
+    def test_query_api_call(self, tmp_path, monkeypatch):
+        db_path = tmp_path / "cache.db"
+        from citationer.utils.database import CitationDatabase
+
+        CitationDatabase(db_path).initialize()
+        monkeypatch.setattr("citationer.llm.client.get_db_path", lambda: db_path)
+
+        client = LLMClient(LLMConfig(api_key="sk-test", model="stub"))
+        fake_client = MagicMock()
+        fake_response = MagicMock()
+        fake_response.choices = [MagicMock(message=MagicMock(content="AI reply"))]
+        fake_response.usage = MagicMock(total_tokens=17)
+        fake_client.chat.completions.create.return_value = fake_response
+        client._client = fake_client
+
+        response = client.query("Summarize.", [make_record(title="Paper")])
+        assert response.cached is False
+        assert response.content == "AI reply"
+        assert response.tokens_used == 17
+        fake_client.chat.completions.create.assert_called_once()
+        # Cache should now contain the response
+        assert client._check_cache(client._get_cache_key(
+            "Summarize.", client._sanitize_records([make_record(title="Paper")])
+        )) == "AI reply"
+
+    def test_query_api_empty_content_and_usage(self, tmp_path, monkeypatch):
+        db_path = tmp_path / "cache.db"
+        from citationer.utils.database import CitationDatabase
+
+        CitationDatabase(db_path).initialize()
+        monkeypatch.setattr("citationer.llm.client.get_db_path", lambda: db_path)
+
+        client = LLMClient(LLMConfig(api_key="sk-test", model="stub"))
+        fake_client = MagicMock()
+        fake_response = MagicMock()
+        fake_response.choices = [MagicMock(message=MagicMock(content=None))]
+        fake_response.usage = None
+        fake_client.chat.completions.create.return_value = fake_response
+        client._client = fake_client
+
+        response = client.query("Go.", [make_record(title="Paper")])
+        assert response.content == ""
+        assert response.tokens_used == 0
+
+
+class TestTruncation:
+    def test_truncates_when_limit_exceeded(self):
+        client = LLMClient(LLMConfig(api_key=""))
+        records = [
+            make_record(title=f"Very long title number {i}", abstract="x" * 500)
+            for i in range(20)
+        ]
+        response = client.query("Summarize.", records, max_input_chars=200, dry_run=True)
+        assert "_truncated" in response.content
+
+    def test_no_truncation_when_limit_zero(self):
+        client = LLMClient(LLMConfig(api_key=""))
+        records = [
+            make_record(title=f"Paper {i}", abstract="x" * 500)
+            for i in range(10)
+        ]
+        response = client.query("Summarize.", records, max_input_chars=0, dry_run=True)
+        assert "_truncated" not in response.content
+
+    def test_no_truncation_when_all_fit(self):
+        client = LLMClient(LLMConfig(api_key=""))
+        records = [make_record(title="Short", abstract="abstract")]
+        response = client.query("Summarize.", records, max_input_chars=10_000, dry_run=True)
+        assert "_truncated" not in response.content

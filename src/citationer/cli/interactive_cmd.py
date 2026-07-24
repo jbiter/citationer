@@ -94,7 +94,7 @@ def _run_wizard() -> None:
 
     # Step 1: Check data
     db_path = get_db_path()
-    if not db_path.exists() or not list(db_path.glob("*")):
+    if not db_path.exists():
         console.print("[red]❌ 数据库为空，请先导入数据：[/red]")
         console.print("    [bold]ctr import[/bold] 或 [bold]ctr import <file>[/bold]")
         return
