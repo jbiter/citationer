@@ -231,3 +231,67 @@ class TestDedupEngine:
         # Layer 4 skips same-source; these may be caught by layer 1/2/3
         # If not caught elsewhere, they remain separate
         assert len(merged) >= 1
+
+
+class TestDedupLayer3Callback:
+    def test_layer3_callback_can_reject_merge(self):
+        """When callback returns False, Layer 3 candidate is not merged."""
+        records = [
+            Record(
+                title="A Survey of Machine Learning in Medical Image Analysis",
+                year=2024,
+                authors=[Author(full_name="Zhang, Wei", order=1)],
+            ),
+            Record(
+                title="A Review of Machine Learning for Medical Image Processing",
+                year=2024,
+                authors=[Author(full_name="Zhang, Wei", order=1)],
+            ),
+        ]
+        engine = DedupEngine(title_threshold_high=0.95, title_threshold_low=0.70)
+        merged, log = engine.deduplicate(records, layer3_callback=lambda _a, _b, _s: False)
+        assert len(merged) == 2
+        assert len(log) == 0
+
+    def test_layer3_callback_can_accept_merge(self):
+        """When callback returns True, Layer 3 candidate is merged."""
+        records = [
+            Record(
+                title="A Survey of Machine Learning in Medical Image Analysis",
+                year=2024,
+                authors=[Author(full_name="Zhang, Wei", order=1)],
+            ),
+            Record(
+                title="A Review of Machine Learning for Medical Image Processing",
+                year=2024,
+                authors=[Author(full_name="Zhang, Wei", order=1)],
+            ),
+        ]
+        engine = DedupEngine(title_threshold_high=0.95, title_threshold_low=0.70)
+        merged, log = engine.deduplicate(records, layer3_callback=lambda _a, _b, _s: True)
+        assert len(merged) == 1
+        assert len(log) == 1
+        assert log[0]["layer"] == 3
+
+    def test_layer3_callback_receives_similarity(self):
+        """Callback should receive the similarity score between 0 and 1."""
+        records = [
+            Record(
+                title="A Survey of Machine Learning in Medical Image Analysis",
+                year=2024,
+                authors=[Author(full_name="Zhang, Wei", order=1)],
+            ),
+            Record(
+                title="A Review of Machine Learning for Medical Image Processing",
+                year=2024,
+                authors=[Author(full_name="Zhang, Wei", order=1)],
+            ),
+        ]
+        engine = DedupEngine(title_threshold_high=0.95, title_threshold_low=0.70)
+        seen = []
+        engine.deduplicate(
+            records,
+            layer3_callback=lambda a, b, s: seen.append((a.title, b.title, s)) or True,
+        )
+        assert len(seen) == 1
+        assert 0.0 <= seen[0][2] <= 1.0

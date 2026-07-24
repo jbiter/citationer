@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import typer
 from rich.console import Console
+from rich.panel import Panel
 from rich.progress import BarColumn, Progress, TextColumn
+from rich.prompt import Confirm
 from rich.table import Table
 
 from citationer.analysis.dedup import DedupEngine
@@ -43,6 +46,11 @@ def clean(
         False,
         "--save",
         help="保存清洗后的数据为 CSV 文件，方便下次直接导入",
+    ),
+    non_interactive: bool = typer.Option(
+        False,
+        "--non-interactive",
+        help="非交互模式：Layer 3 去重自动确认，不在终端询问",
     ),
 ) -> None:
     """数据清洗：去重、缺失字段检测、异常值检测。"""
@@ -129,6 +137,26 @@ def clean(
         console.print()
         engine = DedupEngine()
 
+        # Decide whether to prompt for Layer 3 confirmation.
+        interactive = (not non_interactive) and sys.stdin.isatty()
+
+        def _confirm_layer3(r1, r2, sim: float) -> bool:
+            console.print()
+            console.print(
+                Panel.fit(
+                    f"[bold]疑似重复记录（相似度 {sim:.0%}）[/bold]\n\n"
+                    f"[cyan]保留[/cyan]: {r1.title}\n"
+                    f"  作者: {r1.first_author.full_name if r1.first_author else 'N/A'}; "
+                    f"年份: {r1.year}\n\n"
+                    f"[yellow]合并[/yellow]: {r2.title}\n"
+                    f"  作者: {r2.first_author.full_name if r2.first_author else 'N/A'}; "
+                    f"年份: {r2.year}",
+                    title="Layer 3 人工确认",
+                    border_style="yellow",
+                )
+            )
+            return Confirm.ask("  是否合并这两条记录？", default=False)
+
         with Progress(
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
@@ -140,7 +168,11 @@ def clean(
             def _on_layer(step: int, _total: int) -> None:
                 progress.update(task_id, completed=step)
 
-            merged, merge_log = engine.deduplicate(records, progress_callback=_on_layer)
+            merged, merge_log = engine.deduplicate(
+                records,
+                progress_callback=_on_layer,
+                layer3_callback=_confirm_layer3 if interactive else None,
+            )
 
         dup_removed = initial_count - len(merged)
 
