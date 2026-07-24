@@ -1,10 +1,10 @@
 # Citationer — 文献题录分析工具 · 产品需求文档 v3.0
 
-> **状态**: Phase 4 进行中（质量与打磨）
+> **状态**: Phase 5 进行中（高级功能与生态）
 > **作者**: Jason
-> **日期**: 2026-07-09
+> **日期**: 2026-07-24
 > **合并**: PRD v1.0（原始需求）、PRD v2.0（Phase 2–5 完整规划）、PRD v2.1（终端图表）
-> **当前版本**: v4.0.4
+> **当前版本**: v4.7.0
 > **许可证**: MIT · 开源项目
 > **仓库**: github.com/JasonCENG/citationer
 
@@ -701,9 +701,9 @@ pip install "citationer[all]"
 
 ---
 
-### Phase 4: 扩展与打磨 — 🟡 进行中（v3.0.3–v4.0.4）
+### Phase 4: 扩展与打磨 — ✅ 已完成（v4.1.0–v4.6.0）
 
-> 目标：扩展解析器覆盖 + 提升工程质量，预计剩余 4–6 周
+> 目标：扩展解析器覆盖 + 提升工程质量，已于 v4.6.0 全部完成
 
 #### 已完成
 
@@ -718,17 +718,12 @@ pip install "citationer[all]"
 - [x] `export` 命令组（CSV/JSON/BibTeX/RIS/XLSX）
 - [x] 基金/参考文献数据入库持久化
 - [x] `ai key-papers` 子命令
-
-#### 待完成
-
-| # | 工作项 | 优先级 | 预估工作量 | 说明 |
-|---|--------|--------|-----------|------|
-| P4-1 | **测试覆盖率提升至 ≥ 80%** | 🔴 P0 | 3–4 周 | 当前 35%（153 个测试）。CLI 层全 0%，trend/viz/report 无测试，parser 层 14%–89% 不等。需新增 test_cli、test_trend、test_viz、test_report、test_database、conftest 共享 fixtures |
-| P4-2 | **MkDocs 文档站点部署** | 🟡 P1 | 1 周 | `site/` 目录已有基础结构和 6 页内容，需完善后部署到 GitHub Pages |
-| P4-3 | **PyInstaller 二进制构建** | 🟢 P2 | 0.5 周 | spec 已有，需在 CI 中集成构建 + GitHub Release 附带 |
-| P4-4 | **`stats funding` 子命令** | 🟢 P2 | 0.5 周 | 基金数据已解析入库（CNKI/WoS/Scopus），需新增 CLI 入口 + StatsEngine 方法 |
-| P4-5 | **`report` 模板系统完善** | 🟢 P2 | 1 周 | `--template simple` 实际与 `academic` 相同；报告章节可折叠表格搜索排序等 |
-| P4-6 | **`interactive` 保存报告功能** | 🟢 P2 | 0.5 周 | 当前仅显示占位提示，需对接 `report quick` + CSV/JSON |
+- [x] P4-1 测试覆盖率提升至 ≥ 80%（v4.1.0）
+- [x] P4-2 MkDocs 文档站点部署（v4.2.0）
+- [x] P4-3 PyInstaller 二进制构建（v4.3.0）
+- [x] P4-4 `stats funding` 子命令（v4.4.0）
+- [x] P4-5 `report` 模板系统完善（v4.5.0）
+- [x] P4-6 `interactive` 保存报告功能（v4.6.0）
 
 ---
 
@@ -747,9 +742,9 @@ pip install "citationer[all]"
 | P5-7 | **多语言国际化 (i18n)** | 🔵 P3 | 2 周 | gettext 或手动方案，中英文双语界面 |
 | P5-8 | **EndNote / Zotero 解析器** | 🔵 P3 | 1 周 | EndNote XML + Zotero RDF/CSV |
 | P5-9 | **Docker 镜像** | 🔵 P3 | 0.5 周 | Dockerfile + GitHub Container Registry 自动构建 |
-| P5-10 | **数据库查询命令** (`citationer query`) | 🔵 P3 | 1 周 | SQLite 直查或 DSL 过滤（按年份/期刊/作者/关键词筛选） |
+| P5-10 | **数据库查询命令** (`citationer query`) | ✅ 已完成 | 1 周 | SQLite 直查或 DSL 过滤（按年份/期刊/作者/关键词筛选）；已于 v4.7.0 发布 |
 
----
+> **下阶段重点**：P5-1（多数据集对比分析）与 P5-2（Web UI）为 P1 优先级，将作为 Phase 5 的下一阶段重点。
 
 ### Phase 6: 愿景方向（远期）
 
