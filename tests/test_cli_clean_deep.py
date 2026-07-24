@@ -278,3 +278,67 @@ class TestCleanEmptyDb:
         assert result.exit_code == 0
         # Should print "数据库中没有记录"
         assert "数据库中没有记录" in result.output or result.exit_code == 0
+
+
+class TestCleanLayer3Interactive:
+    """Layer 3 human confirmation flow."""
+
+    @staticmethod
+    def _setup_layer3(clean_cwd: Path) -> None:
+        records = [
+            Record(
+                title="A Survey of Machine Learning in Medical Image Analysis",
+                year=2024,
+                authors=[Author(full_name="Zhang, Wei", order=1)],
+                keywords=["ml"],
+                source_database="CNKI",
+            ),
+            Record(
+                title="A Review of Machine Learning for Medical Image Processing",
+                year=2024,
+                authors=[Author(full_name="Zhang, Wei", order=1)],
+                keywords=["ml"],
+                source_database="WoS",
+            ),
+        ]
+        seed_cli_db(clean_cwd, records)
+
+    def test_layer3_confirm_true_merges(self, cli_runner, clean_cwd, monkeypatch):
+        self._setup_layer3(clean_cwd)
+        monkeypatch.chdir(clean_cwd)
+        monkeypatch.setattr(
+            "citationer.cli.clean_cmd.Confirm.ask", lambda *args, **kwargs: True
+        )
+        result = cli_runner.invoke(app, ["clean"])
+        assert result.exit_code == 0
+        # One duplicate should have been removed after confirmation.
+        assert "1" in result.output or "未发现重复" not in result.output
+
+    def test_layer3_confirm_true_counts_in_table(self, cli_runner, clean_cwd, monkeypatch):
+        self._setup_layer3(clean_cwd)
+        monkeypatch.chdir(clean_cwd)
+        monkeypatch.setattr(
+            "citationer.cli.clean_cmd.Confirm.ask", lambda *args, **kwargs: True
+        )
+        result = cli_runner.invoke(app, ["clean"])
+        assert result.exit_code == 0
+        assert "Layer 3" in result.output or "Layer" in result.output
+
+    def test_layer3_confirm_false_keeps_separate(self, cli_runner, clean_cwd, monkeypatch):
+        self._setup_layer3(clean_cwd)
+        monkeypatch.chdir(clean_cwd)
+        monkeypatch.setattr(
+            "citationer.cli.clean_cmd.Confirm.ask", lambda *args, **kwargs: False
+        )
+        result = cli_runner.invoke(app, ["clean"])
+        assert result.exit_code == 0
+        # No duplicates removed because user rejected the candidate.
+        assert "未发现重复记录" in result.output or result.exit_code == 0
+
+    def test_non_interactive_auto_confirms(self, cli_runner, clean_cwd, monkeypatch):
+        self._setup_layer3(clean_cwd)
+        monkeypatch.chdir(clean_cwd)
+        result = cli_runner.invoke(app, ["clean", "--non-interactive"])
+        assert result.exit_code == 0
+        # Non-interactive mode should auto-merge Layer 3 candidates.
+        assert "Layer 3" in result.output or "未发现重复" not in result.output

@@ -190,12 +190,18 @@ class DedupEngine:
         self,
         records: list[Record],
         progress_callback: Callable[[int, int], None] | None = None,
+        layer3_callback: Callable[[Record, Record, float], bool] | None = None,
     ) -> tuple[list[Record], list[dict]]:
         """Run all deduplication layers.
 
         If *progress_callback* is provided it is called as
         ``callback(current: int, total: int)`` — *total* is fixed at 100
         and *current* advances proportionally through each layer.
+
+        If *layer3_callback* is provided, Layer 3 candidates are presented to
+        the callback as ``callback(r1, r2, similarity)`` and only merged when
+        it returns ``True``.  When no callback is provided, Layer 3 keeps its
+        historical auto-merge behavior.
 
         Returns:
             (merged_records, merge_log)
@@ -220,7 +226,14 @@ class DedupEngine:
 
         working = _run_layer(self._layer1_doi, 5)
         working = _run_layer(self._layer2_title_high, 35)
-        working = _run_layer(self._layer3_title_low, 35)
+
+        if layer3_callback:
+            # Interactive mode: run Layer 3 with per-candidate confirmation.
+            working = self._layer3_title_low(working, confirm_callback=layer3_callback)
+            self._progress_base += 35
+        else:
+            working = _run_layer(self._layer3_title_low, 35)
+
         working = _run_layer(self._layer4_cross_language, 25)
 
         if progress_callback:
@@ -313,10 +326,20 @@ class DedupEngine:
 
         return [r for i, r in enumerate(records) if i not in merged_indices]
 
-    def _layer3_title_low(self, records: list[Record]) -> list[Record]:
-        """Title fuzzy match (>= 70%) + same first author + same year → auto-merge.
+    def _layer3_title_low(
+        self,
+        records: list[Record],
+        confirm_callback: Callable[[Record, Record, float], bool] | None = None,
+    ) -> list[Record]:
+        """Title fuzzy match (>= 70%) + same first author + same year.
 
-        (PRD says "需人工确认" but in MVP we auto-merge and log for review.)
+        When *confirm_callback* is provided, each candidate pair is presented to
+        the callback as ``callback(r1, r2, similarity)`` and only merged when
+        the callback returns ``True``.  This implements the PRD-required human
+        confirmation for Layer 3.
+
+        When no callback is provided, the historical auto-merge behavior is
+        retained for batch / non-interactive usage.
 
         Bucketed by (year, first-author) for O(buckets × bucket²) performance.
         """
@@ -347,20 +370,22 @@ class DedupEngine:
                         continue
                     r1, r2 = records[i], records[j]
 
-                    sim = _title_similarity(r1.title, r2.title,
-                                            threshold=self.title_threshold_low)
+                    sim = _title_similarity(
+                        r1.title, r2.title, threshold=self.title_threshold_low
+                    )
                     if sim >= self.title_threshold_low:
                         fa = r1.first_author
-                        self._merge_log.append({
-                            "layer": 3,
-                            "type": "title_fuzzy_low",
-                            "kept": r1.title,
-                            "merged": r2.title,
-                            "similarity": round(sim, 3),
-                            "first_author": fa.full_name if fa else "",
-                        })
-                        records[i] = _merge_records(r1, r2)
-                        merged_indices.add(j)
+                        if confirm_callback is None or confirm_callback(r1, r2, sim):
+                            self._merge_log.append({
+                                "layer": 3,
+                                "type": "title_fuzzy_low",
+                                "kept": r1.title,
+                                "merged": r2.title,
+                                "similarity": round(sim, 3),
+                                "first_author": fa.full_name if fa else "",
+                            })
+                            records[i] = _merge_records(r1, r2)
+                            merged_indices.add(j)
 
         return [r for i, r in enumerate(records) if i not in merged_indices]
 
