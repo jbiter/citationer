@@ -3,6 +3,14 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v4.8.0 — 2026-07-24
+
+- Dedup Layer 3 now prompts for human confirmation in interactive `citationer clean`;
+  use `--non-interactive` to keep the legacy auto-merge behavior.
+- Unified shared test fixtures (`tests._helpers.seed_cli_db`, `tests._factories.make_record`)
+  and expanded WoS parser test coverage to 96%.
+- Refreshed PRD documentation to reflect the v4.7.0+ state.
+
 ## v4.7.0 — 2026-07-23
 
 `citationer query` DSL filter on imported records (P5-10). Trusted Publishing
