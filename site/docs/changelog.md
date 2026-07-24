@@ -3,6 +3,36 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v4.7.0 — 2026-07-23
+
+`citationer query` DSL filter on imported records (P5-10). Trusted Publishing
+(OIDC) enabled for PyPI releases.
+
+## v4.6.6 — 2026-07-23
+
+Review cleanups: deduplicate test `_r()` factories and extract dedup `_bucket_by`
+helper.
+
+## v4.6.5 — 2026-07-22
+
+Batch of 7 bug fixes (BUG-008 through BUG-014).
+
+## v4.6.4 — 2026-07-17
+
+Review fixes.
+
+## v4.6.3 — 2026-07-17
+
+Version bump (`pyproject.toml` alignment).
+
+## v4.6.2 — 2026-07-16
+
+CI lint fixes in test suite.
+
+## v4.6.1 — 2026-07-16
+
+Fix dedup handling of records with `year=None`.
+
 ## v4.6.0 — 2026-07-10
 
 Interactive wizard: save current analysis as a real report file.
