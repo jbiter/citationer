@@ -116,6 +116,23 @@ citationer trend hotspots --gamma 0.5     # More sensitive (detects weaker burst
 citationer trend strategy --top 50        # Strategic diagram (centrality × density)
 ```
 
+### Multi-Dataset Comparison (`compare`)
+
+```bash
+# Compare all imported datasets by source_database
+citationer compare overview
+citationer compare trends
+citationer compare topics --top-n 30
+citationer compare network --type authors --min-papers 2
+
+# Compare by original file
+citationer compare overview --by file
+
+# Export results as JSON or CSV
+citationer compare overview --format json -o compare.json
+citationer compare trends --format csv -o trends.csv
+```
+
 ### Export (`export`)
 
 ```bash

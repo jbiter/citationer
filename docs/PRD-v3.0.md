@@ -4,7 +4,7 @@
 > **作者**: Jason
 > **日期**: 2026-07-25
 > **合并**: PRD v1.0（原始需求）、PRD v2.0（Phase 2–5 完整规划）、PRD v2.1（终端图表）
-> **当前版本**: v4.10.0
+> **当前版本**: v5.0.0
 > **许可证**: MIT · 开源项目
 > **仓库**: github.com/JasonCENG/citationer
 
@@ -733,7 +733,7 @@ pip install "citationer[all]"
 
 | # | 工作项 | 优先级 | 预估工作量 | 说明 |
 |---|--------|--------|-----------|------|
-| P5-1 | **多数据集对比分析** | 🟡 P1 | 2–3 周 | 跨文件夹文献集合比较：趋势差异、主题差异、机构/作者重叠度 |
+| P5-1 | **多数据集对比分析** | ✅ 已完成 | 2–3 周 | 已实现 `compare` 命令组：overview / trends / topics / network；按 source_database / source_file 分组，输出 table/json/csv；已于 v5.0.0 发布 |
 | P5-2 | **Web UI（`citationer serve`）** | 🟡 P1 | 3–4 周 | Flask/FastAPI 本地 Web 界面 + 交互式图表仪表盘 |
 | P5-3 | **插件系统** | 🟢 P2 | 2–3 周 | 第三方贡献解析器；entry_points 发现 + 标准接口 |
 | P5-4 | **PDF 全文分析** | 🟢 P2 | 3–4 周 | PDF 解析、全文主题建模、引文上下文分析 |
@@ -744,7 +744,7 @@ pip install "citationer[all]"
 | P5-9 | **Docker 镜像** | 🔵 P3 | 0.5 周 | Dockerfile + GitHub Container Registry 自动构建 |
 | P5-10 | **数据库查询命令** (`citationer query`) | ✅ 已完成 | 1 周 | SQLite 直查或 DSL 过滤（按年份/期刊/作者/关键词筛选）；已于 v4.7.0 发布 |
 
-> **下阶段重点**：P5-1（多数据集对比分析）与 P5-2（Web UI）为 P1 优先级，将作为 Phase 5 的下一阶段重点。
+> **下阶段重点**：P5-2（Web UI）为下一阶段重点。
 
 ### Phase 6: 愿景方向（远期）
 

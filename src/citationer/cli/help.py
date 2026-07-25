@@ -66,6 +66,12 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("quick", "快速生成报告"),
         ("custom", "自定义报告"),
     ]),
+    ("compare", "多数据集对比分析", [
+        ("overview", "概览与重叠分析"),
+        ("trends", "年度趋势对比"),
+        ("topics", "关键词/主题对比"),
+        ("network", "作者/机构网络对比"),
+    ]),
     ("export", "数据导出", [
         ("csv", "导出 CSV"),
         ("json", "导出 JSON"),
