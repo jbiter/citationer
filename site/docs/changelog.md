@@ -3,6 +3,18 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v5.0.0 — 2026-07-25
+
+- **P5-1 Multi-Dataset Comparison Analysis**: new `citationer compare` command
+  group (overview / trends / topics / network) for comparing multiple imported
+  datasets in-memory, without database schema changes.
+  - Group records by `source_database` (splitting composite values on `+`) or
+    by `source_file`.
+  - Pairwise DOI overlap, fuzzy title overlap, keyword Jaccard, and shared
+    authors / institutions.
+  - Output as Rich table, JSON, or CSV.
+- Major version bump signals the start of Phase 5 feature work.
+
 ## v4.10.0 — 2026-07-25
 
 - Completed the final CLI coverage push: `ai_cmd`, `stats_cmd`, `trend_cmd`,
