@@ -1,4 +1,4 @@
-# Citationer v4 — 用户手册
+# Citationer v5 — 用户手册
 
 > **终端优先的文献题录分析 CLI 工具** —— 从原始导出文件到分析洞察。
 
@@ -665,4 +665,4 @@ your-project/
 
 ---
 
-*Citationer v4 — 2026年7月*
+*Citationer v5 — 2026年7月*
