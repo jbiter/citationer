@@ -3,6 +3,13 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v5.0.1 — 2026-07-25
+
+- Added PRD v4.0 with rescheduled Phase 5 (v5.x) and Phase 6 (v6.x) roadmaps.
+- Dropped P5-6 (conda-forge) and P5-9 (Docker) from the roadmap.
+- Raised `compare_cmd.py` test coverage from 78% to 100%; project coverage now
+  93.13%.
+
 ## v5.0.0 — 2026-07-25
 
 - **P5-1 Multi-Dataset Comparison Analysis**: new `citationer compare` command
