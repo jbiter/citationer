@@ -3,6 +3,15 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v5.0.2 — 2026-07-25
+
+- Updated user handbook and documentation site titles from v4 to v5 to match
+  the current software version.
+- Fixed `SECURITY.md` supported-versions table: 5.0.x is now supported and
+  4.0.x is not.
+- Fixed stale version assertion in `tests/test_cli.py` to check the actual
+  current version instead of a hardcoded "4.0" string.
+
 ## v5.0.1 — 2026-07-25
 
 - Added PRD v4.0 with rescheduled Phase 5 (v5.x) and Phase 6 (v6.x) roadmaps.

@@ -16,6 +16,7 @@ from pathlib import Path
 
 from openpyxl import Workbook
 
+from citationer import __version__
 from citationer.cli.config_cmd import _mask_value
 from citationer.cli.main import app
 from citationer.utils.config import get_config_path
@@ -30,8 +31,8 @@ class TestMain:
     def test_version_flag(self, cli_runner, monkeypatch):
         """--version prints the version and exits."""
         result = cli_runner.invoke(app, ["--version"])
-        # typer.Exit on version
-        assert "4.0" in result.output or result.exit_code == 0
+        assert f"{__version__}" in result.output
+        assert result.exit_code == 0
 
     def test_help_l1(self, cli_runner):
         """Top-level --help renders the custom L1 overview."""

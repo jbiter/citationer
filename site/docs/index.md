@@ -1,4 +1,4 @@
-# Citationer v4
+# Citationer v5
 
 > **A terminal-first bibliometric analysis CLI tool** — scan, import, analyze, and visualize your literature collection.
 
