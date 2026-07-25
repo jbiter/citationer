@@ -267,9 +267,10 @@ pytest tests/ --cov=src/citationer --cov-report=term-missing
 - **[Wiki Home](https://github.com/jbiter/citationer/wiki/)** — Links to all docs
 - **[Handbook](https://github.com/jbiter/citationer/wiki/Handbook)** — Full user manual (English)
 - **[用户手册](https://github.com/jbiter/citationer/wiki/Handbook_zh)** — 中文用户手册
+- **[PRD v4.0](docs/PRD-v4.0.md)** — Latest product roadmap (Phase 5/6)
+- **[PRD v3.0](docs/PRD-v3.0.md)** — Previous roadmap (historical)
 - **[PRD v2.1](docs/PRD-v2.1.md)** — Terminal charts
-- **[PRD v2.0](docs/PRD-v2.0.md)** — Full requirements doc (Phase 1–5)
-- **[PRD v1.0](docs/PRD-v1.0.md)** — Original PRD
+- **[PRD v2.0](docs/PRD-v2.0.md)** — Full requirements doc (Phase 1–5) (historical)
 - **[PRD v1.0](docs/PRD-v1.0.md)** — Original PRD (historical)
 
 ---
