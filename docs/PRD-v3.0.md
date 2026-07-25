@@ -738,10 +738,8 @@ pip install "citationer[all]"
 | P5-3 | **插件系统** | 🟢 P2 | 2–3 周 | 第三方贡献解析器；entry_points 发现 + 标准接口 |
 | P5-4 | **PDF 全文分析** | 🟢 P2 | 3–4 周 | PDF 解析、全文主题建模、引文上下文分析 |
 | P5-5 | **实时文献监控** | 🔵 P3 | 2–3 周 | RSS/API 追踪新增文献 + 邮件/终端通知 |
-| P5-6 | **conda-forge 发布** | 🔵 P3 | 1 周 | conda recipe → conda-forge feedstock |
 | P5-7 | **多语言国际化 (i18n)** | 🔵 P3 | 2 周 | gettext 或手动方案，中英文双语界面 |
 | P5-8 | **EndNote / Zotero 解析器** | 🔵 P3 | 1 周 | EndNote XML + Zotero RDF/CSV |
-| P5-9 | **Docker 镜像** | 🔵 P3 | 0.5 周 | Dockerfile + GitHub Container Registry 自动构建 |
 | P5-10 | **数据库查询命令** (`citationer query`) | ✅ 已完成 | 1 周 | SQLite 直查或 DSL 过滤（按年份/期刊/作者/关键词筛选）；已于 v4.7.0 发布 |
 
 > **下阶段重点**：P5-2（Web UI）为下一阶段重点。
