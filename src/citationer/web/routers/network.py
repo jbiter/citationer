@@ -14,6 +14,9 @@ router = APIRouter()
 
 def _engine(records: list):
     try:
+        import networkx  # noqa: F401
+        import plotly.graph_objects  # noqa: F401
+
         from citationer.analysis.network import NetworkEngine
     except ImportError as exc:
         raise HTTPException(
