@@ -81,6 +81,7 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
 
 _TOOLS: list[tuple[str, str]] = [
     ("config", "管理 LLM 和其他配置项 (show / set / init)"),
+    ("serve", "启动本地 Web 仪表板"),
 ]
 
 

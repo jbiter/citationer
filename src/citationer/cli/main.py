@@ -94,6 +94,11 @@ def _import_query_cmd():
     return query_cmd.query_cmd
 
 
+def _import_serve():
+    from citationer.cli import serve_cmd
+    return serve_cmd
+
+
 class _RootGroup(TyperGroup):
     """Custom TyperGroup that shows our L1 overview for top-level --help.
 
@@ -191,6 +196,7 @@ def _register():
     app.add_typer(_import_run().app, name="run")
     app.command(name="query")(_import_query_cmd())
     app.add_typer(_import_compare().app, name="compare")
+    app.add_typer(_import_serve().app, name="serve")
 
 _register._done = False  # type: ignore[attr-defined]
 
