@@ -21,6 +21,8 @@ def serve(
     """运行 Citationer Web 服务器。"""
     try:
         import uvicorn
+
+        from citationer.web.app import create_app
     except ImportError as exc:
         typer.echo(
             "Web 服务器依赖未安装。请运行：pip install 'citationer[web]'",
@@ -29,7 +31,7 @@ def serve(
         raise typer.Exit(code=1) from exc
 
     uvicorn.run(
-        "citationer.web.app:create_app",
+        create_app,
         host=host,
         port=port,
         reload=reload,
