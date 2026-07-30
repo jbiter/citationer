@@ -3,6 +3,11 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v5.1.0 — 2026-08
+
+- **P5-2 Web UI**：新增 `citationer serve` 命令，启动基于 FastAPI
+  的本地仪表板，提供 stats、network、compare 的 JSON 接口与交互式图表。
+
 ## v5.0.2 — 2026-07-25
 
 - Updated user handbook and documentation site titles from v4 to v5 to match

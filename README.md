@@ -22,6 +22,7 @@
 | 🤖 **LLM-Powered AI** | Topic labeling, literature review, trend identification, classification — DeepSeek/OpenAI/Ollama |
 | 🆕 **Interactive Mode** | Step-by-step wizard (`citationer interactive`) |
 | 🆕 **Pipeline Runner** | Declarative YAML pipeline (`citationer run pipeline.yaml`) |
+| 🌐 **Web 仪表板** | `citationer serve` 启动本地浏览器 UI，支持交互式图表 |
 | ⚙ **Configurable** | CLI-driven config, env-var support, multi-provider LLM |
 | 🎨 **Rich Terminal** | Color tables, progress bars, interactive HTML network graphs (Plotly) |
 | 📦 **Pipe-friendly** | JSON/CSV/GEXF/GraphML export — works with `grep`, `jq`, Gephi, Cytoscape |
@@ -192,6 +193,16 @@ citationer interactive              # Step-by-step guided analysis wizard
 ```bash
 citationer run pipeline.yaml         # Execute declarative YAML pipeline
 ```
+
+### Web Dashboard (`serve`)
+
+```bash
+citationer serve              # http://127.0.0.1:8000
+citationer serve --port 8080  # Bind to custom port
+citationer serve --reload     # Development auto-reload
+```
+
+Requires `[web]` extras: `pip install 'citationer[web]'`.
 
 ### Configuration (`config`)
 

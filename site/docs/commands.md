@@ -76,6 +76,18 @@ citationer interactive                 # Guided step-by-step wizard
 citationer run pipeline.yaml            # Execute declarative pipeline
 ```
 
+## Web dashboard (`serve`)
+
+启动本地 Web 仪表板。
+
+```bash
+citationer serve              # http://127.0.0.1:8000
+citationer serve --port 8080  # 绑定到 8080 端口
+citationer serve --reload     # 开发模式自动重载
+```
+
+需要 `[web]` extras：`pip install 'citationer[web]'`。
+
 ## Global options
 
 ```bash
