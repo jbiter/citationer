@@ -28,7 +28,7 @@ def _run_isolated(func: Any, *args: Any, **kwargs: Any) -> None:
         if exc.exit_code != 0:
             raise RuntimeError(f"CLI 命令失败，退出码 {exc.exit_code}") from exc
     except SystemExit as exc:
-        if exc.code != 0:
+        if exc.code not in (0, None):
             raise RuntimeError(f"CLI 命令失败，退出码 {exc.code}") from exc
 
 
