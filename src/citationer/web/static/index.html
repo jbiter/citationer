@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Citationer 仪表板</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" crossorigin></script>
+</head>
+<body>
+  <header>
+    <h1>Citationer 仪表板</h1>
+    <p id="status">加载中...</p>
+  </header>
+
+  <main>
+    <section id="overview" class="card">
+      <h2>概览</h2>
+      <div id="overview-grid"></div>
+    </section>
+
+    <section id="yearly" class="card">
+      <h2>年度趋势</h2>
+      <div id="yearly-chart"></div>
+    </section>
+
+    <section id="network" class="card">
+      <h2>关键词共现网络</h2>
+      <iframe id="network-frame" src="/api/charts/network/keywords.html"></iframe>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
