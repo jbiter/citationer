@@ -55,4 +55,5 @@ def network(
     collab_type: Annotated[str, Query(pattern="^(authors|institutions)$")] = "authors",
     min_papers: Annotated[int, Query(ge=1)] = 2,
 ) -> dict:
-    return to_json_safe(_engine(records, by).network(collab_type=collab_type, min_papers=min_papers))
+    result = _engine(records, by).network(collab_type=collab_type, min_papers=min_papers)
+    return to_json_safe(result)
