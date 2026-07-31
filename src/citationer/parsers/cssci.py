@@ -47,8 +47,20 @@ class CssciParser(BaseParser):
         "DOI": "doi",
     }
 
-    def __init__(self, encoding: str = "utf-8") -> None:
+    def __init__(self, encoding: str | None = None) -> None:
         self._encoding = encoding
+
+    @staticmethod
+    def _detect_encoding(filepath: Path) -> str:
+        """Detect text file encoding by trying common Chinese encodings."""
+        for enc in ("utf-8", "utf-8-sig", "gbk", "gb2312", "gb18030"):
+            try:
+                with open(filepath, encoding=enc) as f:
+                    f.read()
+                return enc
+            except (UnicodeDecodeError, UnicodeError):
+                continue
+        return "utf-8"
 
     @property
     def source_name(self) -> str:
@@ -78,8 +90,9 @@ class CssciParser(BaseParser):
 
         # Try text file
         if suffix in (".txt", ".csv"):
+            encoding = self._encoding or self._detect_encoding(filepath)
             try:
-                with open(filepath, encoding=self._encoding, errors="ignore") as f:
+                with open(filepath, encoding=encoding, errors="ignore") as f:
                     first = f.readline()
                 return any(m in first for m in self.CSSCI_MARKERS)
             except Exception:
@@ -91,7 +104,8 @@ class CssciParser(BaseParser):
         suffix = filepath.suffix.lower()
         if suffix in (".xlsx", ".xls"):
             return self._parse_xlsx(filepath)
-        return self._parse_text(filepath)
+        encoding = self._encoding or self._detect_encoding(filepath)
+        return self._parse_text(filepath, encoding)
 
     # ------------------------------------------------------------------
     # XLSX
@@ -126,10 +140,10 @@ class CssciParser(BaseParser):
     # Text/CSV
     # ------------------------------------------------------------------
 
-    def _parse_text(self, filepath: Path) -> list[Record]:
+    def _parse_text(self, filepath: Path, encoding: str) -> list[Record]:
         import csv
 
-        with open(filepath, encoding=self._encoding, errors="ignore") as f:
+        with open(filepath, encoding=encoding, errors="ignore") as f:
             delimiter = "\t" if "\t" in f.readline() else ","
             f.seek(0)
             reader = csv.reader(f, delimiter=delimiter)

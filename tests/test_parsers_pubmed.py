@@ -174,6 +174,50 @@ class TestPubMedXmlParse:
         # No DOI, but PMID exists → doi = "pmid:11111"
         assert r.doi == "pmid:11111"
 
+    def test_year_prefers_pubdate_over_datecompleted(self, tmp_path):
+        """PubDate/ArticleDate must take precedence over DateCompleted/DateRevised."""
+        f = tmp_path / "pubdate.xml"
+        root = ElementTree.Element("PubmedArticleSet")
+        article = ElementTree.SubElement(root, "PubmedArticle")
+        citation = ElementTree.SubElement(article, "MedlineCitation")
+        pmid_el = ElementTree.SubElement(citation, "PMID")
+        pmid_el.text = "99999"
+
+        # DateCompleted says 2024
+        dc = ElementTree.SubElement(citation, "DateCompleted")
+        ElementTree.SubElement(dc, "Year").text = "2024"
+
+        # PubDate says 2001
+        article_el = ElementTree.SubElement(citation, "Article")
+        title_el = ElementTree.SubElement(article_el, "ArticleTitle")
+        title_el.text = "Published in 2001"
+        journal = ElementTree.SubElement(article_el, "Journal")
+        pub_date = ElementTree.SubElement(journal, "PubDate")
+        ElementTree.SubElement(pub_date, "Year").text = "2001"
+
+        ElementTree.ElementTree(root).write(f, encoding="utf-8", xml_declaration=True)
+        r = PubMedParser().parse(f)[0]
+        assert r.year == 2001
+
+    def test_year_uses_article_date_when_available(self, tmp_path):
+        """ArticleDate (electronic publication date) is preferred."""
+        f = tmp_path / "articledate.xml"
+        root = ElementTree.Element("PubmedArticleSet")
+        article = ElementTree.SubElement(root, "PubmedArticle")
+        citation = ElementTree.SubElement(article, "MedlineCitation")
+        ElementTree.SubElement(citation, "PMID").text = "88888"
+        article_el = ElementTree.SubElement(citation, "Article")
+        ElementTree.SubElement(article_el, "ArticleTitle").text = "Electronic 2019"
+        ad = ElementTree.SubElement(article_el, "ArticleDate")
+        ElementTree.SubElement(ad, "Year").text = "2019"
+        journal = ElementTree.SubElement(article_el, "Journal")
+        pd = ElementTree.SubElement(journal, "PubDate")
+        ElementTree.SubElement(pd, "Year").text = "2020"
+
+        ElementTree.ElementTree(root).write(f, encoding="utf-8", xml_declaration=True)
+        r = PubMedParser().parse(f)[0]
+        assert r.year == 2019
+
     def test_parse_with_doi(self, tmp_path):
         f = tmp_path / "doi.xml"
         _make_pubmed_xml(f, [{"pmid": "22222", "title": "D", "doi": "10.1000/x"}])

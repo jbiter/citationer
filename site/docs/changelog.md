@@ -3,6 +3,15 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v5.1.2 — 2026-07-31
+
+- 修复 BibTeX 解析器无法处理嵌套大括号的问题（如 `{Role of {BRCA1} in DNA repair}`）。
+- 修复 PubMed XML 年份提取优先使用 `DateCompleted`/`DateRevised` 而非实际发表日期的问题。
+- 修复 WoS `C1` 地址连续行使用 `; ` 连接导致机构解析丢失的问题。
+- 修复 CSSCI 文本文件硬编码 UTF-8、无法读取 GBK 编码导出的问题。
+- 修复 Scopus CSV/Excel 未读取 `Affiliations` 列导致机构缺失的问题。
+- 修复 WoS `.xls` 解析未调用 `xlrd` 资源释放的问题。
+
 ## v5.1.1 — 2026-07-31
 
 - 修复 `avg_citations` 排除零引用记录的问题，现在计入所有 `citation_count` 非空记录。

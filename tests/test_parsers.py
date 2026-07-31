@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from citationer.parsers.base import ParserRegistry
+from citationer.parsers.bibtex import BibTeXParser
 from citationer.parsers.cnki import CnkiExcelParser
 from citationer.parsers.wos import WosExcelParser, WosTextParser
 
@@ -98,6 +99,43 @@ EF"""
     def test_source_name(self):
         parser = WosTextParser()
         assert parser.source_name == "WoS"
+
+
+class TestBibTeXParser:
+    def test_parse_nested_braces(self, tmp_path: Path):
+        parser = BibTeXParser()
+        content = r"""@article{key1,
+  title = {Role of {BRCA1} in DNA repair},
+  author = {Smith, John},
+  year = {2024},
+  journal = {Nature},
+}
+"""
+        f = tmp_path / "test.bib"
+        f.write_text(content, encoding="utf-8")
+
+        records = parser.parse(f)
+        assert len(records) == 1
+        assert records[0].title == "Role of {BRCA1} in DNA repair"
+
+    def test_parse_simple_bibtex(self, tmp_path: Path):
+        parser = BibTeXParser()
+        content = """@article{key1,
+  title = {Simple Title},
+  author = {Doe, Jane and Smith, John},
+  year = {2023},
+  journal = {Science},
+}
+"""
+        f = tmp_path / "test.bib"
+        f.write_text(content, encoding="utf-8")
+
+        records = parser.parse(f)
+        assert len(records) == 1
+        r = records[0]
+        assert r.title == "Simple Title"
+        assert r.year == 2023
+        assert len(r.authors) == 2
 
 
 class TestWosExcelParser:

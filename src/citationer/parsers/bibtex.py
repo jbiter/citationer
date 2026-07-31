@@ -125,16 +125,34 @@ class BibTeXParser(BaseParser):
         )
 
     def _extract_fields(self, entry: str) -> dict[str, str]:
-        """Extract key = {value} pairs from a BibTeX entry."""
+        """Extract key = {value} or key = \"value\" pairs from a BibTeX entry.
+
+        Handles balanced braces inside braced values, e.g.
+        ``title = {Role of {BRCA1} in DNA repair}``.
+        """
         fields: dict[str, str] = {}
-        # Match key = {value} or key = value
-        for m in re.finditer(
-            r"(\w+)\s*=\s*\{([^}]*)\}", entry, re.DOTALL
-        ):
-            fields[m.group(1).lower()] = m.group(2).strip()
-        # Also match key = value (non-braced)
+
+        # Braced values with nested braces.
+        pattern = re.compile(r"(\w+)\s*=\s*\{")
+        for m in pattern.finditer(entry):
+            key = m.group(1).lower()
+            start = m.end()
+            depth = 1
+            i = start
+            while i < len(entry) and depth > 0:
+                if entry[i] == "{":
+                    depth += 1
+                elif entry[i] == "}":
+                    depth -= 1
+                i += 1
+            # i now points one past the closing brace.
+            value = entry[start : i - 1].strip()
+            fields[key] = value
+
+        # Quoted values (no nesting support needed).
         for m in re.finditer(r"(\w+)\s*=\s*\"([^\"]*)\"", entry, re.DOTALL):
             fields.setdefault(m.group(1).lower(), m.group(2).strip())
+
         return fields
 
     @staticmethod

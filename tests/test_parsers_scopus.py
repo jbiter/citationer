@@ -62,10 +62,11 @@ class TestScopusParseCsv:
             "Authors,Author(s) ID,Title,Year,Source title,Volume,Issue,Pages,"
             "Article Number,DOI,Abstract,Author Keywords,Index Keywords,"
             "Language of Original Document,Document Type,Cited by,References,"
-            "ISSN,Funding Details\n"
+            "ISSN,Funding Details,Affiliations\n"
             '"Smith, J.;Jones, M.",12345,Test paper,2024,Journal of X,10,2,100-120,9,'
             '10.1000/t,Abstract text.,keyword1;keyword2,idx1;idx2,English,Review,5,'
-            '"Ref 1;Ref 2",1234-5678,"Grant A;Grant B"\n',
+            '"Ref 1;Ref 2",1234-5678,"Grant A;Grant B",'
+            '"MIT, Cambridge, MA USA; Harvard Univ, Cambridge, MA USA"\n',
             encoding="utf-8-sig",
         )
         records = ScopusParser().parse(p)
@@ -90,6 +91,11 @@ class TestScopusParseCsv:
         assert len(r.authors) == 2
         assert r.authors[0].surname == "Smith"
         assert r.authors[0].given_name == "J."
+        # Affiliations
+        assert len(r.institutions) == 2
+        names = {i.name for i in r.institutions}
+        assert "MIT" in names
+        assert "Harvard Univ" in names
 
     def test_parse_empty_file_returns_empty(self, tmp_path: Path):
         p = tmp_path / "empty.csv"

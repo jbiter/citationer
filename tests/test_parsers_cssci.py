@@ -65,7 +65,20 @@ class TestCssciDetect:
 
 
 class TestCssciParseText:
-    def test_parse_tab_delimited(self, tmp_path: Path):
+    def test_parse_gbk_encoded_txt(self, tmp_path: Path):
+        """GBK-encoded CSSCI text files must be detected and parsed correctly."""
+        p = tmp_path / "cssci_gbk.txt"
+        p.write_bytes(
+            "来源篇名\t来源作者\t期刊名称\t年份\n标题丙\t作者丁\tCSSCI期刊\t2022\n".encode(
+                "gbk"
+            )
+        )
+        records = CssciParser().parse(p)
+        assert len(records) == 1
+        r = records[0]
+        assert r.title == "标题丙"
+        assert r.year == 2022
+
         p = tmp_path / "cssci.txt"
         p.write_text(
             "来源篇名\t来源作者\t期刊名称\t年份\t机构\t基金\t关键词\t被引频次\n"
