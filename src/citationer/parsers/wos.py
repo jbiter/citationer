@@ -103,8 +103,10 @@ class WosTextParser(BaseParser):
                     continuation = line.strip()
                     if continuation:
                         # For author fields, use "; " separator to distinguish
-                        # multi-author lines from wrapped text
-                        sep = "; " if current_tag in ("AU", "AF", "C1") else " "
+                        # multi-author lines from wrapped text. For address
+                        # fields use a space to avoid mixing with Excel's
+                        # "; " address separators.
+                        sep = "; " if current_tag in ("AU", "AF") else " "
                         current[current_tag] += sep + continuation
                 elif current_tag and line.strip():
                     # Some WoS exports wrap without indentation
@@ -641,7 +643,7 @@ class WosExcelParser(BaseParser):
                 return None
             return [str(ws.cell_value(0, c)).strip() for c in range(ws.ncols)]
         finally:
-            pass  # xlrd auto-closes on garbage collection
+            wb.release_resources()
 
     # ------------------------------------------------------------------
     # Parsing
@@ -685,7 +687,7 @@ class WosExcelParser(BaseParser):
                 for r in range(1, ws.nrows)
             ]
         finally:
-            pass  # xlrd auto-closes on garbage collection
+            wb.release_resources()
 
         return self._rows_to_records(headers, rows, filepath.name)
 

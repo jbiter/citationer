@@ -45,6 +45,7 @@ class ScopusParser(BaseParser):
         "References": "references_raw",
         "ISSN": "issn",
         "Funding Details": "funding_raw",
+        "Affiliations": "affiliations_raw",
     }
 
     def __init__(self, encoding: str = "utf-8-sig") -> None:
@@ -216,6 +217,16 @@ class ScopusParser(BaseParser):
 
         # Parse institutions (from affiliation field or Author IDs)
         institutions: list[Institution] = []
+        aff_str = _val("affiliations_raw")
+        if aff_str:
+            for aff in aff_str.split(";"):
+                aff = aff.strip()
+                if not aff:
+                    continue
+                # Institution name is typically the first comma-separated token
+                name = aff.split(",")[0].strip()
+                if name:
+                    institutions.append(Institution(name=name))
 
         # Parse doc type
         doc_type = self._parse_doc_type(_val("doc_type_raw"))

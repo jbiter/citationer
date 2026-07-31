@@ -234,6 +234,20 @@ class TestWosTextParse:
         names = [i.name for i in r.institutions]
         assert any("Harvard" in n for n in names)
 
+    def test_c1_continuation_not_split_by_semicolon(self, tmp_path):
+        """Wrapped C1 lines must not introduce '; ' separators that break parsing."""
+        f = tmp_path / "c1_cont.txt"
+        f.write_text(
+            "PT J\nTI T\nPY 2024\n"
+            "C1 [Smith, John] Massachusetts Inst Technol, Cambridge, MA USA\n"
+            "   [Jones, Mary] Harvard Univ, Cambridge, MA USA\n"
+            "ER\n"
+        )
+        r = WosTextParser().parse(f)[0]
+        names = {i.name for i in r.institutions}
+        assert any("Massachusetts" in n for n in names)
+        assert any("Harvard" in n for n in names)
+
     def test_institution_dedup(self, tmp_path):
         """Same institution appearing multiple times → deduped.
 

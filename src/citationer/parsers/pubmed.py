@@ -87,7 +87,12 @@ class PubMedParser(BaseParser):
 
         # Year
         year: int | None = None
-        pub_date = citation.find(".//DateCompleted") or citation.find(".//DateRevised")
+        pub_date = (
+            citation.find(".//ArticleDate")
+            or citation.find(".//PubDate")
+            or citation.find(".//DateCompleted")
+            or citation.find(".//DateRevised")
+        )
         if pub_date is not None:
             y = pub_date.findtext("Year")
             if y:
