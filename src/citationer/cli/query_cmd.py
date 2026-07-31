@@ -34,6 +34,13 @@ console = Console()
 _get_records = get_records
 
 
+def _validate_format(value: str) -> str:
+    allowed = {"table", "json", "csv"}
+    if value not in allowed:
+        raise typer.BadParameter(f"格式必须是 {allowed} 之一")
+    return value
+
+
 @app.command(name="query")
 def query_cmd(
     filter_expr: str = typer.Argument(..., help="过滤表达式，如 'year>=2020 AND journal=Nature'"),
@@ -42,6 +49,7 @@ def query_cmd(
         "--format",
         "-f",
         help="输出格式: table, json, csv",
+        callback=_validate_format,
     ),
     output: Path | None = typer.Option(None, "--output", "-o", help="输出文件路径"),
     limit: int | None = typer.Option(None, "--limit", "-n", help="最多输出 N 条"),

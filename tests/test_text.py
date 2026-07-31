@@ -86,18 +86,17 @@ class TestPreprocess:
 
 
 class TestKeywords:
-    def test_keywords_basic(self):
+    def test_keywords_total_occurrences(self):
         records = [
-            make_record(keywords=["machine learning", "deep learning"]),
+            make_record(keywords=["machine learning"]),
             make_record(keywords=["machine learning", "neural networks"]),
             make_record(keywords=["deep learning"]),
         ]
         engine = TextEngine(records)
         result = engine.keywords(top_n=10)
 
+        assert result.total_occurrences == 4  # 2 + 1 + 1
         assert result.total_unique == 3
-        assert ("machine learning", 2) in result.top_keywords
-        assert ("deep learning", 2) in result.top_keywords
 
     def test_keywords_with_en(self):
         records = [

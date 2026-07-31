@@ -127,7 +127,7 @@ class StatsEngine:
             dt = r.doc_type.value
             dt_dist[dt] = dt_dist.get(dt, 0) + 1
             # Citations
-            if r.citation_count is not None and r.citation_count > 0:
+            if r.citation_count is not None:
                 citations.append(r.citation_count)
 
         # ── Finalise stats ──
@@ -229,9 +229,8 @@ class StatsEngine:
                 if r.citation_count:
                     author_citations[name] += r.citation_count
 
-            if r.authors:
-                first = r.authors[0]
-                first_author_pub[first.full_name] += 1
+            if r.first_author is not None:
+                first_author_pub[r.first_author.full_name] += 1
 
         # Price's Law: core authors publish >= 0.749 * sqrt(max_pubs)
         core_authors: list[str] = []

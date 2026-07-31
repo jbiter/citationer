@@ -123,6 +123,7 @@ class KeywordStats:
 
     top_keywords: list[tuple[str, int]] = field(default_factory=list)
     total_unique: int = 0
+    total_occurrences: int = 0
     # keyword → {year: count} for heatmap data
     yearly_distribution: dict[str, dict[int, int]] = field(default_factory=dict)
 
@@ -308,6 +309,7 @@ class TextEngine:
         return KeywordStats(
             top_keywords=top,
             total_unique=len(counter),
+            total_occurrences=sum(counter.values()),
             yearly_distribution=dict(yearly) if per_year else {},
         )
 
