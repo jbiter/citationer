@@ -3,6 +3,15 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v5.1.1 — 2026-07-31
+
+- 修复 `avg_citations` 排除零引用记录的问题，现在计入所有 `citation_count` 非空记录。
+- 修复 `first_author_dist` 使用 `authors[0]` 而非 `order` 元数据的问题。
+- 修复 `citationer text keywords` 的 Top-N 累计占比恒为 100% 的问题。
+- 修复 `citationer import` 在空目录运行时先清空数据库的缺陷，并统一自动检测扩展名。
+- 修复 `citationer interactive` 中整数输入未校验导致崩溃的问题。
+- 为 `import` / `text` / `query` / `compare` / `network` 的 `--format` 选项增加非法值校验。
+
 ## v5.1.0 — 2026-08
 
 - **P5-2 Web UI**：新增 `citationer serve` 命令，启动基于 FastAPI
