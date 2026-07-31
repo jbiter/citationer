@@ -97,6 +97,13 @@ def preprocess(
 # ------------------------------------------------------------------
 
 
+def _validate_format(value: str) -> str:
+    allowed = {"table", "json", "csv"}
+    if value not in allowed:
+        raise typer.BadParameter(f"格式必须是 {allowed} 之一")
+    return value
+
+
 @app.command(name="keywords")
 def keywords(
     top_n: int = typer.Option(50, "--top", "-n", help="显示 Top-N 关键词"),
@@ -107,7 +114,7 @@ def keywords(
         1, "--min-count", "-m", help="关键词最小出现次数"
     ),
     output_format: str = typer.Option(
-        "table", "--format", "-f", help="输出格式: table, json, csv"
+        "table", "--format", "-f", help="输出格式: table, json, csv", callback=_validate_format
     ),
     output_file: Path | None = typer.Option(
         None, "--output", "-o", help="保存到文件"
@@ -156,7 +163,7 @@ def keywords(
     table.add_column("频次", justify="right")
     table.add_column("占比", justify="right")
 
-    total = sum(c for _, c in result.top_keywords)
+    total = result.total_occurrences
     for i, (kw, count) in enumerate(result.top_keywords, 1):
         pct = f"{count / max(total, 1) * 100:.1f}%"
         table.add_row(str(i), kw, str(count), pct)
@@ -164,7 +171,7 @@ def keywords(
     console.print(table)
     if result.top_keywords:
         top_sum = sum(c for _, c in result.top_keywords)
-        coverage = total / max(top_sum, 1) * 100
+        coverage = top_sum / max(total, 1) * 100
     else:
         coverage = 0.0
     console.print(

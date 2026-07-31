@@ -25,6 +25,13 @@ console = Console()
 _get_records = get_records
 
 
+def _validate_format(value: str) -> str:
+    allowed = {"table", "json", "csv"}
+    if value not in allowed:
+        raise typer.BadParameter(f"格式必须是 {allowed} 之一")
+    return value
+
+
 def _load_engine(by: str) -> CompareEngine | None:
     records = _get_records()
     if not records:
@@ -80,7 +87,11 @@ def overview(
     threshold: float = typer.Option(
         0.85, "--threshold", "-t", help="标题模糊匹配阈值 (0-1)"
     ),
-    fmt: str = typer.Option("table", "--format", "-f", help="输出格式: table, json, csv"),
+    fmt: str = typer.Option(
+        "table", "--format", "-f",
+        help="输出格式: table, json, csv",
+        callback=_validate_format,
+    ),
     output: Path | None = typer.Option(None, "--output", "-o", help="输出文件路径"),
 ) -> None:
     """数据集概览与重叠分析。"""
@@ -95,7 +106,11 @@ def overview(
 @app.command(name="trends")
 def trends(
     by: str = typer.Option("database", "--by", help="分组方式: database, file"),
-    fmt: str = typer.Option("table", "--format", "-f", help="输出格式: table, json, csv"),
+    fmt: str = typer.Option(
+        "table", "--format", "-f",
+        help="输出格式: table, json, csv",
+        callback=_validate_format,
+    ),
     output: Path | None = typer.Option(None, "--output", "-o", help="输出文件路径"),
 ) -> None:
     """数据集年度趋势对比。"""
@@ -110,7 +125,11 @@ def trends(
 def topics(
     by: str = typer.Option("database", "--by", help="分组方式: database, file"),
     top_n: int = typer.Option(20, "--top-n", "-n", help="每个数据集 Top-N 关键词"),
-    fmt: str = typer.Option("table", "--format", "-f", help="输出格式: table, json, csv"),
+    fmt: str = typer.Option(
+        "table", "--format", "-f",
+        help="输出格式: table, json, csv",
+        callback=_validate_format,
+    ),
     output: Path | None = typer.Option(None, "--output", "-o", help="输出文件路径"),
 ) -> None:
     """数据集关键词/主题对比。"""
@@ -130,7 +149,11 @@ def network(
     min_papers: int = typer.Option(
         2, "--min-papers", "-m", help="节点最少发文数"
     ),
-    fmt: str = typer.Option("table", "--format", "-f", help="输出格式: table, json, csv"),
+    fmt: str = typer.Option(
+        "table", "--format", "-f",
+        help="输出格式: table, json, csv",
+        callback=_validate_format,
+    ),
     output: Path | None = typer.Option(None, "--output", "-o", help="输出文件路径"),
 ) -> None:
     """数据集作者/机构网络对比。"""

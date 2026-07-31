@@ -131,6 +131,22 @@ class TestTextKeywords:
         )
         assert result.exit_code == 0
 
+    def test_keywords_table_coverage_not_always_100(self, cli_runner, clean_cwd, monkeypatch):
+        """Top-N coverage should reflect real proportion of all occurrences."""
+        _setup_rich_text_data(clean_cwd)
+        monkeypatch.chdir(clean_cwd)
+        result = cli_runner.invoke(app, ["text", "keywords", "--top", "3"])
+        assert result.exit_code == 0
+        output = result.output
+        # Should report coverage < 100% when top-3 doesn't cover all keywords
+        assert "Top-3 累计占比" in output
+        # Extract percentage: e.g. "Top-3 累计占比 36%"
+        import re
+        match = re.search(r"Top-3 累计占比 (\d+)%", output)
+        assert match, f"Could not find coverage in output: {output}"
+        coverage = int(match.group(1))
+        assert coverage < 100, f"Expected coverage < 100, got {coverage}%"
+
     def test_keywords_per_year(self, cli_runner, clean_cwd, monkeypatch):
         _setup_rich_text_data(clean_cwd)
         monkeypatch.chdir(clean_cwd)

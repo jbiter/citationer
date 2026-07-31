@@ -66,6 +66,17 @@ class TestOverviewStats:
         # h-index = 3 (3 papers with >= 3 citations)
         assert stats.h_index == 3
 
+    def test_avg_citations_includes_zero(self):
+        """Zero-cited records must be included in the average."""
+        records = [
+            make_record("Cited", 2024, citation_count=10),
+            make_record("Zero", 2024, citation_count=0),
+            make_record("Missing", 2024, citation_count=None),
+        ]
+        engine = StatsEngine(records)
+        stats = engine.overview()
+        assert stats.avg_citations == pytest.approx(5.0)
+
     def test_solo_rate(self):
         records = [
             make_record("Solo", 2024, authors=[Author(full_name="A")]),
@@ -136,6 +147,19 @@ class TestAuthorStats:
         assert len(result.top_authors.items) == 2
         # Smith has 2 papers
         assert result.top_authors.items[0][1] == 2
+
+    def test_first_author_respects_order_metadata(self):
+        """first_author_dist must use the author marked as first, not authors[0]."""
+        records = [
+            make_record("A", 2024, authors=[
+                Author(full_name="Second", order=2),
+                Author(full_name="First", order=1),
+            ]),
+        ]
+        engine = StatsEngine(records)
+        result = engine.authors(top_n=1)
+        assert result.first_author_dist[0][0] == "First"
+        assert result.first_author_dist[0][1] == 1
 
     def test_author_h_index_computation(self):
         """Verify author H-index from citation counts."""

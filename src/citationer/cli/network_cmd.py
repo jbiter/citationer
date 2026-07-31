@@ -34,6 +34,13 @@ def _get_output_path(
     return viz_dir / f"{default_name}.{fmt}"
 
 
+def _validate_output_format(value: str) -> str:
+    allowed = {"table", "csv", "gexf", "graphml"}
+    if value not in allowed:
+        raise typer.BadParameter(f"格式必须是 {allowed} 之一")
+    return value
+
+
 # ------------------------------------------------------------------
 # network keywords
 # ------------------------------------------------------------------
@@ -48,6 +55,7 @@ def keywords(
     output_format: str = typer.Option(
         "table", "--output-format", "-f",
         help="输出格式: table, csv, gexf, graphml",
+        callback=_validate_output_format,
     ),
     output: Path | None = typer.Option(
         None, "--output", "-o", help="输出文件路径"
@@ -132,6 +140,7 @@ def coauthors(
     output_format: str = typer.Option(
         "table", "--output-format", "-f",
         help="输出格式: table, csv, gexf, graphml",
+        callback=_validate_output_format,
     ),
     output: Path | None = typer.Option(
         None, "--output", "-o", help="输出文件路径"
@@ -217,6 +226,7 @@ def cocitation(
     output_format: str = typer.Option(
         "table", "--output-format", "-f",
         help="输出格式: table, csv, gexf, graphml",
+        callback=_validate_output_format,
     ),
     output: Path | None = typer.Option(
         None, "--output", "-o", help="输出文件路径"
@@ -291,6 +301,7 @@ def coupling(
     output_format: str = typer.Option(
         "table", "--output-format", "-f",
         help="输出格式: table, csv, gexf, graphml",
+        callback=_validate_output_format,
     ),
     output: Path | None = typer.Option(
         None, "--output", "-o", help="输出文件路径"

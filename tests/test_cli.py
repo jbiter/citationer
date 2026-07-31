@@ -88,6 +88,32 @@ class TestImportCommand:
         result = cli_runner.invoke(app, ["import", "--keep"])
         assert result.exit_code in (0, 1)
 
+    def test_import_no_files_preserves_existing_data(self, cli_runner, clean_cwd, monkeypatch):
+        """Running import in an empty cwd must not wipe an existing database."""
+        from citationer.models.record import Author, Record
+        from citationer.utils.database import CitationDatabase
+
+        records = [
+            Record(
+                title="Existing Paper",
+                year=2024,
+                authors=[Author(full_name="Smith, J", order=1)],
+                keywords=["test"],
+                source_database="TestDB",
+            ),
+        ]
+        seed_cli_db(clean_cwd, records)
+        monkeypatch.chdir(clean_cwd)
+
+        result = cli_runner.invoke(app, ["import"])
+        assert result.exit_code in (0, 1), f"Output: {result.output}"
+
+        # Existing data should still be present
+        db_path = clean_cwd / ".citationer" / "cache.db"
+        db = CitationDatabase(db_path)
+        assert db.get_record_count() == 1
+        db.close()
+
     def test_import_format_json(self, cli_runner, clean_cwd):
         result = cli_runner.invoke(app, ["import", "--format", "json"])
         assert result.exit_code in (0, 1)
@@ -104,6 +130,12 @@ class TestImportCommand:
         result = cli_runner.invoke(app, ["import"])
         # Should succeed (exit 0)
         assert result.exit_code == 0, f"Output: {result.output}"
+
+
+    def test_import_invalid_format_rejected(self, cli_runner, clean_cwd):
+        result = cli_runner.invoke(app, ["import", "--format", "xml"])
+        assert result.exit_code == 2
+        assert "格式必须是" in result.output or "Invalid" in result.output
 
 
 class TestCleanCommand:
@@ -627,6 +659,45 @@ class TestConfigCommandsExtended:
         assert result.exit_code == 0
         show = cli_runner.invoke(app, ["config", "show"])
         assert "custom-model" not in show.output
+
+
+# ===========================================================================
+# Output format validation
+# ===========================================================================
+
+
+class TestOutputFormatValidation:
+    def test_text_keywords_invalid_format(self, cli_runner, clean_cwd, monkeypatch):
+        _setup_test_data(clean_cwd)
+        monkeypatch.chdir(clean_cwd)
+        result = cli_runner.invoke(app, ["text", "keywords", "--format", "xml"])
+        assert result.exit_code == 2
+        assert "格式必须是" in result.output
+
+    def test_query_invalid_format(self, cli_runner, clean_cwd, monkeypatch):
+        _setup_test_data(clean_cwd)
+        monkeypatch.chdir(clean_cwd)
+        result = cli_runner.invoke(app, ["query", "year=2024", "--format", "xml"])
+        assert result.exit_code == 2
+        assert "格式必须是" in result.output
+
+    def test_compare_overview_invalid_format(self, cli_runner, clean_cwd, monkeypatch):
+        _setup_test_data(clean_cwd)
+        monkeypatch.chdir(clean_cwd)
+        result = cli_runner.invoke(
+            app, ["compare", "overview", "--format", "xml"]
+        )
+        assert result.exit_code == 2
+        assert "格式必须是" in result.output
+
+    def test_network_keywords_invalid_format(self, cli_runner, clean_cwd, monkeypatch):
+        _setup_test_data(clean_cwd)
+        monkeypatch.chdir(clean_cwd)
+        result = cli_runner.invoke(
+            app, ["network", "keywords", "--output-format", "xml"]
+        )
+        assert result.exit_code == 2
+        assert "格式必须是" in result.output
 
 
 # ===========================================================================

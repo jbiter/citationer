@@ -30,6 +30,16 @@ app = typer.Typer(
 console = Console()
 
 
+def _prompt_int(prompt: str, default: int = 0) -> int:
+    """Prompt for an integer with validation and friendly retry."""
+    while True:
+        value = Prompt.ask(prompt, default=str(default))
+        try:
+            return int(value)
+        except ValueError:
+            console.print(f"  [red]请输入整数，当前输入无效: {value!r}[/red]")
+
+
 @app.callback()
 def main(
     ctx: typer.Context,
@@ -232,20 +242,20 @@ def _interactive_text(records) -> None:
 
     engine = TextEngine(records)
     if choice == "1":
-        top = Prompt.ask("  Top-N 数量", default="20")
-        result = engine.keywords(top_n=int(top))
+        top = _prompt_int("  Top-N 数量", default=20)
+        result = engine.keywords(top_n=top)
         for i, (kw, cnt) in enumerate(result.top_keywords[:20], 1):
             console.print(f"  {i:2}. {kw:<20} {cnt:>5}")
     elif choice == "2":
         method = Prompt.ask("  方法", choices=["lda", "nmf"], default="lda")
-        nt = Prompt.ask("  主题数", default="5")
-        topics = engine.topics(num_topics=int(nt), method=method)
+        nt = _prompt_int("  主题数", default=5)
+        topics = engine.topics(num_topics=nt, method=method)
         for i, terms in enumerate(topics.topics, 1):
             ts = ", ".join(t for t, _ in terms[:5])
             console.print(f"  Topic {i}: {ts}")
     elif choice == "3":
-        ms = Prompt.ask("  句子数", default="5")
-        summary = engine.summarize(max_sentences=int(ms))
+        ms = _prompt_int("  句子数", default=5)
+        summary = engine.summarize(max_sentences=ms)
         for i, (sent, score) in enumerate(summary.sentences, 1):
             console.print(f"  {i}. ({score:.3f}) {sent[:120]}")
 
@@ -262,19 +272,19 @@ def _interactive_network(records) -> None:
 
     engine = NetworkEngine(records)
     if choice == "1":
-        top = Prompt.ask("  Top-N 关键词", default="20")
-        thr = Prompt.ask("  最低共现次数", default="3")
-        result = engine.keyword_cooccurrence(top_n=int(top), threshold=int(thr))
+        top = _prompt_int("  Top-N 关键词", default=20)
+        thr = _prompt_int("  最低共现次数", default=3)
+        result = engine.keyword_cooccurrence(top_n=top, threshold=thr)
         for i, (a, b, w) in enumerate(result.edges[:15], 1):
             console.print(f"  {i:2}. {a} ↔ {b}  ({w})")
     elif choice == "2":
-        min_p = Prompt.ask("  最少发文数", default="2")
-        collab = engine.author_collaboration(min_papers=int(min_p))
+        min_p = _prompt_int("  最少发文数", default=2)
+        collab = engine.author_collaboration(min_papers=min_p)
         console.print(f"  共 {collab.total_nodes} 位作者，{collab.total_edges} 条合作")
     elif choice == "3":
-        min_p = Prompt.ask("  最少发文数", default="2")
+        min_p = _prompt_int("  最少发文数", default=2)
         inst = engine.author_collaboration(
-            min_papers=int(min_p), collab_type="institutions"
+            min_papers=min_p, collab_type="institutions"
         )
         console.print(f"  共 {inst.total_nodes} 个机构，{inst.total_edges} 条合作")
 
@@ -452,7 +462,7 @@ def _show_yearly(engine: StatsEngine) -> None:
 
 def _show_top_journals(engine: StatsEngine) -> None:
     from citationer.viz.terminal_charts import plot_hbar
-    n = int(Prompt.ask("  Top-N", default="20"))
+    n = _prompt_int("  Top-N", default=20)
     result = engine.journals(top_n=n)
     if result.items:
         plot_hbar(
@@ -464,7 +474,7 @@ def _show_top_journals(engine: StatsEngine) -> None:
 
 def _show_top_authors(engine: StatsEngine) -> None:
     from citationer.viz.terminal_charts import plot_hbar
-    n = int(Prompt.ask("  Top-N", default="20"))
+    n = _prompt_int("  Top-N", default=20)
     result = engine.authors(top_n=n)
     if result.top_authors.items:
         plot_hbar(
@@ -476,7 +486,7 @@ def _show_top_authors(engine: StatsEngine) -> None:
 
 def _show_top_institutions(engine: StatsEngine) -> None:
     from citationer.viz.terminal_charts import plot_hbar
-    n = int(Prompt.ask("  Top-N", default="20"))
+    n = _prompt_int("  Top-N", default=20)
     result = engine.institutions(top_n=n)
     if result.items:
         plot_hbar(

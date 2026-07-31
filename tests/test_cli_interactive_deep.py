@@ -13,6 +13,7 @@ from pathlib import Path
 
 from citationer.cli.interactive_cmd import (
     _print_menu,
+    _prompt_int,
     _show_top_authors,
     _show_top_institutions,
     _show_top_journals,
@@ -96,6 +97,13 @@ class TestInteractiveHelpers:
         ]
         engine = StatsEngine(records)
         _show_top_journals(engine)
+
+    def test_prompt_int_rejects_invalid_then_accepts_valid(self, monkeypatch):
+        from rich.prompt import Prompt
+
+        answers = iter(["not-a-number", "10"])
+        monkeypatch.setattr(Prompt, "ask", lambda *args, **kwargs: next(answers))
+        assert _prompt_int("Top-N", default=5) == 10
 
     def test_show_top_authors(self, monkeypatch):
         from rich.prompt import Prompt
