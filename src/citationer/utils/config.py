@@ -94,11 +94,17 @@ def get_db_path() -> Path:
 
 def get_config_path() -> Path:
     """Get the path to the config file."""
+    env_path = os.environ.get("CITATIONER_CONFIG_PATH")
+    if env_path:
+        return Path(env_path)
     return ensure_data_dir() / "config.yaml"
 
 
 def get_output_dir() -> Path:
     """Get the default output directory."""
+    env_dir = os.environ.get("CITATIONER_OUTPUT_DIR")
+    if env_dir:
+        return Path(env_dir)
     return Path.cwd() / "citationer_output"
 
 

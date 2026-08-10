@@ -55,10 +55,10 @@ def _get_client(*, dry_run: bool = False) -> LLMClient | None:
             "     OpenAI:   https://platform.openai.com\n"
             "     Ollama:   本地运行无需 Key\n\n"
             "  [bold]2.[/bold] 配置:\n"
-            "     [bold]ctr config set llm.api_key <your-key>[/bold]\n"
-            "     [bold]ctr config set llm.model deepseek-chat[/bold]  (或其他模型)\n\n"
+            "     [bold]citationer config set llm.api_key <your-key>[/bold]\n"
+            "     [bold]citationer config set llm.model deepseek-chat[/bold]  (或其他模型)\n\n"
             "  [bold]3.[/bold] 验证:\n"
-            "     [bold]ctr ai info[/bold]\n\n"
+            "     [bold]citationer ai info[/bold]\n\n"
             "[dim]或使用环境变量: export CITATIONER_LLM_API_KEY=sk-xxx[/dim]"
         )
         return None
@@ -95,10 +95,6 @@ def topics(
     if not records:
         return
 
-    client = _get_client(dry_run=dry_run)
-    if client is None:
-        return
-
     # First run topic modeling locally
     console.print("[dim]正在运行 LDA 主题建模…[/dim]")
     engine = TextEngine(records)
@@ -114,6 +110,10 @@ def topics(
         topic_terms_list.append(f"Topic {i + 1}: {term_str}")
 
     if auto_label:
+        client = _get_client(dry_run=dry_run)
+        if client is None:
+            return
+
         prompt = (
             "The following are topics discovered from a collection of academic papers. "
             "For each topic, generate a concise, human-readable label (1-5 words) "

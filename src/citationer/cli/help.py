@@ -25,6 +25,7 @@ _TOP_LEVEL: list[tuple[str, str]] = [
     ("status", "快速查看当前目录状态（简化版 scan）"),
     ("import", "导入题录文件到本地 SQLite 数据库"),
     ("clean", "数据清洗：缺失字段检测、异常值检测、智能去重"),
+    ("query", "使用 DSL 查询已导入的记录"),
 ]
 
 _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
@@ -35,6 +36,7 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("authors", "作者分析"),
         ("institutions", "机构分析"),
         ("citations", "引用分析"),
+        ("funding", "基金资助分析"),
     ]),
     ("text", "文本挖掘与 NLP", [
         ("preprocess", "分词 + 语言检测"),
@@ -76,10 +78,14 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("csv", "导出 CSV"),
         ("json", "导出 JSON"),
         ("bibtex", "导出 BibTeX"),
+        ("ris", "导出 RIS"),
+        ("xlsx", "导出 Excel"),
     ]),
 ]
 
 _TOOLS: list[tuple[str, str]] = [
+    ("interactive", "交互式向导，引导完成常见分析步骤"),
+    ("run", "执行声明式 YAML 分析流水线"),
     ("config", "管理 LLM 和其他配置项 (show / set / init)"),
     ("serve", "启动本地 Web 仪表板"),
 ]

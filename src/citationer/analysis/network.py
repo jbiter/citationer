@@ -413,6 +413,7 @@ class NetworkEngine:
         except ImportError:
             raise ImportError("networkx is required for GEXF export.")
 
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         g = nx.Graph()
         if nodes:
             for name, weight in nodes:
@@ -435,6 +436,7 @@ class NetworkEngine:
         except ImportError:
             raise ImportError("networkx is required for GraphML export.")
 
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         g = nx.Graph()
         if nodes:
             for name, weight in nodes:

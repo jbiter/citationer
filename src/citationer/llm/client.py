@@ -105,6 +105,7 @@ class LLMClient:
         if not db_path.exists():
             return None
         db = CitationDatabase(db_path)
+        db.initialize()
         try:
             return db.get_cached_llm_response(cache_key)
         finally:
@@ -218,12 +219,26 @@ class LLMClient:
 
         # API call
         client = self._get_client()
-        response = client.chat.completions.create(
-            model=self._config.model,
-            messages=messages,  # type: ignore[arg-type]
-            temperature=self._config.temperature,
-            max_tokens=self._config.max_tokens,
-        )
+        try:
+            from openai import OpenAIError
+        except ImportError:  # pragma: no cover
+            openai_error = Exception
+        else:
+            openai_error = OpenAIError
+        try:
+            response = client.chat.completions.create(
+                model=self._config.model,
+                messages=messages,  # type: ignore[arg-type]
+                temperature=self._config.temperature,
+                max_tokens=self._config.max_tokens,
+            )
+        except openai_error as exc:
+            return LLMResponse(
+                content=f"LLM API 调用失败: {exc}",
+                model=self._config.model,
+                tokens_used=0,
+                cached=False,
+            )
 
         content = response.choices[0].message.content or ""
         tokens = response.usage.total_tokens if response.usage else 0
@@ -244,6 +259,7 @@ class LLMClient:
         if not db_path.exists():
             return {"cached_entries": 0, "total_tokens_used": 0}
         db = CitationDatabase(db_path)
+        db.initialize()
         try:
             return db.get_llm_cache_stats()
         finally:

@@ -59,6 +59,31 @@ class TestMain:
         result = cli_runner.invoke(app, ["notacommand"])
         assert result.exit_code != 0
 
+    def test_global_config_option(self, cli_runner, clean_cwd, monkeypatch, tmp_path):
+        """--config should be honored by subcommands via environment variable."""
+        custom_config = tmp_path / "custom" / "config.yaml"
+        monkeypatch.chdir(clean_cwd)
+        result = cli_runner.invoke(
+            app, ["--config", str(custom_config), "config", "show"]
+        )
+        assert result.exit_code == 0, result.output
+        assert "config.yaml" in result.output
+
+    def test_global_config_env_is_cleaned_after_invoke(
+        self, cli_runner, clean_cwd, monkeypatch, tmp_path
+    ):
+        """Global option env vars must not leak to subsequent tests."""
+        import os
+
+        custom_config = tmp_path / "custom" / "config.yaml"
+        monkeypatch.chdir(clean_cwd)
+        result = cli_runner.invoke(
+            app, ["--config", str(custom_config), "config", "show"]
+        )
+        assert result.exit_code == 0, result.output
+        assert "CITATIONER_CONFIG_PATH" not in os.environ
+        assert "CITATIONER_OUTPUT_DIR" not in os.environ
+
 
 # ===========================================================================
 # Data commands
