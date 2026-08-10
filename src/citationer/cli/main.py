@@ -8,6 +8,7 @@ Help system (PRD v2.0 F-8.2):
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import typer
@@ -167,6 +168,24 @@ def main(
     """
     if no_color:
         console.no_color = True
+
+    ctx.ensure_object(dict)
+    ctx.obj.update({
+        "verbose": verbose,
+        "quiet": quiet,
+        "output_dir": output_dir,
+        "config_path": config_path,
+    })
+
+    def _cleanup_env() -> None:
+        os.environ.pop("CITATIONER_CONFIG_PATH", None)
+        os.environ.pop("CITATIONER_OUTPUT_DIR", None)
+
+    if config_path is not None:
+        os.environ["CITATIONER_CONFIG_PATH"] = str(config_path.resolve())
+    if output_dir is not None:
+        os.environ["CITATIONER_OUTPUT_DIR"] = str(output_dir.resolve())
+    ctx.call_on_close(_cleanup_env)
 
 
 # ── Register commands with lazy imports ───────────────────────────

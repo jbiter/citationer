@@ -106,7 +106,7 @@ def _run_wizard() -> None:
     db_path = get_db_path()
     if not db_path.exists():
         console.print("[red]❌ 数据库为空，请先导入数据：[/red]")
-        console.print("    [bold]ctr import[/bold] 或 [bold]ctr import <file>[/bold]")
+        console.print("    [bold]citationer import[/bold] 或 [bold]citationer import <file>[/bold]")
         return
 
     records = load_records_from_db(db_path)

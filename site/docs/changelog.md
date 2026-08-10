@@ -3,6 +3,32 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v5.1.3 — 2026-08-10
+
+### LLM / 查询 / 模型 / 网络导出健壮性
+
+- 修复 LLM API 异常未捕获导致 CLI 崩溃的问题，现在返回友好的错误信息。
+- 修复旧数据库缺少 `llm_cache` 表时 AI 调用报错的问题，查询缓存前自动初始化表结构。
+- 修复 `citationer ai topics --no-auto-label` 仍要求配置 API Key 的问题。
+- 修复 `citationer query` 中 `None` 值被当作小于任何数的比较错误。
+- 修复 `Author.__hash__` 与 `__eq__` 不一致的问题（现在仅按姓名小写哈希）。
+- 修复网络图 `gexf` / `graphml` 导出不会自动创建父目录的问题。
+
+### Web UI 安全与资源泄漏
+
+- 修复图表端点 `/api/charts/*` 产生的临时文件泄漏问题，响应后通过 `BackgroundTask` 清理。
+- 修复 `get_db()` 依赖未关闭数据库连接的问题，改用 `yield` 上下文管理器。
+- 为 `POST /api/data/scan|import|clean` 增加 `X-Requested-With` 请求头校验，防止 CSRF。
+- 收紧 CORS，仅允许 `localhost` / `127.0.0.1` 来源。
+- 添加 `X-Frame-Options: DENY` 响应头，防止点击劫持。
+- 修复 `citationer serve --reload` 不生效的问题。
+
+### CLI 全局选项与帮助信息
+
+- 全局选项 `--config` / `--output` 现在会通过环境变量传递给子命令，并在命令结束后清理，避免污染后续调用。
+- L1 帮助概览补充了 `query`、`interactive`、`run`、`stats funding`、`export ris/xlsx` 等缺失的命令。
+- 将用户提示语中的旧可执行名 `ctr` 统一替换为 `citationer`。
+
 ## v5.1.2 — 2026-07-31
 
 - 修复 BibTeX 解析器无法处理嵌套大括号的问题（如 `{Role of {BRCA1} in DNA repair}`）。

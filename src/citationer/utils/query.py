@@ -59,10 +59,10 @@ _FIELD_GETTERS: dict[str, Any] = {
 _OPS: dict[str, Any] = {
     "=": lambda v, f: v == _coerce(f, v),
     "!=": lambda v, f: v != _coerce(f, v),
-    ">": lambda v, f: _cmp(v, f) > 0,
-    "<": lambda v, f: _cmp(v, f) < 0,
-    ">=": lambda v, f: _cmp(v, f) >= 0,
-    "<=": lambda v, f: _cmp(v, f) <= 0,
+    ">": lambda v, f: False if v is None else _cmp(v, f) > 0,
+    "<": lambda v, f: False if v is None else _cmp(v, f) < 0,
+    ">=": lambda v, f: False if v is None else _cmp(v, f) >= 0,
+    "<=": lambda v, f: False if v is None else _cmp(v, f) <= 0,
     "contains": lambda v, f: _contains(v, f),
 }
 

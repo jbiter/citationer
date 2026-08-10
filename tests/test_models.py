@@ -20,6 +20,14 @@ class TestAuthor:
         a2 = Author(full_name="zhang, wei")
         assert hash(a1) == hash(a2)
 
+    def test_author_hash_consistent_with_eq_ignores_order(self):
+        """Same name with different order must be equal and hash-equal."""
+        a1 = Author(full_name="Zhang, Wei", order=1)
+        a2 = Author(full_name="ZHANG, WEI", order=2)
+        assert a1 == a2
+        assert hash(a1) == hash(a2)
+        assert len({a1, a2}) == 1
+
 
 class TestRecord:
     def test_create_minimal_record(self):

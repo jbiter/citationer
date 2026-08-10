@@ -30,13 +30,22 @@ def serve(
         )
         raise typer.Exit(code=1) from exc
 
-    uvicorn.run(
-        create_app,
-        host=host,
-        port=port,
-        reload=reload,
-        factory=True,
-    )
+    if reload:
+        uvicorn.run(
+            "citationer.web.app:create_app",
+            host=host,
+            port=port,
+            reload=True,
+            factory=True,
+        )
+    else:
+        uvicorn.run(
+            create_app,
+            host=host,
+            port=port,
+            reload=False,
+            factory=True,
+        )
 
 
 if __name__ == "__main__":

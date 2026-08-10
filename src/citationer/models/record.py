@@ -35,7 +35,7 @@ class Author(BaseModel):
     email: str | None = None
 
     def __hash__(self) -> int:
-        return hash((self.full_name.lower(), self.order))
+        return hash(self.full_name.lower())
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Author):

@@ -222,6 +222,22 @@ class TestExport:
         content = result.read_text()
         assert "graphml" in content.lower() or "<graph" in content.lower()
 
+    def test_gexf_creates_parent_directory(self, tmp_path):
+        edges = [("A", "B", 5)]
+        nodes = [("A", 1), ("B", 1)]
+        out = tmp_path / "reports" / "subdir" / "net.gexf"
+        result = NetworkEngine.to_gexf(edges, nodes, out)
+        assert result.exists()
+        assert out.parent.is_dir()
+
+    def test_graphml_creates_parent_directory(self, tmp_path):
+        edges = [("A", "B", 5)]
+        nodes = [("A", 1), ("B", 1)]
+        out = tmp_path / "reports" / "subdir" / "net.graphml"
+        result = NetworkEngine.to_graphml(edges, nodes, out)
+        assert result.exists()
+        assert out.parent.is_dir()
+
     def test_gexf_no_nodes(self, tmp_path):
         """GEXF export with edges but no node metadata."""
         edges = [("X", "Y", 3)]

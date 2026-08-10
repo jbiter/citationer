@@ -1,6 +1,7 @@
 """Tests for the LLM client module."""
 
 
+import sys
 from unittest.mock import MagicMock
 
 import pytest
@@ -212,6 +213,19 @@ class TestCache:
         client = LLMClient(LLMConfig(api_key=""))
         assert client._check_cache("any-key") is None
 
+    def test_check_cache_missing_table_initializes_db(self, tmp_path, monkeypatch):
+        """Old/empty db files missing llm_cache table should be initialized."""
+        db_path = tmp_path / "cache.db"
+        db_path.write_bytes(b"")  # empty but existing file
+        monkeypatch.setattr("citationer.llm.client.get_db_path", lambda: db_path)
+        client = LLMClient(LLMConfig(api_key=""))
+        # Should not raise sqlite3.OperationalError
+        assert client._check_cache("any-key") is None
+        # Table should now exist
+        from citationer.utils.database import CitationDatabase
+
+        assert CitationDatabase(db_path).get_cached_llm_response("any-key") is None
+
     def test_save_and_check_cache(self, tmp_path, monkeypatch):
         db_path = tmp_path / "cache.db"
         from citationer.utils.database import CitationDatabase
@@ -232,6 +246,15 @@ class TestCache:
             "cached_entries": 0,
             "total_tokens_used": 0,
         }
+
+    def test_get_cache_stats_missing_table_initializes_db(self, tmp_path, monkeypatch):
+        """Cache stats on an old db file should initialize the schema first."""
+        db_path = tmp_path / "cache.db"
+        db_path.write_bytes(b"")
+        monkeypatch.setattr("citationer.llm.client.get_db_path", lambda: db_path)
+        client = LLMClient(LLMConfig(api_key=""))
+        stats = client.get_cache_stats()
+        assert stats == {"cached_entries": 0, "total_tokens_used": 0}
 
     def test_get_cache_stats_with_entries(self, tmp_path, monkeypatch):
         db_path = tmp_path / "cache.db"
@@ -310,6 +333,32 @@ class TestQueryMocked:
         response = client.query("Go.", [make_record(title="Paper")])
         assert response.content == ""
         assert response.tokens_used == 0
+
+    def test_query_api_error_returns_message(self, tmp_path, monkeypatch):
+        """API exceptions should produce a friendly error response, not traceback."""
+        db_path = tmp_path / "cache.db"
+        from citationer.utils.database import CitationDatabase
+
+        CitationDatabase(db_path).initialize()
+        monkeypatch.setattr("citationer.llm.client.get_db_path", lambda: db_path)
+
+        client = LLMClient(LLMConfig(api_key="sk-test", model="stub"))
+        fake_client = MagicMock()
+
+        class FakeAuthError(Exception):
+            pass
+
+        fake_client.chat.completions.create.side_effect = FakeAuthError(
+            "Incorrect API key"
+        )
+        client._client = fake_client
+
+        # Simulate openai not being importable by replacing the module lookup
+        monkeypatch.setitem(sys.modules, "openai", None)
+        response = client.query("Go.", [make_record(title="Paper")])
+        assert response.tokens_used == 0
+        assert "LLM API 调用失败" in response.content
+        assert "Incorrect API key" in response.content
 
 
 class TestTruncation:

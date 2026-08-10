@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import tempfile
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from fastapi import Path as PathParam
 from fastapi.responses import FileResponse
 
@@ -53,26 +54,36 @@ def _write_empty_html(path: Path, title: str) -> Path:
     return path
 
 
+def _cleanup_temp_file(path: Path) -> None:
+    """请求结束后删除图表临时文件。"""
+    with contextlib.suppress(OSError):
+        path.unlink()
+
+
 @router.get("/yearly.png")
 def yearly_chart(
     records: RecordsDep,
+    background_tasks: BackgroundTasks,
     cumulative: bool = False,
 ) -> FileResponse:
     viz_charts = _require_viz_charts()
 
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        output_path = Path(tmp.name)
         viz_charts.generate_yearly_chart(
             records,
-            Path(tmp.name),
+            output_path,
             title="Yearly Publications",
             cumulative=cumulative,
         )
-        return FileResponse(tmp.name, media_type="image/png")
+    background_tasks.add_task(_cleanup_temp_file, output_path)
+    return FileResponse(output_path, media_type="image/png")
 
 
 @router.get("/top/{kind}.png")
 def top_chart(
     records: RecordsDep,
+    background_tasks: BackgroundTasks,
     kind: Annotated[str, PathParam(pattern="^(journals|authors|institutions)$")],
     top: Annotated[int, Query(ge=1, le=200)] = 20,
 ) -> FileResponse:
@@ -90,19 +101,22 @@ def top_chart(
         title, xlabel = "Top Institutions", "Institution"
 
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        output_path = Path(tmp.name)
         viz_charts.generate_top_n_chart(
             data.items,
-            Path(tmp.name),
+            output_path,
             title=title,
             xlabel=xlabel,
             horizontal=True,
         )
-        return FileResponse(tmp.name, media_type="image/png")
+    background_tasks.add_task(_cleanup_temp_file, output_path)
+    return FileResponse(output_path, media_type="image/png")
 
 
 @router.get("/network/{kind}.html")
 def network_html(
     records: RecordsDep,
+    background_tasks: BackgroundTasks,
     kind: Annotated[str, PathParam(pattern="^(keywords|coauthors|cocitation|coupling)$")],
     top_n: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> FileResponse:
@@ -137,4 +151,5 @@ def network_html(
             _write_empty_html(output_path, title)
         else:
             network_engine_cls.to_html(edges, nodes, communities, output_path, title=title)
-        return FileResponse(tmp.name, media_type="text/html")
+    background_tasks.add_task(_cleanup_temp_file, output_path)
+    return FileResponse(output_path, media_type="text/html")

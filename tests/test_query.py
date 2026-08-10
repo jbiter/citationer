@@ -115,6 +115,14 @@ class TestMatches:
         assert matches(r, [Filter("year", "=", "2024")]) is False
         assert matches(r, [Filter("year", ">", "0")]) is False
 
+    def test_citation_count_none_does_not_match_less_than(self):
+        """Missing citation_count should not satisfy </<= operators."""
+        r = _r(citation_count=None)
+        assert matches(r, [Filter("citation_count", "<", "5")]) is False
+        assert matches(r, [Filter("citation_count", "<=", "5")]) is False
+        assert matches(r, [Filter("citation_count", ">", "0")]) is False
+        assert matches(r, [Filter("citation_count", ">=", "0")]) is False
+
     def test_journal_substring(self):
         r = _r(journal="Nature Medicine")
         # "contains" / "like" matches substring

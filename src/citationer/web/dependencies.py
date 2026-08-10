@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from pathlib import Path
 from typing import Annotated
 
@@ -17,11 +18,14 @@ def _db_path() -> Path:
     return get_db_path()
 
 
-def get_db() -> CitationDatabase:
-    """返回当前工作目录下已初始化的 CitationDatabase。"""
+def get_db() -> Generator[CitationDatabase, None, None]:
+    """返回当前工作目录下已初始化的 CitationDatabase，请求结束后关闭。"""
     db = CitationDatabase(_db_path())
     db.initialize()
-    return db
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 def get_records() -> list[Record]:

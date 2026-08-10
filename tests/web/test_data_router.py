@@ -59,6 +59,11 @@ def test_run_isolated_captures_stdout_stderr(capsys: pytest.CaptureFixture) -> N
     assert captured.err == ""
 
 
+def test_scan_without_csrf_header_returns_403(web_client: TestClient) -> None:
+    response = web_client.post("/api/data/scan")
+    assert response.status_code == 403
+
+
 def test_scan_import_error_returns_501(
     web_client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -67,7 +72,9 @@ def test_scan_import_error_returns_501(
         raise ImportError("scan unavailable")
 
     monkeypatch.setattr("citationer.web.routers.data.run_scan", _broken)
-    response = web_client.post("/api/data/scan")
+    response = web_client.post(
+        "/api/data/scan", headers={"X-Requested-With": "XMLHttpRequest"}
+    )
     assert response.status_code == 501
     assert "扫描模块不可用" in response.json()["detail"]
 
@@ -80,6 +87,8 @@ def test_scan_runtime_error_returns_500(
         raise RuntimeError("scan failed")
 
     monkeypatch.setattr("citationer.web.routers.data.run_scan", _broken)
-    response = web_client.post("/api/data/scan")
+    response = web_client.post(
+        "/api/data/scan", headers={"X-Requested-With": "XMLHttpRequest"}
+    )
     assert response.status_code == 500
     assert "scan failed" in response.json()["detail"]
