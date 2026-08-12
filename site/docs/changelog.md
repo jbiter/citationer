@@ -3,6 +3,17 @@
 All notable changes to Citationer are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## v5.2.0 — 2026-08-12
+
+- **P5-3 Parser Plugin System**: Citationer now supports third-party parser
+  plugins via the `citationer.parsers` entry-point group.
+  - Built-in parsers (BibTeX, CNKI, CSSCI, PubMed, RIS, Scopus, WoS) are always
+    registered first; third-party plugins append after them.
+  - Plugin loading failures are logged as warnings and do not crash the parser
+    registry.
+  - New `citationer plugins` CLI command lists all registered parsers, including
+    loaded plugins.
+
 ## v5.1.3 — 2026-08-10
 
 ### LLM / 查询 / 模型 / 网络导出健壮性
