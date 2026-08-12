@@ -143,3 +143,12 @@ def test_get_registry_includes_entry_point_plugins(monkeypatch):
     assert "FakePlugin" in registry.registered_sources
     # Built-in parsers are still registered.
     assert "CNKI" in registry.registered_sources
+
+
+def test_plugins_list_command(cli_runner):
+    from citationer.cli.main import app
+
+    result = cli_runner.invoke(app, ["plugins", "list"])
+    assert result.exit_code == 0
+    assert "CNKI" in result.output
+    assert "built-in" in result.output

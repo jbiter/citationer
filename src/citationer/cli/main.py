@@ -80,6 +80,11 @@ def _import_run():
     return run_cmd
 
 
+def _import_plugins():
+    from citationer.cli import plugins_cmd
+    return plugins_cmd
+
+
 def _import_compare():
     from citationer.cli import compare_cmd
     return compare_cmd
@@ -216,6 +221,7 @@ def _register():
     app.command(name="query")(_import_query_cmd())
     app.add_typer(_import_compare().app, name="compare")
     app.add_typer(_import_serve().app, name="serve")
+    app.add_typer(_import_plugins().app, name="plugins")
 
 _register._done = False  # type: ignore[attr-defined]
 
