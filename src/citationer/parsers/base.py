@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
+from importlib.metadata import entry_points
 from pathlib import Path
 
 from citationer.models.record import Record
+
+logger = logging.getLogger(__name__)
 
 
 class BaseParser(ABC):
@@ -93,3 +97,30 @@ class ParserRegistry:
 
     def __iter__(self):
         return iter(self._parsers)
+
+    def register_from_entry_points(self) -> None:
+        """Discover and register third-party parsers via entry points."""
+        try:
+            eps = entry_points(group="citationer.parsers")
+        except Exception:  # pragma: no cover
+            logger.debug("Unable to scan citationer.parsers entry points")
+            return
+
+        for ep in eps:
+            try:
+                factory = ep.load()
+                if isinstance(factory, type) and issubclass(factory, BaseParser):
+                    parser: BaseParser = factory()
+                elif callable(factory):
+                    parser = factory()
+                    if not isinstance(parser, BaseParser):
+                        raise TypeError(
+                            f"Plugin {ep.name!r} factory did not return a BaseParser"
+                        )
+                else:
+                    raise TypeError(
+                        f"Plugin {ep.name!r} entry point is not a BaseParser subclass or factory"
+                    )
+                self.register(parser)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Failed to load parser plugin %s: %s", ep.name, exc)
