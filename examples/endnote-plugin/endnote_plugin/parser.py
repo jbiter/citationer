@@ -27,7 +27,10 @@ class EndNoteXMLParser(BaseParser):
             return False
 
     def parse(self, filepath: Path) -> list[Record]:
-        tree = ET.parse(filepath)
+        try:
+            tree = ET.parse(filepath)
+        except ET.ParseError:
+            return []
         root = tree.getroot()
         records: list[Record] = []
         for record in root.findall(".//record"):

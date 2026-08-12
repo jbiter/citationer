@@ -88,6 +88,14 @@ citationer serve --reload     # 开发模式自动重载
 
 需要 `[web]` extras：`pip install 'citationer[web]'`。
 
+## Plugins (`plugins`)
+
+列出已注册的解析器插件。
+
+```bash
+citationer plugins list       # 显示内置与第三方解析器来源
+```
+
 ## Global options
 
 ```bash

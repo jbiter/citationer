@@ -87,6 +87,7 @@ _TOOLS: list[tuple[str, str]] = [
     ("interactive", "交互式向导，引导完成常见分析步骤"),
     ("run", "执行声明式 YAML 分析流水线"),
     ("config", "管理 LLM 和其他配置项 (show / set / init)"),
+    ("plugins", "列出已安装的解析器插件"),
     ("serve", "启动本地 Web 仪表板"),
 ]
 

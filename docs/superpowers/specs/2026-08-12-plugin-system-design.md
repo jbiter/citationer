@@ -1,6 +1,6 @@
 # Citationer 解析器插件系统设计
 
-> **状态**: 已评审待实现  
+> **状态**: 已实现  
 > **日期**: 2026-08-12  
 > **对应 PRD**: P5-3 插件系统  
 > **目标版本**: v5.2.0
@@ -94,16 +94,16 @@ citationer plugins list
 ```
 已注册的解析器
 
-  来源          解析器
+  来源              解析器
   ───────────────────────────────
-  built-in      CNKI
-  built-in      Web of Science
+  built-in          CNKI
+  built-in          Web of Science
   ...
-  plugin: endnote-plugin   EndNote
+  endnote-plugin    EndNote
 ```
 
 - 内置解析器显示 `built-in`。
-- 插件显示 `plugin: <distribution_name>`（通过 `ep.dist.name` 获取）。
+- 插件显示 `<distribution_name>`（通过 `ep.dist.name` 获取）。
 - 加载失败的插件显示 `error` 及错误信息。
 
 ## 5. 示例插件 `examples/endnote-plugin/`
