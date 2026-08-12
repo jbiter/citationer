@@ -39,6 +39,7 @@ def get_registry() -> ParserRegistry:
         _registry.register(CssciParser())
         _registry.register(BibTeXParser())
         _registry.register(RISParser())
+        _registry.register_from_entry_points()
     return _registry
 
 

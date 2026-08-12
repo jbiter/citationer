@@ -124,3 +124,22 @@ def test_registry_preserves_existing_parsers_on_entry_points_failure(registry, m
 
     assert len(registry) == 1
     assert registry.registered_sources == ["FakePlugin"]
+
+
+def test_get_registry_includes_entry_point_plugins(monkeypatch):
+    from citationer.cli.scan_cmd import get_registry
+
+    # Clear module-level cache so get_registry builds a fresh registry.
+    monkeypatch.setattr("citationer.cli.scan_cmd._registry", None)
+
+    def _fake_eps(*, group):
+        if group == "citationer.parsers":
+            return [make_entry_point("fake", FakeParser)]
+        return []
+
+    monkeypatch.setattr("citationer.parsers.base.entry_points", _fake_eps)
+
+    registry = get_registry()
+    assert "FakePlugin" in registry.registered_sources
+    # Built-in parsers are still registered.
+    assert "CNKI" in registry.registered_sources
