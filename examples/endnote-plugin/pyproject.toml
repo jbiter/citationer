@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "endnote-plugin"
+version = "0.1.0"
+description = "Citationer parser plugin for EndNote XML exports"
+requires-python = ">=3.11"
+dependencies = [
+    "citationer>=5.2.0",
+]
+
+[project.entry-points."citationer.parsers"]
+endnote = "endnote_plugin.parser:EndNoteXMLParser"
+
+[tool.setuptools.packages.find]
+where = ["."]
