@@ -145,6 +145,27 @@ def test_get_registry_includes_entry_point_plugins(monkeypatch):
     assert "CNKI" in registry.registered_sources
 
 
+def test_endnote_example_plugin_loads(tmp_path, monkeypatch):
+    """If endnote-plugin is installed, it should appear in the registry."""
+    from citationer.parsers.base import entry_points
+
+    # 检查是否真的安装了该 entry point
+    try:
+        eps = list(entry_points(group="citationer.parsers"))
+    except Exception:  # noqa: BLE001
+        pytest.skip("No entry points available")
+
+    names = [ep.name for ep in eps]
+    if "endnote" not in names:
+        pytest.skip("endnote-plugin not installed")
+
+    from citationer.cli.scan_cmd import get_registry
+
+    monkeypatch.setattr("citationer.cli.scan_cmd._registry", None)
+    registry = get_registry()
+    assert "EndNote" in registry.registered_sources
+
+
 def test_plugins_list_command(cli_runner):
     from citationer.cli.main import app
 
