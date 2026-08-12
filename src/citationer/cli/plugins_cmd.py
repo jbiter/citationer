@@ -41,9 +41,9 @@ def list_plugins() -> None:
                 parser = ep.load()()
                 plugin_sources[parser.source_name] = ep.dist.name if ep.dist else "plugin"
             except Exception as exc:  # noqa: BLE001
-                logger.debug("Could not inspect plugin %s: %s", ep.name, exc)
-    except Exception:  # noqa: BLE001
-        pass
+                logger.warning("Could not inspect plugin %s: %s", ep.name, exc)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Unable to enumerate citationer.parsers entry points: %s", exc)
 
     for parser in registry:
         source = plugin_sources.get(parser.source_name, "built-in")

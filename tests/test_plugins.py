@@ -152,3 +152,53 @@ def test_plugins_list_command(cli_runner):
     assert result.exit_code == 0
     assert "CNKI" in result.output
     assert "built-in" in result.output
+
+
+def test_plugins_list_command_handles_broken_entry_point(
+    cli_runner, monkeypatch, caplog
+):
+    class _BrokenEP:
+        name = "broken"
+
+        def load(self):
+            raise RuntimeError("boom")
+
+    def _fake_eps(*, group):
+        if group == "citationer.parsers":
+            return [_BrokenEP()]
+        return []
+
+    monkeypatch.setattr("citationer.parsers.base.entry_points", _fake_eps)
+
+    from citationer.cli.main import app
+
+    with caplog.at_level("WARNING", logger="citationer.cli.plugins_cmd"):
+        result = cli_runner.invoke(app, ["plugins", "list"])
+
+    assert result.exit_code == 0
+    assert "CNKI" in result.output
+    assert any(
+        "Could not inspect plugin broken" in rec.message
+        for rec in caplog.records
+    )
+
+
+def test_plugins_list_command_handles_entry_points_enumeration_failure(
+    cli_runner, monkeypatch, caplog
+):
+    def _fake_eps(*, group):
+        raise RuntimeError("entry_points unavailable")
+
+    monkeypatch.setattr("citationer.parsers.base.entry_points", _fake_eps)
+
+    from citationer.cli.main import app
+
+    with caplog.at_level("WARNING", logger="citationer.cli.plugins_cmd"):
+        result = cli_runner.invoke(app, ["plugins", "list"])
+
+    assert result.exit_code == 0
+    assert "CNKI" in result.output
+    assert any(
+        "Unable to enumerate citationer.parsers entry points" in rec.message
+        for rec in caplog.records
+    )
