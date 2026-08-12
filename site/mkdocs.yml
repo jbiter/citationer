@@ -18,6 +18,7 @@ nav:
   - Commands: commands.md
   - Configuration: config.md
   - Contributing: contributing.md
+  - Plugin Development: plugin-development.md
   - Changelog: changelog.md
 
 markdown_extensions:

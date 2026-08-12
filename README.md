@@ -15,6 +15,7 @@
 | Category | Capability |
 |----------|-----------|
 | 🔍 **7 Parsers** | CNKI, WoS, Scopus, PubMed, CSSCI, BibTeX, RIS — auto-detection |
+| 🔌 **Parser Plugins** | Extend Citationer with custom bibliographic parsers via `citationer.parsers` entry points. See `examples/endnote-plugin/`. |
 | 📊 **Descriptive Stats** | Yearly trends, top journals/authors/institutions, h-index — with **terminal charts** |
 | 📈 **Terminal Charts** | Braille line charts + Unicode bar charts rendered directly in terminal |
 | 🔗 **Network Analysis** | Keyword co-occurrence, author/institution collaboration, co-citation, bibliographic coupling |
