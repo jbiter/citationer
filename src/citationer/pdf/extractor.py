@@ -5,8 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from pypdf import PdfReader
-
 
 class PdfExtractor:
     """Extract text from a directory of PDF files."""
@@ -47,6 +45,8 @@ class PdfExtractor:
     def extract_file(self, filepath: Path) -> dict[str, Any]:
         """Extract text from a single PDF file."""
         try:
+            from pypdf import PdfReader
+
             reader = PdfReader(str(filepath))
             text_parts: list[str] = []
             for page in reader.pages:

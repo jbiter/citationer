@@ -19,6 +19,18 @@ app = typer.Typer(
 console = Console()
 
 
+def _ensure_pypdf() -> None:
+    """Fail fast with a helpful message if pypdf is not installed."""
+    try:
+        import pypdf  # noqa: F401
+    except ImportError as exc:
+        console.print(
+            "[red]PDF 功能需要 pypdf 库。[/red]\n"
+            "请运行: pip install \"citationer[text]\" 或 pip install pypdf"
+        )
+        raise typer.Exit(code=1) from exc
+
+
 @app.command(name="extract")
 def extract_command(
     directory: Path = typer.Argument(
@@ -48,6 +60,7 @@ def extract_command(
     ),
 ) -> None:
     """提取一个目录下所有 PDF 的文本内容。"""
+    _ensure_pypdf()
     extractor = PdfExtractor(recursive=recursive, max_chars=max_chars)
     result = extractor.extract_directory(directory)
 

@@ -5,7 +5,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from citationer.cli.main import app
+
+
+@pytest.fixture(autouse=True)
+def _skip_pypdf_check(monkeypatch):
+    """Bypass the pypdf availability check so tests run without the optional dep."""
+    monkeypatch.setattr("citationer.cli.pdf_cmd._ensure_pypdf", lambda: None)
 
 
 class TestPdfExtractCommand:
