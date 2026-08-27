@@ -85,6 +85,11 @@ def _import_plugins():
     return plugins_cmd
 
 
+def _import_pdf():
+    from citationer.cli import pdf_cmd
+    return pdf_cmd
+
+
 def _import_compare():
     from citationer.cli import compare_cmd
     return compare_cmd
@@ -222,6 +227,7 @@ def _register():
     app.add_typer(_import_compare().app, name="compare")
     app.add_typer(_import_serve().app, name="serve")
     app.add_typer(_import_plugins().app, name="plugins")
+    app.add_typer(_import_pdf().app, name="pdf")
 
 _register._done = False  # type: ignore[attr-defined]
 
