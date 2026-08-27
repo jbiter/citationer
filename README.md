@@ -23,7 +23,7 @@
 | 🤖 **LLM-Powered AI** | Topic labeling, literature review, trend identification, classification — DeepSeek/OpenAI/Ollama |
 | 🆕 **Interactive Mode** | Step-by-step wizard (`citationer interactive`) |
 | 🆕 **Pipeline Runner** | Declarative YAML pipeline (`citationer run pipeline.yaml`) |
-| 🌐 **Web 仪表板** | `citationer serve` 启动本地浏览器 UI，支持交互式图表 |
+| 🌐 **Web Dashboard** | Launch local browser UI with `citationer serve`, interactive charts |
 | ⚙ **Configurable** | CLI-driven config, env-var support, multi-provider LLM |
 | 🎨 **Rich Terminal** | Color tables, progress bars, interactive HTML network graphs (Plotly) |
 | 📦 **Pipe-friendly** | JSON/CSV/GEXF/GraphML export — works with `grep`, `jq`, Gephi, Cytoscape |
