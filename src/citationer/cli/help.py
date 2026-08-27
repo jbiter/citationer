@@ -81,6 +81,9 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
         ("ris", "导出 RIS"),
         ("xlsx", "导出 Excel"),
     ]),
+    ("pdf", "PDF 全文分析", [
+        ("extract", "批量提取 PDF 文本"),
+    ]),
 ]
 
 _TOOLS: list[tuple[str, str]] = [
