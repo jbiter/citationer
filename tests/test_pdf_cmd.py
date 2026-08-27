@@ -37,7 +37,7 @@ class TestPdfExtractCommand:
 
             return Reader()
 
-        monkeypatch.setattr("citationer.pdf.extractor.PdfReader", _fake_reader)
+        monkeypatch.setattr("pypdf.PdfReader", _fake_reader)
         monkeypatch.chdir(tmp_path)
 
         result = cli_runner.invoke(
@@ -75,7 +75,7 @@ class TestPdfExtractCommand:
         def _raise(_p):
             raise RuntimeError("boom")
 
-        monkeypatch.setattr("citationer.pdf.extractor.PdfReader", _raise)
+        monkeypatch.setattr("pypdf.PdfReader", _raise)
         monkeypatch.chdir(tmp_path)
 
         result = cli_runner.invoke(

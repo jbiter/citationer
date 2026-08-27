@@ -32,7 +32,7 @@ class TestPdfExtractor:
         pdf_path.write_bytes(b"fake")
 
         monkeypatch.setattr(
-            "citationer.pdf.extractor.PdfReader",
+            "pypdf.PdfReader",
             lambda _p: _make_fake_reader(["Hello world", "Second page"]),
         )
 
@@ -53,7 +53,7 @@ class TestPdfExtractor:
         def _raise(_p):
             raise RuntimeError("corrupted file")
 
-        monkeypatch.setattr("citationer.pdf.extractor.PdfReader", _raise)
+        monkeypatch.setattr("pypdf.PdfReader", _raise)
 
         extractor = PdfExtractor()
         result = extractor.extract_file(pdf_path)
@@ -73,7 +73,7 @@ class TestPdfExtractor:
                 return _make_fake_reader(["page one"])
             return _make_fake_reader(["page two"])
 
-        monkeypatch.setattr("citationer.pdf.extractor.PdfReader", _fake_reader)
+        monkeypatch.setattr("pypdf.PdfReader", _fake_reader)
 
         extractor = PdfExtractor(recursive=True)
         result = extractor.extract_directory(tmp_path)
@@ -88,7 +88,7 @@ class TestPdfExtractor:
         (tmp_path / "root.pdf").write_bytes(b"fake")
 
         monkeypatch.setattr(
-            "citationer.pdf.extractor.PdfReader",
+            "pypdf.PdfReader",
             lambda _p: _make_fake_reader(["text"]),
         )
 
@@ -110,7 +110,7 @@ class TestPdfExtractor:
         pdf_path.write_bytes(b"fake")
 
         monkeypatch.setattr(
-            "citationer.pdf.extractor.PdfReader",
+            "pypdf.PdfReader",
             lambda _p: _make_fake_reader(["abcdefghij"]),
         )
 
