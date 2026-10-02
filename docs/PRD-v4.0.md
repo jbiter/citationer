@@ -4,7 +4,7 @@
 > **作者**: Jason
 > **日期**: 2026-07-25
 > **合并**: PRD v1.0（原始需求）、PRD v2.0（Phase 2–5 完整规划）、PRD v2.1（终端图表）、PRD v3.0（Phase 5/6 上一轮规划）
-> **当前版本**: v5.3.1
+> **当前版本**: v5.4.0
 > **许可证**: MIT · 开源项目
 > **仓库**: github.com/JasonCENG/citationer
 
@@ -734,7 +734,7 @@ pip install "citationer[all]"
 | P5-1 | **多数据集对比分析** | ✅ 已完成 | v5.0.0 | 2026-07 | 2–3 周 | 已实现 `compare` 命令组：overview / trends / topics / network；按 source_database / source_file 分组，输出 table/json/csv |
 | P5-2 | **Web UI（`citationer serve`）** | ✅ 已完成 | v5.1.0 | 2026-08 | 3–4 周 | 基于 FastAPI 的本地 Web 界面 + 交互式图表仪表盘；覆盖 stats / network / compare / data / charts |
 | P5-3 | **插件系统** | ✅ 已完成 | v5.2.0 | 2026-08 | 2–3 周 | 第三方贡献解析器；entry_points 发现 + 标准接口；首个示例插件：EndNote 解析器 |
-| P5-4 | **PDF 全文分析** | ✅ 已完成 | v5.3.0 | 2026-08 | 3–4 周 | 第一版实现 PDF 文本提取（`citationer pdf extract`）；全文主题建模与引文上下文分析移至后续迭代 |
+| P5-4 | **PDF 全文分析** | ✅ 已完成 | v5.4.0 | 2026-10 | 3–4 周 | 已实现 PDF 文本提取（`pdf extract`）与全文主题建模（`pdf topics`，复用 LDA/NMF 引擎）；PDF 与题录库绑定、引文上下文分析移至后续迭代 |
 | P5-7 | **多语言国际化 (i18n)** | 🔵 P3 | v5.5.0 | 2026-10 | 2 周 | gettext 或手动方案，CLI 输出中英文双语；先覆盖核心命令 |
 | P5-10 | **数据库查询命令** (`citationer query`) | ✅ 已完成 | v4.7.0 | 2026-07 | 1 周 | SQLite 直查或 DSL 过滤（按年份/期刊/作者/关键词筛选） |
 
