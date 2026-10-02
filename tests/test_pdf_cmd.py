@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,11 @@ from citationer.cli.main import app
 def _skip_pypdf_check(monkeypatch):
     """Bypass the pypdf availability check so tests run without the optional dep."""
     monkeypatch.setattr("citationer.cli.pdf_cmd._ensure_pypdf", lambda: None)
+
+
+def _strip_ansi(text: str) -> str:
+    """Remove ANSI escape codes so assertions work with forced-color output."""
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
 class TestPdfExtractCommand:
@@ -127,8 +133,9 @@ class TestPdfTopicsCommand:
     def test_pdf_topics_help(self, cli_runner):
         result = cli_runner.invoke(app, ["pdf", "topics", "--help"])
         assert result.exit_code == 0
-        assert "num-topics" in result.output
-        assert "method" in result.output
+        plain = _strip_ansi(result.output)
+        assert "num-topics" in plain
+        assert "method" in plain
 
     def test_pdf_topics_success(self, cli_runner, clean_cwd, monkeypatch, tmp_path):
         pdf_dir = tmp_path / "pdfs"
@@ -150,9 +157,10 @@ class TestPdfTopicsCommand:
         )
 
         assert result.exit_code == 0, result.output
-        assert "发现 2 个主题" in result.output
-        assert "learning" in result.output
-        assert "一致性分数: 0.420" in result.output
+        plain = _strip_ansi(result.output)
+        assert "发现 2 个主题" in plain
+        assert "learning" in plain
+        assert "一致性分数: 0.420" in plain
 
         data = json.loads(Path("t.json").read_text(encoding="utf-8"))
         assert data["num_topics"] == 2
@@ -181,8 +189,9 @@ class TestPdfTopicsCommand:
         result = cli_runner.invoke(app, ["pdf", "topics", str(pdf_dir)])
 
         assert result.exit_code == 0, result.output
-        assert "1 个文件文本为空" in result.output
-        assert "发现 1 个主题" in result.output
+        plain = _strip_ansi(result.output)
+        assert "1 个文件文本为空" in plain
+        assert "发现 1 个主题" in plain
 
     def test_pdf_topics_no_texts(self, cli_runner, clean_cwd, monkeypatch, tmp_path):
         pdf_dir = tmp_path / "pdfs"
