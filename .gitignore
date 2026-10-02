@@ -241,3 +241,6 @@ data/
 
 # local docs build test
 /tmp_build
+
+# Claude Code
+.claude/
