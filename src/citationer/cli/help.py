@@ -83,6 +83,7 @@ _GROUPS: list[tuple[str, str, list[tuple[str, str]]]] = [
     ]),
     ("pdf", "PDF 全文分析", [
         ("extract", "批量提取 PDF 文本"),
+        ("topics", "PDF 全文主题建模"),
     ]),
 ]
 
